@@ -3,9 +3,9 @@
 # ----------------------- #
 
 url: http://nrinaudo.github.io
-title: My Octopress Blog
-subtitle: A blogging framework for hackers.
-author: Your Name
+title: Dear Future Self
+subtitle: I worked this out so you don't have to
+author: Nicolas Rinaudo
 simple_search: http://google.com/search
 description:
 
@@ -13,7 +13,7 @@ description:
 # You can customize the format as defined in
 # http://www.ruby-doc.org/core-1.9.2/Time.html#method-i-strftime
 # Additionally, %o will give you the ordinal representation of the day
-date_format: "ordinal"
+date_format: "%F"
 
 # RSS / Email (optional) subscription links (change if using something like Feedburner)
 subscribe_rss: /atom.xml
@@ -64,8 +64,8 @@ github_show_profile_link: true
 github_skip_forks: true
 
 # Twitter
-twitter_user:
-twitter_tweet_button: true
+twitter_user: NicolasRinaudo
+twitter_tweet_button:
 
 # Google +1
 google_plus_one: false
