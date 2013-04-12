@@ -68,7 +68,9 @@ printInt(f())
 
 ## Origin of the name
 
-From the mouth of the [Scala designer himself](http://scala-programming-language.1934581.n4.nabble.com/Why-quot-by-name-quot-parameters-are-called-this-way-tt1944598.html#a1944599):
+I find `by-name` to be an odd choice: after all, you're not passing a name at all.
+
+Here's what [Martin Odersky](http://scala-programming-language.1934581.n4.nabble.com/Why-quot-by-name-quot-parameters-are-called-this-way-tt1944598.html#a1944599) has to say about it:
 
 > I think it dates back to Algol 60. Algol 60's default convention was 
 > that the formal parameter would be literally replaced by the actual 
@@ -81,8 +83,7 @@ From the mouth of the [Scala designer himself](http://scala-programming-language
 
 ## Usage
 
-assertions
-log messages
+TODO: assertions, log.
 
 ## Not lazy parameters
 It's important to realize that by-name parameters are not lazy parameters, and can only partially be used that way.
