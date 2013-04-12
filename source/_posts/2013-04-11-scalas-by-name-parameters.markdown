@@ -5,11 +5,15 @@ date: 2013-04-11 17:39
 comments: true
 categories: scala
 ---
-I'm teaching myself Scala at the moment, and just worked out what by-name parameters were and how they could be useful. I'll probably have forgotten two weeks from now though, and this post should save time when that happens.
+Dear future self,
+
+You hopefully remember the time when you were attempting to teach yourself Scala with fondness, now that you have mastered the language. Hopefully.
+
+Well, *I*'m still in the middle of it, and just worked out what by-name parameters were and how they could be useful. Feel free to have a read in case you forget - or, equaly likely, want to make fun of your past self for his limited undestanding of what I hope is an obvious concept to you by now.
 
 ## Purpose
 
-As far as I can tell, by-name parameters are syntactic sugar for no-arg closure parameters. For example, take the following higher-order function:
+As far as I can tell, by-name parameters are syntactic sugar for no-arg closure parameters (I *think* these are actually called [thunks](http://en.wikipedia.org/wiki/Thunk_(functional_programming\))). For example, take the following higher-order function:
 ```scala
 // Prints the value returned by the specified closure.
 def printInt(f: () => Int) {println(f())}
@@ -43,7 +47,7 @@ val f = () => 5
 printInt(f())
 ```
 
-In these 3 examples, the parameter to `printInt` is implicitly wrapped in a `() => Int` closure. Whenver `printInt` tries to access its parameter's value, the closure is executed and its return value used.
+In these 3 examples, the parameter to `printInt` is implicitly wrapped in a `() => Int` closure. Whenever `printInt` tries to access its parameter's value, the closure is executed and its return value used.
 
 It's worth stressing that, in the previous example, `f()` is not actually called when passed to `printInt` but when implicitly passed to `println`. The following illustrates this more clearly:
 ```scala
@@ -68,7 +72,7 @@ printInt(f())
 
 ## Origin of the name
 
-I find `by-name` to be an odd choice: after all, you're not passing a name at all.
+I find "by-name" to be an odd choice: after all, you're not passing a name at all.
 
 Here's what [Martin Odersky](http://scala-programming-language.1934581.n4.nabble.com/Why-quot-by-name-quot-parameters-are-called-this-way-tt1944598.html#a1944599) has to say about it:
 
@@ -88,7 +92,7 @@ TODO: assertions, log.
 ## Not lazy parameters
 It's important to realize that by-name parameters are not lazy parameters, and can only partially be used that way.
 
-Lazy parameters will [hopefully](https://issues.scala-lang.org/browse/SI-240) make it into Scala at some point. They are parameters whose value is only computed when used for the first, rather than at declaration time, which is great for values that are expensive to compute and not used in all code paths.
+Lazy parameters will [hopefully](https://issues.scala-lang.org/browse/SI-240) make it into Scala at some point. They are parameters whose value is only computed when used for the first time, rather than at declaration time, which is great for values that are expensive to compute and not used in all code paths.
 
 The value of by-name parameters, on the other hand, is computed every single time the parameter is referenced. This can have some unexpected and unpleasant side effects, such as in:
 ```scala

@@ -1,19 +1,21 @@
 ---
 layout: post
-title: "GPath notes"
+title: "Using GPath with XmlSlurper"
 date: 2013-04-09 21:28
 comments: true
 categories: groovy
 ---
-Every so often, I need to write quick tools to parse some sort of XML, extract information from it and put it somewhere else.
+Dear future self,
 
-As far as I'm concerned, Groovy is the perfect tool for that - it has access to the wealth of existing Java libraries, but with a much more flexible syntax that does away with most of its parent's boilerplate code.
+Writing quick, discardable tools to parse some sort of XML, extract information from it and put it somewhere else is something you have to do with some regularity.
 
-Also, mostly, `XmlSlurper` and GPath. These make loading XML and extracting the information you need so smooth and easy, you'll wonder why you ever put up with Java's horrendously complex XML APIs.
+The best tool you currently have for this is Groovy - it has access to the wealth of existing Java libraries, but with a much more flexible syntax that does away with most of its parent's boilerplate code.
 
-That's the theory, at least, but it doesn't appear to work for me. Whenever I have to use GPath, I find myself stimmied by the same problems. Time and time again, I'll forget the difference between `grep` and `find`, or fail to remember that detph- or breadth-first searches change the rules slightly.
+Also, mostly, `XmlSlurper` and GPath. These make loading XML and extracting the information you need so smooth and easy that you almost forget the nightmare that Java's internal XML APIs can be.
 
-Not anymore. Since my brain obviously has some sort of block as far as GPath syntax is concerned, this post will do in its stead. What follows are notes meant for my future self. Hopefully he'll be smart enough to read them before wasting another hour trying to re-remember something that he's forgotten yet again.
+That's the theory, at least, but it doesn't appear to work for you. Whenever you have to use GPath, you find yourself stimmied by the same problems. Time and time again, you'll forget the difference between `grep` and `find`, or fail to remember that detph- or breadth-first searches change the rules slightly.
+
+Not anymore. Since our brain obviously has some sort of block as far as GPath syntax is concerned, this post will do in its stead. Do both ourselves a favour and have a quick read next time you have to use `XmlSlurper`.
 
 In the rest of this post, the `xml` object is assumed to have been obtained through one of `XmlSlurper`'s `parse` methods.
 
@@ -42,7 +44,7 @@ xml.'**'.findAll {it.name() == 'li'}.each {
 }
 ```
 
-Pay attention to the way the element's name is retrieved: it's `it.name()`, not `it.name`. A method, not a property. And yes, I know you feel vaguely insulted by what seems like such a stupid choice, but there's a very good reason for it: properties describe children of the current node, so `it.name` would referrer to a `name` child element rather than the element's name.
+Pay attention to the way the element's name is retrieved: it's `it.name()`, not `it.name`. A method, not a property. And yes, I know you feel vaguely insulted by what seems like such a stupid decision, but there's a very good reason for it: properties describe children of the current node, so `it.name` would referrer to a `name` child element rather than the element's name.
 
 Honestly, if past me had told me that this morning, I'd have saved a good half hour this afternoon.
 
