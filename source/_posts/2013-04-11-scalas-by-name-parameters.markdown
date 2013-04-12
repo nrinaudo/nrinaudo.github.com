@@ -11,6 +11,8 @@ You hopefully remember the time when you were attempting to teach yourself Scala
 
 Well, *I*'m still in the middle of it, and just worked out what by-name parameters were and how they could be useful. Feel free to have a read in case you forget - or, equaly likely, want to make fun of your past self for his limited undestanding of what I hope is an obvious concept to you by now.
 
+<!-- more -->
+
 ## Purpose
 
 As far as I can tell, by-name parameters are syntactic sugar for no-arg closure parameters (I *think* these are actually called [thunks](http://en.wikipedia.org/wiki/Thunk_(functional_programming\))). Take the following higher-order function, for example:
@@ -79,10 +81,6 @@ Here's what Scala's designer has to say about it:
 {% blockquote Martin Odersky http://scala-programming-language.1934581.n4.nabble.com/Why-quot-by-name-quot-parameters-are-called-this-way-tt1944598.html#a1944599 Why "by-name" parameters are called this way?  %}
 I think it dates back to Algol 60. Algol 60's default convention was that the formal parameter would be literally replaced by the actual argument name (I believe the actual argument needed to be a single identifier then) in a procedure's body. This made it possible to evaluate the argument several times as needed and also to change it by assignment. The language also had ''call by value' parameters (that's what's used in almost all other languages), but these were declared with the special keyword `value' in front of them.
 {% endblockquote %}
-
-## Usage
-
-TODO: assertions, log.
 
 ## Not lazy parameters
 It's important to realize that by-name parameters are not lazy parameters, and can only partially be used that way.

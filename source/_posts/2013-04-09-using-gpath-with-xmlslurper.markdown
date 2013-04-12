@@ -17,6 +17,8 @@ That's the theory, at least, but it doesn't appear to work for you. Whenever you
 
 Not anymore. Since our brain obviously has some sort of block as far as GPath syntax is concerned, this post will do in its stead. Do both ourselves a favour and have a quick read next time you have to use `XmlSlurper`.
 
+<!-- more -->
+
 In the rest of this post, the `xml` object is assumed to have been obtained through one of `XmlSlurper`'s `parse` methods.
 
 ## Finding an element by name

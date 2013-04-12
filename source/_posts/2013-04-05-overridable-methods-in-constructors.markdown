@@ -9,6 +9,8 @@ Dear future self,
 
 A code quality issue that you seem to be particularly prone to is [calling an overridable method within a constructor](http://pmd.sourceforge.net/pmd-4.3.0/rules/design.html#ConstructorCallsOverridableMethod). Whenever one of your various code quality metrics tools spits out a warning about this practice, you get a bit annoyed and need to be convinced it's a bad idea all over again. Come read this next time, it'll be quicker.
 
+<!-- more -->
+
 Overridable methods in a constructor are a bad idea because of a very simple fact: a class' parent's constructor is always called before the class' constructor is executed. When not called explicitely, the compiler will add an implicit call to the parent's default constructor.
 
 Most Java developers understand that, and I know *you* do, but a fair amount of us still get caught unawares by the implications.
