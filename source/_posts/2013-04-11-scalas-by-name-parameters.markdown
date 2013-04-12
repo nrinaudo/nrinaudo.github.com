@@ -13,7 +13,7 @@ Well, *I*'m still in the middle of it, and just worked out what by-name paramete
 
 ## Purpose
 
-As far as I can tell, by-name parameters are syntactic sugar for no-arg closure parameters (I *think* these are actually called [thunks](http://en.wikipedia.org/wiki/Thunk_(functional_programming\))). For example, take the following higher-order function:
+As far as I can tell, by-name parameters are syntactic sugar for no-arg closure parameters (I *think* these are actually called [thunks](http://en.wikipedia.org/wiki/Thunk_(functional_programming\))). Take the following higher-order function, for example:
 ```scala
 // Prints the value returned by the specified closure.
 def printInt(f: () => Int) {println(f())}
@@ -49,7 +49,7 @@ printInt(f())
 
 In these 3 examples, the parameter to `printInt` is implicitly wrapped in a `() => Int` closure. Whenever `printInt` tries to access its parameter's value, the closure is executed and its return value used.
 
-It's worth stressing that, in the previous example, `f()` is not actually called when passed to `printInt` but when implicitly passed to `println`. The following illustrates this more clearly:
+It's worth stressing out that, in the previous example, `f()` is not actually called when passed to `printInt` but when implicitly passed to `println`. The following illustrates this more clearly:
 ```scala
 // Added some trace before value is printed
 def printInt(value: => Int) {
@@ -74,16 +74,11 @@ printInt(f())
 
 I find "by-name" to be an odd choice: after all, you're not passing a name at all.
 
-Here's what [Martin Odersky](http://scala-programming-language.1934581.n4.nabble.com/Why-quot-by-name-quot-parameters-are-called-this-way-tt1944598.html#a1944599) has to say about it:
+Here's what Scala's designer has to say about it:
 
-> I think it dates back to Algol 60. Algol 60's default convention was 
-> that the formal parameter would be literally replaced by the actual 
-> argument name (I believe the actual argument needed to be a single 
-> identifier then) in a procedure's body. This made it possible to 
-> evaluate the argument several times as needed and also to change it by 
-> assignment. The language also had ''call by value' parameters (that's 
-> what's used in almost all other languages), but these were declared 
-> with the special keyword `value' in front of them. 
+{% blockquote Martin Odersky http://scala-programming-language.1934581.n4.nabble.com/Why-quot-by-name-quot-parameters-are-called-this-way-tt1944598.html#a1944599 Why "by-name" parameters are called this way?  %}
+I think it dates back to Algol 60. Algol 60's default convention was that the formal parameter would be literally replaced by the actual argument name (I believe the actual argument needed to be a single identifier then) in a procedure's body. This made it possible to evaluate the argument several times as needed and also to change it by assignment. The language also had ''call by value' parameters (that's what's used in almost all other languages), but these were declared with the special keyword `value' in front of them.
+{% endblockquote %}
 
 ## Usage
 
