@@ -127,6 +127,8 @@ xml.body.ul.li.findAll {it.@class == 'odd'}*.span.each {println it.text()}
 
 While this works, I find it unsatisfactory: it looks out of place in what is an otherwise fairly clean GPath expression. I'll keep looking and update this post should I find a reason, but for the moment, future self, bear in mind that `findAll` feels a bit broken. You'd want its result to be manipulable in exactly the same way `find`'s result is, but this is just not the case.
 
+_Edit: this is apparently a reported [bug](https://jira.codehaus.org/browse/GROOVY-6122) and will hopefully be fixed eventually_
+
 
 ### grep
 `grep` is where I usually get stuck. At a glance, its signature and purpose are the same as `findAll`'s.
