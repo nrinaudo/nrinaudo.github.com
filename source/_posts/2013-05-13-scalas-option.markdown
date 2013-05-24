@@ -7,7 +7,8 @@ categories: scala
 ---
 Dear future self,
 
-I used Scala's [`Option`](http://www.scala-lang.org/api/current/index.html#scala.Option) for the first time today, and found it confusing enough that I thought I'd write a quick post
+I used Scala's [`Option`](http://www.scala-lang.org/api/current/index.html#scala.Option) for the first time today, and
+found it confusing enough that I thought I'd write a quick post
 about it.
 
 <!-- more -->
