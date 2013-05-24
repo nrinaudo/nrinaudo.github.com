@@ -65,7 +65,7 @@ class HtmlParser extends SAXParser {
 Once this is done, parsing an HTML file can be done with one of
 [XML](http://www.scala-lang.org/api/2.11.0-M2/index.html#scala.xml.XML)'s various `load` methods:
 ```scala
-val html = XML.loadFile(new java.io.File("my/html/file.html"))
+val html = XML.withSAXParser(new HtmlParser()).loadFile(new java.io.File("my/html/file.html"))
 
 html \\ "div" foreach {div => println(div.text)}
 ```
