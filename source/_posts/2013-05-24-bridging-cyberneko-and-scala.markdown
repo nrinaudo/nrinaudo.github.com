@@ -3,7 +3,7 @@ layout: post
 title: "Bridging CyberNeko and Scala"
 date: 2013-05-24 22:06
 comments: true
-categories: scala, cyberneko
+categories: scala, xml
 ---
 Dear future self,
 
@@ -12,6 +12,7 @@ I just spent a few hours working out how to use my favourite HTML cleaner,
 I'd rather spare you the frustration I just went through, so here goes.
 
 <!-- more -->
+
 
 ## The Problem
 
