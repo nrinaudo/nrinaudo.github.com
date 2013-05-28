@@ -7,7 +7,7 @@ categories: scala, xml
 ---
 Dear future self,
 
-After I worked out how to [load HTML](/blog/2013/05/24/bridging-cyberneko-and-scala/) with Scala, I had to work out
+After I worked out how to [load HTML](/blog/2013/05/24/bridging-cyberneko-and-scala/) with Scala, I had to figure out
 how to explore the resulting documents. It's rather straightfroward in
 [Groovy](2013/04/09/using-gpath-with-xmlslurper/), but it turns out to be somewhat less pleasant in Scala.
 
