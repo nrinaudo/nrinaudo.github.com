@@ -3,7 +3,7 @@ layout: post
 title: "Bridging CyberNeko and Scala"
 date: 2013-05-24 22:06
 comments: true
-categories: scala, xml
+categories: scala xml
 ---
 Dear future self,
 

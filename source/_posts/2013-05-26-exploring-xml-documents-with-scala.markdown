@@ -3,7 +3,7 @@ layout: post
 title: "Exploring XML documents with Scala"
 date: 2013-05-26 21:58
 comments: true
-categories: scala, xml
+categories: scala xml
 ---
 Dear future self,
 

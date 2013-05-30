@@ -3,7 +3,7 @@ layout: post
 title: "Using GPath with XmlSlurper"
 date: 2013-04-09 21:28
 comments: true
-categories: groovy, xml
+categories: groovy xml
 ---
 Dear future self,
 
