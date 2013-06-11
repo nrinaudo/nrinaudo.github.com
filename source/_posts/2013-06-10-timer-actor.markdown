@@ -22,8 +22,8 @@ import scala.actors.scheduler.DaemonScheduler
 class Timer(val timeout: Long, val dest: Actor) extends Actor {
   import Timer.WakeUp
 
-  // Might as well make this a daemon. This probably doesn't serve much of a purpose: this implementation is configured
-  // to die as soon as its target dies anyway.
+  // Might as well make it into a daemon. This probably doesn't serve much of a purpose: this implementation is
+  // configured to die as soon as its target dies anyway.
   override def scheduler = DaemonScheduler
 
   def act {
