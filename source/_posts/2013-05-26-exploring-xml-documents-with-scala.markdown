@@ -9,7 +9,7 @@ Dear future self,
 
 After I worked out how to [load HTML](/blog/2013/05/24/bridging-cyberneko-and-scala/) with Scala, I had to figure out
 how to explore the resulting documents. It's rather straightfroward in
-[Groovy](2013/04/09/using-gpath-with-xmlslurper/), but it turns out to be somewhat less pleasant in Scala.
+[Groovy](/blog/2013/04/09/using-gpath-with-xmlslurper/), but it turns out to be somewhat less pleasant in Scala.
 
 <!-- more -->
 
@@ -26,7 +26,7 @@ val xml = <html><body>
             <div><a href="test.html">Test</a></div>
             <div><a href="test2.html">Test 2</a></div>
           </body></html>
- 
+
 // `\` returns a sequence containing all elements whose name match the right operand and are direct descendants of the
 // left operand.
 // Prints:
@@ -88,7 +88,7 @@ val xml = <html><body>
             <div><a href="test2.html">Test 2</a></div>
             <div><a>No Link</a></div>
           </body></html>
- 
+
 // Finds all a elements whose href attribute exists.
 // Prints:
 // <a href="test.html">Test</a>
