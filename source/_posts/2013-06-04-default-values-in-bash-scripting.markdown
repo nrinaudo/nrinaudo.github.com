@@ -5,7 +5,7 @@ date: 2013-06-04 09:47
 comments: true
 categories: bash
 ---
-Dear futur self,
+Dear future self,
 
 I regularly have to write small bash scripts to wrap the various tools I create and have to run in batches. Bash
 scripting is a nightmare to me - almost as bad as using `tar` without looking at the help - and I always stumble on
