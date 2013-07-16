@@ -21,6 +21,13 @@ subscribe_email:
 # RSS feeds can list your email address if you like
 email:
 
+
+navigation:
+- text: Home
+  url: /index.html
+- text: Archives
+  url: /blog/archives/index.html
+
 # ----------------------- #
 #    Jekyll & Plugins     #
 # ----------------------- #
@@ -58,14 +65,17 @@ default_asides: [asides/recent_posts.html, asides/github.html, asides/delicious.
 # ----------------------- #
 
 # Github repositories
-github_user: 
+github_user: nrinaudo
 github_repo_count: 0
 github_show_profile_link: true
-github_skip_forks: true
+github_skip_forks: false
 
 # Twitter
-twitter_user: 
+twitter_user: NicolasRinaudo
 twitter_tweet_button:
+
+# Linkedin
+linkedin_user: nicolasrinaudo
 
 # Google +1
 google_plus_one: false

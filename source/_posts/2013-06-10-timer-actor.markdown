@@ -3,7 +3,7 @@ layout: post
 title: "Timer Actor"
 date: 2013-06-10 11:49
 comments: true
-categories: scala
+categories: scala actor
 ---
 Dear future self,
 
