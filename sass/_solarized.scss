@@ -15,7 +15,7 @@ $solar-blue:      #268bd2 !default;
 $solar-cyan:      #2aa198 !default;
 $solar-green:     #859900 !default;
 
-$solarized: dark !default;
+$solarized: light !default;
 
 @if $solarized == light {
 
@@ -42,5 +42,3 @@ $solarized: dark !default;
 $pre-bg: $base03 !default;
 $pre-border: darken($base02, 5) !default;
 $pre-color: $base1 !default;
-
-

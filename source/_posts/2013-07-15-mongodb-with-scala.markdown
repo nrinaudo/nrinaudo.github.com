@@ -83,7 +83,7 @@ col.update("_id" $eq 1, $set("name" -> "Jane Smith") ++ $inc("age" -> 1))
 
 Retrieving field values is slightly more verbose, but very flexible:
 ```scala
-cold.find("_id" $eq 1) foreach {o =>
+col.find("_id" $eq 1) foreach {o =>
   // Unsafe: if the requested field doesn't exist, an exception is thrown.
   println(o.as[Int]("age"))
 

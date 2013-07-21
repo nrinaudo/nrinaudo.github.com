@@ -26,7 +26,7 @@ class Point2d(val x: Int, val y: Int) {
 }
 ```
 
-## `hashCode`
+## hashCode
 Exactly as in Java, overriding `equals` should always be accompanied by an equivalent implementation of `hashCode`.
 
 Nothing tricky there, although the convention is slightly different than in Java: Scala uses the 41 magic number where
@@ -42,7 +42,7 @@ class Point2d(val x: Int, val y: Int) {
 }
 ```
 
-## `canEqual`
+## canEqual
 This is where Scala becomes more cumbersome (yet more powerful) than Java.
 
 A proper `equals` method should be reflexive, which means that `x == y` implies that `y == x`. Common Java wisdom has
