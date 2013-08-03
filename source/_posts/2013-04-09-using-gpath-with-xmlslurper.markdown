@@ -8,19 +8,20 @@ categories: groovy xml
 Dear future self,
 
 Writing quick, discardable tools to parse some sort of XML, extract information from it and put it somewhere else is
-something you have to do with some regularity.
+something I have to do with some regularity.
 
-The best tool you currently have for this is Groovy - it has access to the wealth of existing Java libraries, but with a
-much more flexible syntax that does away with most of its parent's boilerplate code.
+The best tool I currently have for this is Groovy - it has access to the wealth of existing Java libraries, but with a
+much more flexible syntax that does away with most of its parent's boilerplate.
 
-Also, mostly, `XmlSlurper` and GPath. These make loading XML and extracting the information you need so smooth and easy
-that you almost forget the nightmare that Java's internal XML APIs can be.
+Also, mostly, `XmlSlurper` and GPath. These make loading and extracting information from XML so smooth and easy that
+one would almost forget the nightmare Java's internal XML APIs can be.
 
-That's the theory, at least, but it doesn't appear to work for you. Whenever you have to use GPath, you find yourself
-stimmied by the same problems. Time and time again, you'll forget the difference between `grep` and `find`, or fail to remember that detph- or breadth-first searches change the rules slightly.
+That's the theory, at least, but it doesn't appear to work for me. Whenever I have to use GPath, I find myself
+stimmied by the same problems. Time and time again, I'll forget the difference between `grep` and `find`, or fail to
+remember that detph- or breadth-first searches change the rules slightly.
 
-Not anymore. Since our brain obviously has some sort of block as far as GPath syntax is concerned, this post will do in
-its stead. Do both ourselves a favour and have a quick read next time you have to use `XmlSlurper`.
+Not anymore. Since my brain obviously has some sort of block as far as GPath syntax is concerned, this post will do in
+its stead.
 
 <!-- more -->
 
@@ -41,8 +42,8 @@ xml.'**'.li.each {
 
 And, for some reason, I *always* distinctly remember having done so in the past.
 
-Well, future me, you're wrong. This syntax isn't supported, nor has it ever been supported, as far as I can tell. Don't
-try to get it to work.
+Well, future self, you're wrong. This syntax isn't supported, nor, as far as I can tell, has it ever been. Don't try to
+get it to work.
 
 `**` is an alias for `depthFirst()`, which returns an iterator - a Groovy enhanced one, certainly, but still not one
 that supports nested GPath expressions.
