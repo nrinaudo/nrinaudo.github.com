@@ -3,6 +3,9 @@
     {% if site.github_user %}
     <li><a href="http://github.com/{{ site.github_user }}" title="Github Profile"><i class="icon-github-sign social-navbar"></i></a></li>
     {% endif %}
+    {% if site.stackoverflow_user && site.stackoverflow_id %}
+    <li><a href="http://stackoverflow.com/users/{{ site.stackoverflow_id }}/{{ site.stackoverflow_user }}" title="Stackoverflow Profile"><i class="icon-stackexchange social-navbar"></i></a></li>
+    {% endif %}
     {% if site.linkedin_user %}
     <li><a href="http://linkedin.com/in/{{ site.linkedin_user }}" title="Linkedin Profile"><i class="icon-linkedin-sign social-navbar"></i></a></li>
     {% endif %}

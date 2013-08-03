@@ -70,6 +70,10 @@ github_repo_count: 0
 github_show_profile_link: true
 github_skip_forks: false
 
+# Stackoverflow profile
+stackoverflow_user: nicolas-rinaudo
+stackoverflow_id: 1370349
+
 # Twitter
 twitter_user: NicolasRinaudo
 twitter_tweet_button:
