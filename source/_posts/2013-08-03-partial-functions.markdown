@@ -35,12 +35,12 @@ value.
 One could write a partial version of `math.sqrt` as follows:
 
 ```scala
-val sqrt = new PartialFunction[Double, Double] {
+val sqrt = new PartialFunction[Int, Double] {
   // sqrt is only defined for positive numbers.
-  def isDefinedAt(p: Double) = p >= 0
+  def isDefinedAt(p: Int) = p >= 0
 
   // Should this be called on a negative number, a MatchError would be thrown.
-  def apply(p: Double) = p match {
+  def apply(p: Int) = p match {
     case a if a >= 0 => math.sqrt(a)
   }
 }
@@ -52,14 +52,14 @@ this much easier to write: `case` statements.
 ```scala
 // This is strictly equivalent to our previous example, but with much less boilerplate.
 // Note that a partial function's type cannot be inferred and needs always be fully declared.
-val sqrt: PartialFunction[Double, Double] = {
+val sqrt: PartialFunction[Int, Double] = {
   case p if p >= 0 => math.sqrt(p)
 }
 
 // Prints 'true'
 println(sqrt.isDefinedAt(4))
 
-// Prints '2'
+// Prints '2.0'
 println(sqrt(4))
 
 // Prints 'false'
