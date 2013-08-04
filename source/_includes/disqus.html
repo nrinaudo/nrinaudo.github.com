@@ -1,5 +1,5 @@
 {% comment %} Load script if disquss comments are enabled and `page.comments` is either empty (index) or set to true {% endcomment %}
-{% if site.disqus_short_name and page.comments != false %}
+{% if site.disqus_short_name and page.comments == true %}
 <script type="text/javascript">
       var disqus_shortname = '{{ site.disqus_short_name }}';
       {% if page.comments == true %}
