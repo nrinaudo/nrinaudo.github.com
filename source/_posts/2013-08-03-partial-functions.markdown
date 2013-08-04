@@ -71,7 +71,7 @@ println(sqrt(-4))
 
 
 ## Collecting values through partial functions
-Now that we know what partial functions are, one might wonder what's the point of them. Frankly, initially, I thought they
+Now that we know what partial functions are, one might wonder what's the point of them. Frankly, I initially thought they
 were a bit of an affectation and not terribly useful, until I encountered `Seq`'s `collect` method.
 
 `collect` takes a partial function as a parameter and acts a bit like `map`, but only for values for which its
