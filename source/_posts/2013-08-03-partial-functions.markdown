@@ -39,7 +39,7 @@ val sqrt = new PartialFunction[Double, Double] {
   // sqrt is only defined for positive numbers.
   def isDefinedAt(p: Double) = p >= 0
 
-  // Should this be called on a negative number, a MathError would be thrown.
+  // Should this be called on a negative number, a MatchError would be thrown.
   def apply(p: Double) = p match {
     case a if a >= 0 => math.sqrt(a)
   }
