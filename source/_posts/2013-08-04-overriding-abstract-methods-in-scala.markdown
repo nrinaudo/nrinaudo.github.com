@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "The override keyword on implemented abstract methods"
+title: "Overriding abstract methods in Scala"
 date: 2013-08-04 14:32
 comments: true
 categories: scala best-practice
