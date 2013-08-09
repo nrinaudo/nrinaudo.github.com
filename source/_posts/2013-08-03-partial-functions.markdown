@@ -29,7 +29,7 @@ Scala's partial function are exactly the same as their mathematical counterparts
 their input domain.
 
 In practical terms, a partial function is an instance of `PartialFunction`, which is roughly an instance of `Function1`
-with an added `isDefinedAt` method whose purpose is to let called know whether the function is defined for a particular
+with an added `isDefinedAt` method whose purpose is to let callers know whether the function is defined for a particular
 value.
 
 One could write a partial version of `math.sqrt` as follows:
