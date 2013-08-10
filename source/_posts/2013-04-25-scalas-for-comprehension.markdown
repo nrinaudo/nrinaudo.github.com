@@ -22,7 +22,7 @@ inherits from [`FilterMonadic`](http://www.scala-lang.org/api/current/index.html
 can be used as a generator.
 
 
-### Without `yield`
+### Without yield
 In a for-comprehension that doesn't yield anything, generators are transformed into nested `foreach` calls:
 ```scala
 // for-comprehension without a yield statement.
@@ -39,7 +39,7 @@ for(x <- 0 until 4;
 }
 ```
 
-### With `yield`
+### With yield
 When for-comprehension yield values, however, all generators but the last one are transformed into nested `flatMap`
 calls. The last generator is transformed into a `map` call.
 

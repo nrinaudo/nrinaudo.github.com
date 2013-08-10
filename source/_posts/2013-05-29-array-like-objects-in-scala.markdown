@@ -17,11 +17,11 @@ It's actually surprisingly simple: any Scala class can be made to behave that wa
 ```scala
 class Demo {
   def update(i: Int, v: String) = {
-    println(s"Setting index $i to '$v'")
+    println("Setting index %d to '%s'" format (i, v))
   }
 
   def apply(i: Int) = {
-    println(s"Getting index $i")
+    println("Getting index %s" format i)
     0
   }
 }
@@ -34,6 +34,3 @@ a(0) = "zero"
 // Prints 'Getting index 0'
 a(0)
 ```
-
-Note the use of [String interpolation](http://docs.scala-lang.org/overviews/core/string-interpolation.html), quite
-useful for formatting.
