@@ -14,6 +14,7 @@ Type variance is a subject that I've long found confusing and counter-intuitive.
 I've finally decided to bite the bullet and make sense of it all. This post is what I came up with after hacking at /
 reading on type variance until I decided I had it as figured out as I was likely to for the time being.
 
+
 <!-- more -->
 
 
