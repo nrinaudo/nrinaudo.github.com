@@ -20,7 +20,7 @@ understand and prove that assertion.
 ## Constants in algorithm complexity
 
 The first step to understanding the irrelevance of a logarithm's base when expressing algorithm complexity is to
-remember that constants are considered irrelevant: a complexity of $2N$ is expressed as $N$.
+remember that constants are considered irrelevant: a complexity of `2N` is expressed as `N`.
 
 With that in mind, we "just" need to prove that logarithms with different bases are linked together by a constant:
 
@@ -33,14 +33,12 @@ $$\forall i,j \, \exists c_{ij} \mid \forall x \, log_i(x) = c_{ij} * log_j(x)$$
 Finding this $c_{ij}$ constant turns out to be surprisingly easy, even for someone whose math skills are as rusty as
 mine.
 
-Let's start from $log_i$:
-$$y = log_i(x)$$
+Let's start from the definition of a logarithm:
+$$y = log_i(x) \Leftrightarrow x = i^y \Leftrightarrow x = i^y \Leftrightarrow log_j(x) = log_j(i^y) \\
+\Leftrightarrow log_j(x) = y * log_j(i)$$
 
-By the definition of logarithm this can be written as:
-$$x = i^y \implies log_j(x) = log_j(i^y) \implies log_j(x) = y * log_j(i)$$
-
-Replacing $y$ by its actual value, we get:
+Replacing `y` by its actual value, we get:
 $$log_j(x) = log_i(x) * log_j(i)$$
 
-Which allows us to state the following rule:
+Which allows us to state what we set out to prove:
 $$\forall i,j,x \, log_j(x) = log_j(i) * log_j(x)$$
