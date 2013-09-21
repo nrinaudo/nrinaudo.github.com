@@ -105,6 +105,10 @@ println(json fieldOrZero("id") numberOr(0))
 json field "id" map {_.number map {i => println("id is an int of value %s".format(i))
 } getOrElse println("id is set, but not to a number")
 } getOrElse println("id is not set")
+
+// As usual, for comprehensions make this both more readable and usable.
+val id = for(i <- json.field("id"); j <- i.number) yield j
+println(id.getOrElse(0))
 ```
 
 All `Json` instances are immutable: modifying a field's value is done by creating a clone of the initial instance with
@@ -155,8 +159,8 @@ val source = """{"id": 1, "name" : "John Smith", "age" : 34}"""
 
 // There are other parsing methods, but they rely on Scalaz datatypes that I have no familiarity with and don't plan
 // on learning just now.
-Parse.parseOption(source) map {
-  j => println("Parsed into %s".format(j.spaces4))
+Parse.parseOption(source) map {j =>
+  println("Parsed into %s".format(j.spaces4))
 } getOrElse {
   println("An error occurred")
 }
