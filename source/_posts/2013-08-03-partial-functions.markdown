@@ -17,7 +17,7 @@ This post will explore partial functions and how to use them, since I'm tired of
 
 
 ## Origin of the name
-It would appear that partial functions are originally a mathematical concept: they are function that are only defined
+It would appear that partial functions are originally a mathematical concept: they are functions that are only defined
 for a subset of the input domain (as opposed to *total* functions, which are defined for the entirety of this domain).
 
 The square root function, for example, is a partial function: `sqrt(x)` is only defined for positive values of `x`.
