@@ -7,7 +7,7 @@ categories: scala
 ---
 Dear future self,
 
-I [recently realized](https://twitter.com/NicolasRinaudo/status/351807385217679360) that partial functions and
+I [recently realised](https://twitter.com/NicolasRinaudo/status/351807385217679360) that partial functions and
 partially applied functions were two fundamentally different things. Unfortunately, while I now *know* they're not the
 same, I still can't remember which is which.
 

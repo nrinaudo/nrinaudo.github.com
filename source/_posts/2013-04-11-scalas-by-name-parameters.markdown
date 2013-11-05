@@ -95,7 +95,7 @@ these were declared with the special keyword `value' in front of them.
 {% endblockquote %}
 
 ## Not lazy parameters
-It's important to realize that by-name parameters are not lazy parameters, and can only partially be used that way.
+It's important to realise that by-name parameters are not lazy parameters, and can only partially be used that way.
 
 Lazy parameters will [hopefully](https://issues.scala-lang.org/browse/SI-240) make it into Scala at some point. They are
 parameters whose value is only computed when used for the first time, rather than at declaration time, which is great for

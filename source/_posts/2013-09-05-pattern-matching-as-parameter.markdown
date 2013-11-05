@@ -13,7 +13,7 @@ clicked: a pattern match is a legal argument for higher-order functions expectin
 
 <!-- more -->
 
-As I previously realized, pattern matching is a shortcut for partial function creation. Since partial functions are
+As I previously realised, pattern matching is a shortcut for partial function creation. Since partial functions are
 unary, it follows that you can pass them to higher-order functions such as, for example, `map`:
 
 ```scala
@@ -33,5 +33,5 @@ def unwrap[A](la: Seq[Option[A]], da: A): Seq[A] = la map {
 }
 ```
 
-It seems obvious in hinsight, but I'd never realized that before. My OCD is probably going to force me to go and "fix"
+It seems obvious in hinsight, but I'd never realised that before. My OCD is probably going to force me to go and "fix"
 this in all the Scala code I ever wrote...
