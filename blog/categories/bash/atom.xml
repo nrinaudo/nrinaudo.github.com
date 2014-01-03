@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: bash | Dear Future Self]]></title>
+  <link href="http://nrinaudo.github.io/blog/categories/bash/atom.xml" rel="self"/>
+  <link href="http://nrinaudo.github.io/"/>
+  <updated>2014-01-03T14:47:43+01:00</updated>
+  <id>http://nrinaudo.github.io/</id>
+  <author>
+    <name><![CDATA[Nicolas Rinaudo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Default values in Bash Scripting]]></title>
+    <link href="http://nrinaudo.github.io/blog/2013/06/04/default-values-in-bash-scripting/"/>
+    <updated>2013-06-04T09:47:00+02:00</updated>
+    <id>http://nrinaudo.github.io/blog/2013/06/04/default-values-in-bash-scripting</id>
+    <content type="html"><![CDATA[<p>Dear future self,</p>
+
+<p>I regularly have to write small bash scripts to wrap the various tools I create and have to run in batches. Bash
+scripting is a nightmare to me - almost as bad as using <code>tar</code> without looking at the help - and I always stumble on
+the same problems.</p>
+
+<p>Not today, though. Today, I spent 15 minutes looking for the syntax of default values for shell variables for the last
+time.</p>
+
+<!-- more -->
+
+
+<p>The syntax is, to my untrained eyes, obscure and as unhelpful as possible, but this is how it works:</p>
+
+<p>```bash script.sh</p>
+
+<h1>! /bin/bash</h1>
+
+<p>HOST=$1
+: ${HOST:="localhost"}
+echo $HOST
+```</p>
+
+<p>Executing <code>script.sh</code> then yields:
+<code>bash
+nicolasrinaudo:~/scripts ./script.sh 212.128.0.1
+212.128.0.1
+nicolasrinaudo:~/scripts ./script.sh
+localhost
+</code></p>
+]]></content>
+  </entry>
+  
+</feed>

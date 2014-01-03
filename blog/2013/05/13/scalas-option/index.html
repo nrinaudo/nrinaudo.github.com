@@ -1,0 +1,423 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Scala's Option - Dear Future Self</title>
+  <meta name="author" content="Nicolas Rinaudo">
+
+  
+  <meta name="description" content="Scala's Option 2013-05-13 Dear future self, I used Scala&#8217;s Option for the first time today, and
+found it confusing enough that I thought I&# &hellip;">
+  
+
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://nrinaudo.github.io/blog/2013/05/13/scalas-option">
+  <link href="/images/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Dear Future Self" type="application/atom+xml">
+  <script src="/js/jquery.js"></script>
+  <script src="/js/bootstrap-collapse.js"></script>
+  <script src="/js/modernizr.js"></script>
+  <script src="/js/octopress.js" type="text/javascript"></script>
+
+  <!-- mathjax config similar to math.stackexchange -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+     jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      },
+      displayAlign: "left",
+      messageStyle: "none",
+      styles: {
+        ".math": {
+            "font-size": "80%"
+        }
+      },
+      "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+    });
+  </script>
+  <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  
+
+</head>
+
+<body   >
+  <div class="navbar navbar-inverse navbar-static-top">
+  	<div class="navbar-inner">
+  	  <div class="container">
+        <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+          <span class="fui-menu-24"></span>
+        </a>
+  	  	<div class="nav-collapse collapse navbar-responsive-collapse" style="height:0;">
+  	      <ul class="nav">
+    
+        <li ><a href="/index.html">Home</a></li>
+    
+        <li ><a href="/blog/archives/index.html">Archives</a></li>
+    
+</ul>
+
+<ul class="nav pull-right">
+    
+    <li><a href="http://github.com/nrinaudo" title="Github Profile"><i class="icon-github-sign social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://stackoverflow.com/users/1370349/nicolas-rinaudo" title="Stackoverflow Profile"><i class="icon-stackexchange social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://linkedin.com/in/nicolasrinaudo" title="Linkedin Profile"><i class="icon-linkedin-sign social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://twitter.com/NicolasRinaudo" title="Twitter Profile"><i class="icon-twitter-sign social-navbar"></i></a></li>
+    
+    
+    
+    
+</ul>
+
+  	    </div>
+  	  </div>
+  	</div>
+  </div>
+  <div class="container" id="main">
+    <div class="span12">
+      <div class="row-fluid">
+        <div id="content">
+          <div>
+<article class="hentry" role="article">
+  
+
+  <header>
+  <div class="jumbotron">
+    Scala's Option
+	<h5>
+
+
+
+
+
+
+
+
+  
+
+
+<i class="icon-calendar-empty"></i> <time datetime="2013-05-13T16:28:00+02:00" pubdate data-updated="true">2013-05-13</time></h5>
+  </div>
+</header>
+  <div class="row-fluid">
+    <div class="span12">
+      <p>Dear future self,</p>
+
+<p>I used Scala&#8217;s <a href="http://www.scala-lang.org/api/current/index.html#scala.Option">Option</a> for the first time today, and
+found it confusing enough that I thought I&#8217;d write about it.</p>
+
+<!-- more -->
+
+
+<h2>Purpose</h2>
+
+<p>An instance of <code>Option</code> represents an optional value. If the value is set, it&#8217;s an instance of <code>Some</code> - a value set to
+10 will be equal to <code>Some(10)</code>, for example. If, on the other hand, it isn&#8217;t set, the value will be equal to <code>None</code>.</p>
+
+<p>A typical use case is for methods that might not return a value at all - methods that would return <code>null</code> in Java. It
+makes things clearer: callers don&#8217;t need to check against <code>null</code> every time, it can be considered (rightly!) to be
+an illegal value.</p>
+
+<p>Callers do, however, need to work with the <code>Option</code>.</p>
+
+<h2>Default values</h2>
+
+<p>One way in which <code>Option</code> is very convenient is default values through the <code>getOrElse</code> method:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// Prints &#39;10&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="nc">Some</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span> <span class="n">getOrElse</span> <span class="mi">0</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;0&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="nc">None</span> <span class="n">getOrElse</span> <span class="mi">0</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I can see this being useful for default configuration values, for example.</p>
+
+<p>Note that you sometimes need to return another instance of <code>Option</code> rather than the wrapped value. In theses cases, the
+<code>orElse</code> method is perfect:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// Prints &#39;Some(10)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="nc">Some</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span> <span class="n">orElse</span> <span class="nc">Some</span><span class="o">(</span><span class="mi">0</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Some(0)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="nc">None</span> <span class="n">orElse</span> <span class="nc">Some</span><span class="o">(</span><span class="mi">0</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Pattern matching</h2>
+
+<p>Instances of <code>Option</code> are very pleasant in pattern matching:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">def</span> <span class="n">check</span><span class="o">(</span><span class="n">o</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span> <span class="k">=</span> <span class="n">o</span> <span class="k">match</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">case</span> <span class="nc">Some</span><span class="o">(</span><span class="n">x</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">println</span><span class="o">(</span><span class="s">&quot;Ok: %s&quot;</span> <span class="n">format</span> <span class="n">x</span><span class="o">)</span>
+</span><span class='line'>  <span class="k">case</span> <span class="nc">None</span>    <span class="k">=&gt;</span> <span class="n">println</span><span class="o">(</span><span class="s">&quot;Problem&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Ok: 10&#39;</span>
+</span><span class='line'><span class="n">check</span><span class="o">(</span><span class="nc">Some</span><span class="o">(</span><span class="mi">10</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Problem&#39;</span>
+</span><span class='line'><span class="n">check</span><span class="o">(</span><span class="nc">None</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note, however, that this isn&#8217;t considered very idiomatic - nor is it really necessary, when you can use the
+<code>fold</code> or <code>getOrElse</code> methods to achieve the same effect with much less typing.</p>
+
+<h2>Branching</h2>
+
+<p>The <code>getOrElse</code> method actually takes a <a href="/blog/2013/04/11/scalas-by-name-parameters/">by-name parameter</a>, which
+means it can be used in a rather neat way for branching depending on whether or not the value is set:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// The function passed to map will be executed if someMethod returns a value,</span>
+</span><span class='line'><span class="c1">// the one passed to getOrElse if someMethod returns None.</span>
+</span><span class='line'><span class="c1">// This prints &#39;Value: 10&#39;</span>
+</span><span class='line'><span class="nc">Some</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span> <span class="n">map</span> <span class="o">{</span><span class="n">v</span> <span class="k">=&gt;</span>
+</span><span class='line'>  <span class="n">println</span><span class="o">(</span><span class="s">&quot;Value: %s&quot;</span> <span class="n">format</span> <span class="n">v</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span> <span class="n">getOrElse</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">println</span><span class="o">(</span><span class="s">&quot;No value specified&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <code>fold</code> method is a bit of a shortcut for this construct:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// The first argument is the function to execute if the option is None.</span>
+</span><span class='line'><span class="c1">// The second one will be executed if the option is Some(v)</span>
+</span><span class='line'><span class="c1">// This prints &#39;Value: 10&#39;</span>
+</span><span class='line'><span class="nc">Some</span><span class="o">(</span><span class="mi">10</span><span class="o">).</span><span class="n">fold</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">println</span><span class="o">(</span><span class="s">&quot;No value specified&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span> <span class="o">{</span><span class="n">v</span> <span class="k">=&gt;</span>
+</span><span class='line'>  <span class="n">println</span><span class="o">(</span><span class="s">&quot;Value: %s&quot;</span> <span class="n">format</span> <span class="n">v</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Interraction with for-comprehensions</h2>
+
+<p>Due to the way <a href="blog/2013/04/25/scalas-for-comprehension/">for-comprehensions</a> work and <code>Option</code> defines the <code>map</code> and
+<code>flatMap</code> methods, it&#8217;s also possible to write some fairly terse code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// For the purpose of this example, conf&#39;s apply method returns an Option[String]</span>
+</span><span class='line'><span class="c1">// containing the value of the requested configuration variable.</span>
+</span><span class='line'><span class="k">val</span> <span class="n">conf</span> <span class="k">=</span> <span class="o">...</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// uri is an Option[String]: either a Some containing the final URI, or a None if at least one of the requested</span>
+</span><span class='line'><span class="c1">// configuration variables is not set.</span>
+</span><span class='line'><span class="k">val</span> <span class="n">uri</span> <span class="k">=</span> <span class="k">for</span><span class="o">(</span><span class="n">proto</span> <span class="k">&lt;-</span> <span class="n">conf</span><span class="o">(</span><span class="s">&quot;protocol&quot;</span><span class="o">);</span>
+</span><span class='line'>              <span class="n">host</span> <span class="k">&lt;-</span> <span class="n">conf</span><span class="o">(</span><span class="s">&quot;host&quot;</span><span class="o">);</span>
+</span><span class='line'>              <span class="n">port</span> <span class="k">&lt;-</span> <span class="n">conf</span><span class="o">(</span><span class="s">&quot;port&quot;</span><span class="o">))</span> <span class="k">yield</span> <span class="s">&quot;%s://%s:%s&quot;</span> <span class="n">format</span> <span class="o">(</span><span class="n">proto</span><span class="o">,</span> <span class="n">host</span><span class="o">,</span> <span class="n">port</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">uri</span><span class="o">.</span><span class="n">fold</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">println</span><span class="o">(</span><span class="s">&quot;Failed to extract a URI&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span> <span class="o">{</span><span class="n">u</span> <span class="k">=&gt;</span>
+</span><span class='line'>  <span class="n">println</span><span class="o">(</span><span class="s">&quot;Extracted the following URI: %s&quot;</span> <span class="n">format</span> <span class="n">u</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This felt a bit like magic to me at first, so let&#8217;s dissect it.
+At compile-time, the for-comprehension is turned into the following code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">uri</span> <span class="k">=</span> <span class="n">conf</span><span class="o">(</span><span class="s">&quot;protocol&quot;</span><span class="o">).</span><span class="n">flatMap</span> <span class="o">{</span><span class="n">proto</span> <span class="k">=&gt;</span>
+</span><span class='line'>  <span class="n">conf</span><span class="o">(</span><span class="s">&quot;host&quot;</span><span class="o">).</span><span class="n">flatMap</span> <span class="o">{</span><span class="n">host</span> <span class="k">=&gt;</span>
+</span><span class='line'>    <span class="n">conf</span><span class="o">(</span><span class="s">&quot;port&quot;</span><span class="o">).</span><span class="n">map</span> <span class="o">{</span><span class="n">port</span> <span class="k">=&gt;</span>
+</span><span class='line'>      <span class="s">&quot;%s://%s:%s&quot;</span> <span class="n">format</span> <span class="o">(</span><span class="n">proto</span><span class="o">,</span> <span class="n">host</span><span class="o">,</span> <span class="n">port</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The way <code>Option.flatMap</code> and <code>Option.map</code> work is:</p>
+
+<ul>
+<li>if called on an instance of <code>Some</code>, they&#8217;ll return another instance of <code>Some</code> containing the result of the specified
+function.</li>
+<li>if called on an instance of <code>None</code>, they&#8217;ll return <code>None</code>.</li>
+</ul>
+
+
+<p>Which means that should any of the calls to <code>conf.apply</code> in the previous code return <code>None</code>, the nested functions won&#8217;t
+be evaluated at all and <code>None</code> will bubble back to <code>uri</code>.</p>
+
+<p>Say, for example, that <code>conf("host")</code> isn&#8217;t defined:</p>
+
+<ul>
+<li><code>conf("protocol")</code> returns an instance of <code>Some[String]</code>. Calling <code>flatMap</code> on it returns the result of evaluating its
+argument.</li>
+<li><code>conf("host")</code> returns <code>None</code>. Calling <code>flatMap</code> on it returns <code>None</code> without evaluating its argument: the whole
+<code>conf("port")</code> block isn&#8217;t executed, and <code>None</code> is returned immediately.</li>
+</ul>
+
+
+    </div>
+  </div>
+
+
+
+  <footer>
+    <hr>
+    
+    <div class="row-fluid">
+      <div class="span6">
+        <p class="meta">
+        
+        
+
+
+
+  <a href="/blog/categories/scala/"><span class="badge">scala</span></a>
+
+
+
+
+        </p>
+      </div>
+    </div>
+    
+    <div class="row-fluid">
+      <div class="span12">
+        <p class="meta">
+          
+            <a class="basic-alignment left" href="/blog/2013/04/25/scalas-for-comprehension/" title="Previous Post: Scala's for-comprehension">&laquo; Scala's for-comprehension</a>
+          
+          
+            <a class="basic-alignment right" href="/blog/2013/05/24/bridging-cyberneko-and-scala/" title="Next Post: Bridging CyberNeko and Scala">Bridging CyberNeko and Scala &raquo;</a>
+          
+        </p>
+      </div>
+    </div>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+        </div>
+      </div>
+      <div class="row-fluid">
+        <footer class="footer-page" role="contentinfo">
+          <p>
+  Copyright &copy; 2014 - Nicolas Rinaudo
+</p>
+
+
+        </footer>
+      </div>
+    </div>
+  </div>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'futureself';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://nrinaudo.github.io/blog/2013/05/13/scalas-option/';
+        var disqus_url = 'http://nrinaudo.github.io/blog/2013/05/13/scalas-option/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

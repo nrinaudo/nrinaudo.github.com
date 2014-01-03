@@ -1,0 +1,332 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Scala's for-comprehension - Dear Future Self</title>
+  <meta name="author" content="Nicolas Rinaudo">
+
+  
+  <meta name="description" content="Scala's for-comprehension 2013-04-25 Dear future self, Today, I worked out that Scala&#8217;s for-comprehensions were just syntactic sugar for &hellip;">
+  
+
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://nrinaudo.github.io/blog/2013/04/25/scalas-for-comprehension">
+  <link href="/images/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Dear Future Self" type="application/atom+xml">
+  <script src="/js/jquery.js"></script>
+  <script src="/js/bootstrap-collapse.js"></script>
+  <script src="/js/modernizr.js"></script>
+  <script src="/js/octopress.js" type="text/javascript"></script>
+
+  <!-- mathjax config similar to math.stackexchange -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+     jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      },
+      displayAlign: "left",
+      messageStyle: "none",
+      styles: {
+        ".math": {
+            "font-size": "80%"
+        }
+      },
+      "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+    });
+  </script>
+  <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  
+
+</head>
+
+<body   >
+  <div class="navbar navbar-inverse navbar-static-top">
+  	<div class="navbar-inner">
+  	  <div class="container">
+        <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+          <span class="fui-menu-24"></span>
+        </a>
+  	  	<div class="nav-collapse collapse navbar-responsive-collapse" style="height:0;">
+  	      <ul class="nav">
+    
+        <li ><a href="/index.html">Home</a></li>
+    
+        <li ><a href="/blog/archives/index.html">Archives</a></li>
+    
+</ul>
+
+<ul class="nav pull-right">
+    
+    <li><a href="http://github.com/nrinaudo" title="Github Profile"><i class="icon-github-sign social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://stackoverflow.com/users/1370349/nicolas-rinaudo" title="Stackoverflow Profile"><i class="icon-stackexchange social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://linkedin.com/in/nicolasrinaudo" title="Linkedin Profile"><i class="icon-linkedin-sign social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://twitter.com/NicolasRinaudo" title="Twitter Profile"><i class="icon-twitter-sign social-navbar"></i></a></li>
+    
+    
+    
+    
+</ul>
+
+  	    </div>
+  	  </div>
+  	</div>
+  </div>
+  <div class="container" id="main">
+    <div class="span12">
+      <div class="row-fluid">
+        <div id="content">
+          <div>
+<article class="hentry" role="article">
+  
+
+  <header>
+  <div class="jumbotron">
+    Scala's for-comprehension
+	<h5>
+
+
+
+
+
+
+
+
+  
+
+
+<i class="icon-calendar-empty"></i> <time datetime="2013-04-25T15:36:00+02:00" pubdate data-updated="true">2013-04-25</time></h5>
+  </div>
+</header>
+  <div class="row-fluid">
+    <div class="span12">
+      <p>Dear future self,</p>
+
+<p>Today, I worked out that Scala&#8217;s for-comprehensions were just syntactic sugar for standard collection operations.
+That&#8217;s exactly the kind of knowledge I tend to vaguely remember - just enough to know there&#8217;s something there, but not
+enough to be actually useful.</p>
+
+<p>The following post explains the conclusions I came to, should you ever need to refresh your memory.</p>
+
+<!-- more -->
+
+
+<h2>Generators</h2>
+
+<p>Generators are the parts of for-comprehension that are used to produce the data to iterate over. As far as I can tell
+(that is, it makes sense to me but I haven&#8217;t been able to get a confirmation one way or the other), anything that
+inherits from <a href="http://www.scala-lang.org/api/current/index.html#scala.collection.generic.FilterMonadic"><code>FilterMonadic</code></a>
+can be used as a generator.</p>
+
+<h3>Without yield</h3>
+
+<p>In a for-comprehension that doesn&#8217;t yield anything, generators are transformed into nested <code>foreach</code> calls:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// for-comprehension without a yield statement.</span>
+</span><span class='line'><span class="k">for</span><span class="o">(</span><span class="n">x</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">;</span>
+</span><span class='line'>    <span class="n">y</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">println</span><span class="o">((</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">))</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// De-sugared version of the for-comprehension.</span>
+</span><span class='line'><span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">).</span><span class="n">foreach</span> <span class="o">{</span><span class="n">x</span> <span class="k">=&gt;</span>
+</span><span class='line'>  <span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">).</span><span class="n">foreach</span> <span class="o">{</span><span class="n">y</span> <span class="k">=&gt;</span>
+</span><span class='line'>    <span class="n">println</span><span class="o">((</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">))</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>With yield</h3>
+
+<p>When for-comprehension yield values, however, all generators but the last one are transformed into nested <code>flatMap</code>
+calls. The last generator is transformed into a <code>map</code> call.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// for-comprehension with a yield statement.</span>
+</span><span class='line'><span class="k">val</span> <span class="n">f1</span> <span class="k">=</span> <span class="k">for</span><span class="o">(</span><span class="n">x</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">;</span>
+</span><span class='line'>             <span class="n">y</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">)</span>
+</span><span class='line'>         <span class="k">yield</span> <span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// De-sugared version of the for-comprehension.</span>
+</span><span class='line'><span class="k">val</span> <span class="n">f2</span> <span class="k">=</span> <span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">).</span><span class="n">flatMap</span> <span class="o">{</span><span class="n">x</span> <span class="k">=&gt;</span>
+</span><span class='line'>  <span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">).</span><span class="n">map</span> <span class="o">{</span><span class="n">y</span> <span class="k">=&gt;</span>
+</span><span class='line'>    <span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">)</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">assert</span><span class="o">(</span><span class="n">f1</span> <span class="o">==</span> <span class="n">f2</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Guards</h2>
+
+<p>Guards are conditional statements you can put in for-comprehensions that allow you to filter the generators that precede
+them. They are, rather logically, transformed into calls to <code>withFilter</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// for-comprehension with a guard.</span>
+</span><span class='line'><span class="k">val</span> <span class="n">f3</span> <span class="k">=</span> <span class="k">for</span><span class="o">(</span><span class="n">x</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">;</span>
+</span><span class='line'>             <span class="k">if</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class='line'>             <span class="n">y</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">)</span>
+</span><span class='line'>         <span class="k">yield</span> <span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// De-sugared version of the for-comprehension.</span>
+</span><span class='line'><span class="k">val</span> <span class="n">f4</span> <span class="k">=</span> <span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">).</span><span class="n">withFilter</span> <span class="o">{</span><span class="k">_</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="o">}.</span><span class="n">flatMap</span> <span class="o">{</span><span class="n">x</span> <span class="k">=&gt;</span>
+</span><span class='line'>  <span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">).</span><span class="n">map</span> <span class="o">{</span><span class="n">y</span> <span class="k">=&gt;</span>
+</span><span class='line'>    <span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">)</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">assert</span><span class="o">(</span><span class="n">f3</span> <span class="o">==</span> <span class="n">f4</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+    </div>
+  </div>
+
+
+
+  <footer>
+    <hr>
+    
+    <div class="row-fluid">
+      <div class="span6">
+        <p class="meta">
+        
+        
+
+
+
+  <a href="/blog/categories/scala/"><span class="badge">scala</span></a>
+
+
+
+
+        </p>
+      </div>
+    </div>
+    
+    <div class="row-fluid">
+      <div class="span12">
+        <p class="meta">
+          
+            <a class="basic-alignment left" href="/blog/2013/04/15/scalas-streams/" title="Previous Post: Scala's streams">&laquo; Scala's streams</a>
+          
+          
+            <a class="basic-alignment right" href="/blog/2013/05/13/scalas-option/" title="Next Post: Scala's Option">Scala's Option &raquo;</a>
+          
+        </p>
+      </div>
+    </div>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+        </div>
+      </div>
+      <div class="row-fluid">
+        <footer class="footer-page" role="contentinfo">
+          <p>
+  Copyright &copy; 2014 - Nicolas Rinaudo
+</p>
+
+
+        </footer>
+      </div>
+    </div>
+  </div>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'futureself';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://nrinaudo.github.io/blog/2013/04/25/scalas-for-comprehension/';
+        var disqus_url = 'http://nrinaudo.github.io/blog/2013/04/25/scalas-for-comprehension/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

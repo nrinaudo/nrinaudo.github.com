@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: mongodb | Dear Future Self]]></title>
+  <link href="http://nrinaudo.github.io/blog/categories/mongodb/atom.xml" rel="self"/>
+  <link href="http://nrinaudo.github.io/"/>
+  <updated>2014-01-03T14:47:43+01:00</updated>
+  <id>http://nrinaudo.github.io/</id>
+  <author>
+    <name><![CDATA[Nicolas Rinaudo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[MongoDB with Scala]]></title>
+    <link href="http://nrinaudo.github.io/blog/2013/07/15/mongodb-with-scala/"/>
+    <updated>2013-07-15T21:52:00+02:00</updated>
+    <id>http://nrinaudo.github.io/blog/2013/07/15/mongodb-with-scala</id>
+    <content type="html"><![CDATA[<p>Dear future self,</p>
+
+<p>I finally know enough Scala to start incorporating it in my day-to-day job. Before I can actually become productive,
+however, I need to work out how to do the following, which are prerequisites to a large chunk of my recent weekly tasks:</p>
+
+<ul>
+<li>read / write CSV files (<a href="https://github.com/nrinaudo/scala-csv">sorted</a>)</li>
+<li>interact with <a href="http://www.mongodb.org">MongoDB</a></li>
+<li>read / write XML files</li>
+<li>read / write JSON files</li>
+</ul>
+
+
+<p>Today's post is about integrating with MongoDB.</p>
+
+<!-- more -->
+
+
+<h2>Library</h2>
+
+<p>This is achieved through <a href="http://mongodb.github.io/casbah/">Casbah</a>, the official Scala MongoDB driver. Casbah builds
+are available in standard Maven repositories, which means that it should be rather trivial to integrate with most
+modern build tools. I've been working with <a href="http://www.scala-sbt.org">sbt</a> recently, which makes it as easy as:</p>
+
+<p><code>scala
+// Note the %% symbol: it lets sbt look for a casbah built that matches the target version of Scala by appending it
+// to artifact names.
+libraryDependencies += "org.mongodb" %% "casbah" % "2.6.2"
+</code></p>
+
+<p>Casbah depends on <a href="http://www.slf4j.org">SLF4j</a>, which is brilliant but means that you need a valid SLF4j output
+connector in the classpath on pain of ugly warnings at runtime. For testing purposes, I always use their no-op
+connector:</p>
+
+<p><code>scala
+// Note the absence of %% symbol: slf4j is not scala specific and has no version number in its artifact names.
+libraryDependencies += "org.slf4j" % "slf4j-nop" % "1.7.5"
+</code></p>
+
+<h2>Querying MongoDB</h2>
+
+<p>At its most basic, querying MongoDB is very reminiscent of the official Java driver:
+```scala
+// Connects to collection MyCollection of database MyDatabase on the default port.
+val col = MongoClient()("MyDatabase")("MyCollection")</p>
+
+<p>// Inserts an object in the collection.
+col.insert(MongoDBObject("_id" -> 1, "name" -> "John Smith", "age" -> 34))</p>
+
+<p>// Finds all documents with an <em>id field of 1
+col.find(MongoDBObject("</em>id" -> 1)) foreach {o => println(o("name"))}</p>
+
+<p>// Sets the "age" field of all documents with an <em>id field of 1 to 35.
+col.update(MongoDBObject("</em>id" -> 1), MongoDBObject("$set" -> MongoDBObject("age" -> 35)))</p>
+
+<p>// Deletes all documents with an <em>id field of 1.
+col.remove(MongoDBObject("</em>id" -> 1))
+```</p>
+
+<p>Casbah, however, has a clever <a href="http://mongodb.github.io/casbah/guide/query_dsl.html">DSL</a> to make these verbose calls
+much more pleasant to read and closer to standard MongoDB syntax:</p>
+
+<p>```scala
+// This is strictly equivalent to col.find(MongoDBObject("<em>id" -> 1)).
+col.find("</em>id" $eq 1)</p>
+
+<p>// This can alternatively be done with findOneByID (which is a bit of a pain with int ids, as you need to use
+// type ascription).
+col.findOneByID(1: java.lang.Integer)</p>
+
+<p>// Multiple filters can be chained through the ++ operator:
+col.find(("_id" $eq 1) ++ ("age" $eq 34))</p>
+
+<p>// The same is true for update criterias:
+col.update("_id" $eq 1, $set("name" -> "Jane Smith") ++ $inc("age" -> 1))
+```</p>
+
+<h2>Retrieving field values</h2>
+
+<p>Retrieving field values is slightly more verbose, but very flexible:
+```scala
+col.find("_id" $eq 1) foreach {o =>
+  // Unsafe: if the requested field doesn't exist, an exception is thrown.
+  println(o.as<a href="" title="age">Int</a>)</p>
+
+<p>  // Safe: returns an Option.
+  println(o.getAs<a href="" title="age">Int</a>)
+}
+```</p>
+
+<p>Array fields are handled exactly as you'd expect through the <code>MongoDBList</code> class:
+```scala
+col.insert(MongoDBObject("_id" -> 1, "name" -> "John Smith", "age" -> 34, "numbers" -> MongoDBList(1, 2, 3, 4)))</p>
+
+<p>// Both findOneByID and getAs return an Option, which explains the calls to map.
+col.findOneByID(1: java.lang.Integer) map {o =>
+  o.getAs<a href="" title="numbers">MongoDBList</a> map {n =></p>
+
+<pre><code>// n behaves as a standard Seq[Any].
+n foreach println
+</code></pre>
+
+<p>  }
+}
+```</p>
+]]></content>
+  </entry>
+  
+</feed>

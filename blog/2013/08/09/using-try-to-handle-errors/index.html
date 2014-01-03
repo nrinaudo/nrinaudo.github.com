@@ -1,0 +1,475 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Using Try to handle errors - Dear Future Self</title>
+  <meta name="author" content="Nicolas Rinaudo">
+
+  
+  <meta name="description" content="Using Try to handle errors 2013-08-09 Dear future self, While working on my current pet project, I found out about Scala&#8217;s
+Try construct. I&# &hellip;">
+  
+
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://nrinaudo.github.io/blog/2013/08/09/using-try-to-handle-errors">
+  <link href="/images/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Dear Future Self" type="application/atom+xml">
+  <script src="/js/jquery.js"></script>
+  <script src="/js/bootstrap-collapse.js"></script>
+  <script src="/js/modernizr.js"></script>
+  <script src="/js/octopress.js" type="text/javascript"></script>
+
+  <!-- mathjax config similar to math.stackexchange -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+     jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      },
+      displayAlign: "left",
+      messageStyle: "none",
+      styles: {
+        ".math": {
+            "font-size": "80%"
+        }
+      },
+      "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+    });
+  </script>
+  <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  
+
+</head>
+
+<body   >
+  <div class="navbar navbar-inverse navbar-static-top">
+  	<div class="navbar-inner">
+  	  <div class="container">
+        <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+          <span class="fui-menu-24"></span>
+        </a>
+  	  	<div class="nav-collapse collapse navbar-responsive-collapse" style="height:0;">
+  	      <ul class="nav">
+    
+        <li ><a href="/index.html">Home</a></li>
+    
+        <li ><a href="/blog/archives/index.html">Archives</a></li>
+    
+</ul>
+
+<ul class="nav pull-right">
+    
+    <li><a href="http://github.com/nrinaudo" title="Github Profile"><i class="icon-github-sign social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://stackoverflow.com/users/1370349/nicolas-rinaudo" title="Stackoverflow Profile"><i class="icon-stackexchange social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://linkedin.com/in/nicolasrinaudo" title="Linkedin Profile"><i class="icon-linkedin-sign social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://twitter.com/NicolasRinaudo" title="Twitter Profile"><i class="icon-twitter-sign social-navbar"></i></a></li>
+    
+    
+    
+    
+</ul>
+
+  	    </div>
+  	  </div>
+  	</div>
+  </div>
+  <div class="container" id="main">
+    <div class="span12">
+      <div class="row-fluid">
+        <div id="content">
+          <div>
+<article class="hentry" role="article">
+  
+
+  <header>
+  <div class="jumbotron">
+    Using Try to handle errors
+	<h5>
+
+
+
+
+
+
+
+
+  
+
+
+<i class="icon-calendar-empty"></i> <time datetime="2013-08-09T16:20:00+02:00" pubdate data-updated="true">2013-08-09</time></h5>
+  </div>
+</header>
+  <div class="row-fluid">
+    <div class="span12">
+      <p>Dear future self,</p>
+
+<p>While working on my current <a href="https://github.com/nrinaudo/eshitsuji">pet project</a>, I found out about Scala&#8217;s
+<a href="http://www.scala-lang.org/api/current/index.html#scala.util.Try">Try</a> construct. I&#8217;m still coming to grips with it, but
+it feels like <a href="blog/2013/05/13/scalas-option/">Option</a> for error handling, which is a good thing in my books. This post
+is meant as a brain dump of what I&#8217;ve understood so far.</p>
+
+<!-- more -->
+
+
+<h2>Purpose</h2>
+
+<p>An instance of <code>Try</code> represents the result of an action, either its failure (<code>Failure[Throwable]</code>) or its success
+(<code>Success[T]</code>).</p>
+
+<p>Instances of <code>Try</code> are typically retrieved through the companion object&#8217;s <code>apply</code> method:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">import</span> <span class="nn">scala.util.</span><span class="o">{</span><span class="nc">Try</span><span class="o">,</span> <span class="nc">Failure</span><span class="o">,</span> <span class="nc">Success</span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Wraps String.toInt in Try.apply.</span>
+</span><span class='line'><span class="c1">// Note that thanks to Scala&#39;s syntactic sugar, this looks just like a &#39;normal&#39; block.</span>
+</span><span class='line'><span class="k">def</span> <span class="n">safeToInt</span><span class="o">(</span><span class="n">str</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nc">Try</span> <span class="o">{</span><span class="n">str</span><span class="o">.</span><span class="n">toInt</span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Success(42)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">safeToInt</span><span class="o">(</span><span class="s">&quot;42&quot;</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Failure(java.lang.NumberFormatException: For input string: &quot;fish&quot;)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">safeToInt</span><span class="o">(</span><span class="s">&quot;fish&quot;</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Default values</h2>
+
+<p>Just as with <code>Option</code>, instances of <code>Try</code> make it easy to provide default values in case of failure:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// getOrElse is used to provide a default value (through a by-name parameter).</span>
+</span><span class='line'><span class="k">def</span> <span class="n">safeToInt</span><span class="o">(</span><span class="n">str</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nc">Try</span> <span class="o">{</span><span class="n">str</span><span class="o">.</span><span class="n">toInt</span><span class="o">}</span> <span class="n">getOrElse</span> <span class="mi">0</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;42&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">safeToInt</span><span class="o">(</span><span class="s">&quot;42&quot;</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;0&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">safeToInt</span><span class="o">(</span><span class="s">&quot;fish&quot;</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Pattern matching</h2>
+
+<p>Instances of <code>Try</code> are convenient to manipulate through pattern matching:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">def</span> <span class="n">safeToInt</span><span class="o">(</span><span class="n">str</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nc">Try</span> <span class="o">{</span><span class="n">str</span><span class="o">.</span><span class="n">toInt</span><span class="o">}</span> <span class="k">match</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">case</span> <span class="nc">Success</span><span class="o">(</span><span class="n">i</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">println</span><span class="o">(</span><span class="s">&quot;Success: %d&quot;</span> <span class="n">format</span> <span class="n">i</span><span class="o">)</span>
+</span><span class='line'>  <span class="k">case</span> <span class="nc">Failure</span><span class="o">(</span><span class="n">e</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">println</span><span class="o">(</span><span class="s">&quot;Failure: %s&quot;</span> <span class="n">format</span> <span class="n">e</span><span class="o">.</span><span class="n">getMessage</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Success: 42&#39;</span>
+</span><span class='line'><span class="n">safeToInt</span><span class="o">(</span><span class="s">&quot;42&quot;</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Failure: For input string: &quot;fish&quot;&#39;</span>
+</span><span class='line'><span class="n">safeToInt</span><span class="o">(</span><span class="s">&quot;fish&quot;</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Note that this isn&#8217;t significantly less work than an old-fashionned <code>try / catch</code> block, though.</p>
+
+<h2>Branching</h2>
+
+<p>Just as with <code>Option</code>, instances of <code>Try</code> can be used for executing different code depending on success or failure
+through the <code>map / getOrElse</code> construct:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">def</span> <span class="n">safeToInt</span><span class="o">(</span><span class="n">str</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nc">Try</span> <span class="o">{</span><span class="n">str</span><span class="o">.</span><span class="n">toInt</span><span class="o">}</span> <span class="n">map</span> <span class="o">{</span><span class="n">i</span> <span class="k">=&gt;</span>
+</span><span class='line'>  <span class="n">println</span><span class="o">(</span><span class="s">&quot;Success: %d&quot;</span> <span class="n">format</span> <span class="n">i</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span> <span class="n">getOrElse</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">println</span><span class="o">(</span><span class="s">&quot;Failure&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Success: 42&#39;</span>
+</span><span class='line'><span class="n">safeToInt</span><span class="o">(</span><span class="s">&quot;42&quot;</span><span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Failure&#39;</span>
+</span><span class='line'><span class="n">safeToInt</span><span class="o">(</span><span class="s">&quot;fish&quot;</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Again, this isn&#8217;t much better than a <code>try / catch</code> block. It does get much better, however, when you have multiple
+instances of <code>Try</code> to deal with.</p>
+
+<h2>Interraction with for-comprehensions</h2>
+
+<p>Since <code>Try</code> defines both <code>map</code> and <code>flatMap</code>, it can be used in
+<a href="blog/2013/04/25/scalas-for-comprehension/">for-comprehensions</a> (or in nested <code>map</code> / <code>flatMap</code> calls, depending on
+your preference):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// This is where Try really shines: all possible errors are handled and passed back to the caller,</span>
+</span><span class='line'><span class="c1">// with a minimum of actual code written.</span>
+</span><span class='line'><span class="k">def</span> <span class="n">sum</span><span class="o">(</span><span class="n">a</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">b</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="k">for</span><span class="o">(</span><span class="n">i</span> <span class="k">&lt;-</span> <span class="nc">Try</span> <span class="o">{</span><span class="n">a</span><span class="o">.</span><span class="n">toInt</span><span class="o">};</span>
+</span><span class='line'>                                    <span class="n">j</span> <span class="k">&lt;-</span> <span class="nc">Try</span> <span class="o">{</span><span class="n">b</span><span class="o">.</span><span class="n">toInt</span><span class="o">})</span> <span class="k">yield</span> <span class="n">i</span> <span class="o">+</span> <span class="n">j</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Success(3)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">sum</span><span class="o">(</span><span class="s">&quot;1&quot;</span><span class="o">,</span> <span class="s">&quot;2&quot;</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Failure(java.lang.NumberFormatException: For input string: &quot;fish&quot;)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">sum</span><span class="o">(</span><span class="s">&quot;1&quot;</span><span class="o">,</span> <span class="s">&quot;fish&quot;</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A more generic version of the <code>sum</code> function could be written like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// Recursively goes through all entries in args, attempts to parse as them integers</span>
+</span><span class='line'><span class="c1">// and returns their sum (or Failure if an error occurred).</span>
+</span><span class='line'><span class="k">def</span> <span class="n">sum</span><span class="o">(</span><span class="n">args</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">String</span><span class="o">])</span><span class="k">:</span> <span class="kt">Try</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="n">args</span> <span class="k">match</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">case</span> <span class="n">head</span> <span class="o">::</span> <span class="n">rest</span> <span class="k">=&gt;</span> <span class="k">for</span><span class="o">(</span><span class="n">a</span> <span class="k">&lt;-</span> <span class="nc">Try</span> <span class="o">{</span><span class="n">head</span><span class="o">.</span><span class="n">toInt</span><span class="o">};</span> <span class="n">b</span> <span class="k">&lt;-</span> <span class="n">sum</span><span class="o">(</span><span class="n">rest</span><span class="o">))</span> <span class="k">yield</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+</span><span class='line'>  <span class="k">case</span> <span class="nc">Nil</span>          <span class="k">=&gt;</span> <span class="nc">Success</span><span class="o">(</span><span class="mi">0</span><span class="o">)</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Success(6)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">sum</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">&quot;1&quot;</span><span class="o">,</span> <span class="s">&quot;2&quot;</span><span class="o">,</span> <span class="s">&quot;3&quot;</span><span class="o">)))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Failure(java.lang.NumberFormatException: For input string: &quot;fish&quot;)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">sum</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="s">&quot;1&quot;</span><span class="o">,</span> <span class="s">&quot;2&quot;</span><span class="o">,</span> <span class="s">&quot;fish&quot;</span><span class="o">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Other toys</h2>
+
+<p><code>Try</code> has a few other toys that make its usage pleasant. Among them, the possibility to transform an instance of
+<code>Try</code> to an instance of <code>Option</code> in a single call:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">def</span> <span class="n">safeToInt</span><span class="o">(</span><span class="n">str</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nc">Try</span> <span class="o">{</span><span class="n">str</span><span class="o">.</span><span class="n">toInt</span><span class="o">}.</span><span class="n">toOption</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Some(42)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">safeToInt</span><span class="o">(</span><span class="s">&quot;42&quot;</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;None&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">safeToInt</span><span class="o">(</span><span class="s">&quot;fish&quot;</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Another nice method is <code>filter</code>, which transforms a <code>Success</code> into a <code>Failure</code> if some criteria isn&#8217;t met:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">def</span> <span class="n">toPositiveInt</span><span class="o">(</span><span class="n">s</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="o">(</span><span class="nc">Try</span> <span class="o">{</span><span class="n">s</span><span class="o">.</span><span class="n">toInt</span><span class="o">}</span> <span class="n">filter</span> <span class="o">{</span><span class="k">_</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;42&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">toPositiveInt</span><span class="o">(</span><span class="s">&quot;42&quot;</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Failure(java.util.NoSuchElementException: Predicate does not hold for -42)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">toPositiveInt</span><span class="o">(</span><span class="s">&quot;-42&quot;</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Failure(java.lang.NumberFormatException: For input string: &quot;fish&quot;)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">toPositiveInt</span><span class="o">(</span><span class="s">&quot;fish&quot;</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Finally, <code>recover</code> deserves a mention: it takes a <a href="/blog/2013/08/03/partial-functions/">partial function</a> that allows
+callers to react to some specific types of failure.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">def</span> <span class="n">safeToInt</span><span class="o">(</span><span class="n">str</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nc">Try</span> <span class="o">{</span><span class="n">str</span><span class="o">.</span><span class="n">toInt</span><span class="o">}</span> <span class="n">recover</span> <span class="o">{</span><span class="k">case</span> <span class="n">e</span><span class="k">:</span> <span class="kt">NumberFormatException</span> <span class="o">=&gt;</span> <span class="n">println</span><span class="o">(</span><span class="s">&quot;Error&quot;</span><span class="o">);</span> <span class="mi">0</span><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Success(42)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">safeToInt</span><span class="o">(</span><span class="s">&quot;42&quot;</span><span class="o">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Prints &#39;Error\nSuccess(0)&#39;</span>
+</span><span class='line'><span class="n">println</span><span class="o">(</span><span class="n">safeToInt</span><span class="o">(</span><span class="s">&quot;fish&quot;</span><span class="o">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Usage in public APIs</h2>
+
+<p>I feel that using <code>Try</code> as a return type for public functions in an API is bad form: it transforms an unchecked
+exception (the cause of the <code>Failure</code>) into a checked one - after a fashion, anyway: the caller <em>must</em> deal with the
+failure and cannot ignore it as he would an unchecked one.</p>
+
+<p>In such circumstances, I think it&#8217;s better to use an exception and let the caller wrap it in a <code>Try</code> block if he needs
+to.</p>
+
+    </div>
+  </div>
+
+
+
+  <footer>
+    <hr>
+    
+    <div class="row-fluid">
+      <div class="span6">
+        <p class="meta">
+        
+        
+
+
+
+  <a href="/blog/categories/scala/"><span class="badge">scala</span></a>
+
+
+
+
+        </p>
+      </div>
+    </div>
+    
+    <div class="row-fluid">
+      <div class="span12">
+        <p class="meta">
+          
+            <a class="basic-alignment left" href="/blog/2013/08/04/overriding-abstract-methods-in-scala/" title="Previous Post: Overriding abstract methods in Scala">&laquo; Overriding abstract methods in Scala</a>
+          
+          
+            <a class="basic-alignment right" href="/blog/2013/09/05/pattern-matching-as-parameter/" title="Next Post: Pattern matching as parameter">Pattern matching as parameter &raquo;</a>
+          
+        </p>
+      </div>
+    </div>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+        </div>
+      </div>
+      <div class="row-fluid">
+        <footer class="footer-page" role="contentinfo">
+          <p>
+  Copyright &copy; 2014 - Nicolas Rinaudo
+</p>
+
+
+        </footer>
+      </div>
+    </div>
+  </div>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'futureself';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://nrinaudo.github.io/blog/2013/08/09/using-try-to-handle-errors/';
+        var disqus_url = 'http://nrinaudo.github.io/blog/2013/08/09/using-try-to-handle-errors/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
