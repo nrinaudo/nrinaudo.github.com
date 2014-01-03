@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Scala's for-comprehension - Dear Future Self</title>
+  <title>Scala's for expressions - Dear Future Self</title>
   <meta name="author" content="Nicolas Rinaudo">
 
   
-  <meta name="description" content="Scala's for-comprehension 2013-04-25 Dear future self, Today, I worked out that Scala&#8217;s for-comprehensions were just syntactic sugar for &hellip;">
+  <meta name="description" content="Scala's for expressions 2013-04-25 Dear future self, Today, I worked out that Scala&#8217;s for expressions were just syntactic sugar for a standard &hellip;">
   
 
   <meta name="HandheldFriendly" content="True">
@@ -101,7 +101,7 @@
 
   <header>
   <div class="jumbotron">
-    Scala's for-comprehension
+    Scala's for expressions
 	<h5>
 
 
@@ -121,8 +121,9 @@
     <div class="span12">
       <p>Dear future self,</p>
 
-<p>Today, I worked out that Scala&#8217;s for-comprehensions were just syntactic sugar for standard collection operations.
-That&#8217;s exactly the kind of knowledge I tend to vaguely remember - just enough to know there&#8217;s something there, but not
+<p>Today, I worked out that Scala&#8217;s <em>for expressions</em> were just syntactic sugar for a standard set of methods.</p>
+
+<p>That&#8217;s exactly the kind of knowledge I tend to vaguely remember - just enough to know there&#8217;s something there, but not
 enough to be actually useful.</p>
 
 <p>The following post explains the conclusions I came to, should you ever need to refresh your memory.</p>
@@ -130,113 +131,127 @@ enough to be actually useful.</p>
 <!-- more -->
 
 
+<h2>Purpose</h2>
+
+<p>As a mostly imperative programmer, I&#8217;m used to thinking of <em>for</em> as a loop - give it a lower and upper bound, an
+increment, and it&#8217;ll explore all corresponding values.</p>
+
+<p>While you can do the exact same thing with Scala&#8217;s for expressions, they&#8217;re also much more generic and closer to Java&#8217;s
+<code>foreach</code> loop: they iterate over one or more collections, optionally yielding a result.</p>
+
+<p>When a for expression yields a result, it&#8217;s known as a <em>for comprehension</em>. When it doesn&#8217;t, it&#8217;s a <em>for loop</em>. I feel
+that <em>for loops</em> are viewed with some scorn by the functional community, as they&#8217;re inherently non-functional: not
+having a result, their only usefulness resides in side-effects.</p>
+
+<h2>Anatomy of a for expression</h2>
+
+<p>A typical for expression looks like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">for</span><span class="o">(</span><span class="n">x</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">;</span> <span class="k">if</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="k">yield</span> <span class="n">x</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is decomposed in three different parts, which I&#8217;ll explain in more details below:</p>
+
+<ul>
+<li>a <em>generator</em>, used to provide the values being iterated over.</li>
+<li>a <em>filter</em>, used to filter out specific values.</li>
+<li>a <em>yield expression</em>, used to construct a return collection (in the case of a <em>for comprehensions</em>).</li>
+</ul>
+
+
 <h2>Generators</h2>
 
-<p>Generators are the parts of for-comprehension that are used to produce the data to iterate over. As far as I can tell
-(that is, it makes sense to me but I haven&#8217;t been able to get a confirmation one way or the other), anything that
-inherits from <a href="http://www.scala-lang.org/api/current/index.html#scala.collection.generic.FilterMonadic"><code>FilterMonadic</code></a>
-can be used as a generator.</p>
+<p>The generator of our example is <code>x &lt;- 0 until 4</code>. The bit to the right of the <code>&lt;-</code> is known as the
+<em>generator expression</em>.</p>
 
-<h3>Without yield</h3>
+<p>What the generator does is define a <code>val</code> (<code>x</code>, in our example) and assign it a series of values taken from the
+generator expression.</p>
 
-<p>In a for-comprehension that doesn&#8217;t yield anything, generators are transformed into nested <code>foreach</code> calls:</p>
+<p>A single for expression can have multiple nested generators:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// for-comprehension without a yield statement.</span>
-</span><span class='line'><span class="k">for</span><span class="o">(</span><span class="n">x</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">;</span>
-</span><span class='line'>    <span class="n">y</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>  <span class="n">println</span><span class="o">((</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">))</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// De-sugared version of the for-comprehension.</span>
-</span><span class='line'><span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">).</span><span class="n">foreach</span> <span class="o">{</span><span class="n">x</span> <span class="k">=&gt;</span>
-</span><span class='line'>  <span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">).</span><span class="n">foreach</span> <span class="o">{</span><span class="n">y</span> <span class="k">=&gt;</span>
-</span><span class='line'>    <span class="n">println</span><span class="o">((</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">))</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">for</span><span class="o">(</span><span class="n">x</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">;</span> <span class="n">y</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">)</span> <span class="k">yield</span> <span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">)</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h3>With yield</h3>
+<p>Under the hood, the compiler transforms generators into method calls on the generator expression. The exact method
+depends on the type of for expression and the number of generators:</p>
 
-<p>When for-comprehension yield values, however, all generators but the last one are transformed into nested <code>flatMap</code>
-calls. The last generator is transformed into a <code>map</code> call.</p>
+<ul>
+<li>for <em>for loops</em>, all generators are transformed into calls to <code>foreach</code>.</li>
+<li>the last (or only) generator of a <em>for comprehension</em> is transformed into a call to <code>map</code>.</li>
+<li>all generators but the last of a <em>for comprehension</em> are transformed into calls to <code>flatMap</code>.</li>
+</ul>
+
+
+<p>Our previous example is thus strictly equivalent to:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// for-comprehension with a yield statement.</span>
-</span><span class='line'><span class="k">val</span> <span class="n">f1</span> <span class="k">=</span> <span class="k">for</span><span class="o">(</span><span class="n">x</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">;</span>
-</span><span class='line'>             <span class="n">y</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">)</span>
-</span><span class='line'>         <span class="k">yield</span> <span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// De-sugared version of the for-comprehension.</span>
-</span><span class='line'><span class="k">val</span> <span class="n">f2</span> <span class="k">=</span> <span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">).</span><span class="n">flatMap</span> <span class="o">{</span><span class="n">x</span> <span class="k">=&gt;</span>
-</span><span class='line'>  <span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">).</span><span class="n">map</span> <span class="o">{</span><span class="n">y</span> <span class="k">=&gt;</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">)</span> <span class="n">flatMap</span> <span class="o">{</span><span class="n">x</span> <span class="k">=&gt;</span>
+</span><span class='line'>  <span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">)</span> <span class="n">map</span> <span class="o">{</span><span class="n">y</span> <span class="k">=&gt;</span>
 </span><span class='line'>    <span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">)</span>
 </span><span class='line'>  <span class="o">}</span>
 </span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">assert</span><span class="o">(</span><span class="n">f1</span> <span class="o">==</span> <span class="n">f2</span><span class="o">)</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h2>Guards</h2>
+<p>In order to compile, the result value of a generator expression must support the method(s) required for the
+transformations we&#8217;ve just described - that is, for example, the generator expression of a for loop must support
+<code>foreach</code> (but does not need to support either <code>map</code> or <code>flatMap</code>).</p>
 
-<p>Guards are conditional statements you can put in for-comprehensions that allow you to filter the generators that precede
-them. They are, rather logically, transformed into calls to <code>withFilter</code>:</p>
+<p>We&#8217;ll see in the next section that it might also need to support either <code>withFilter</code> or <code>filter</code>.</p>
+
+<p>Note that while collections are a natural fit for <em>for expressions</em>, they&#8217;re only a subset of what can be manipulated.
+The <a href="http://www.scala-lang.org/api/current/#scala.Option">Option</a> and
+<a href="http://www.scala-lang.org/api/current/#scala.util.Try">Try</a> classes, for example, are often used in conjunction with
+<em>for comprehensions</em>.</p>
+
+<p>For readers with functional programming background, <em>for expressions</em> are designed in such a way that they&#8217;re perfect
+for manipulating and combining <em>monads</em>.</p>
+
+<h2>Filters</h2>
+
+<p><em>Filters</em> are predicates used to filter out some specific values of our generators.</p>
+
+<p>For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">for</span><span class="o">(</span><span class="n">x</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">;</span> <span class="k">if</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="o">;</span> <span class="n">y</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">)</span> <span class="k">yield</span> <span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this expression, <code>if x % 2 == 0</code> is the filter (also known as <em>guard</em>). <code>x % 2 == 0</code> is a <em>filter expression</em>.</p>
+
+<p>Depending on the capacities of the generator, filters are transformed into calls to:</p>
+
+<ul>
+<li><code>withFilter</code>, if supported.</li>
+<li><code>filter</code>, if not.</li>
+</ul>
+
+
+<p>Our previous example is thus strictly equivalent to:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="c1">// for-comprehension with a guard.</span>
-</span><span class='line'><span class="k">val</span> <span class="n">f3</span> <span class="k">=</span> <span class="k">for</span><span class="o">(</span><span class="n">x</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">;</span>
-</span><span class='line'>             <span class="k">if</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="o">;</span>
-</span><span class='line'>             <span class="n">y</span> <span class="k">&lt;-</span> <span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">)</span>
-</span><span class='line'>         <span class="k">yield</span> <span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1">// De-sugared version of the for-comprehension.</span>
-</span><span class='line'><span class="k">val</span> <span class="n">f4</span> <span class="k">=</span> <span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">).</span><span class="n">withFilter</span> <span class="o">{</span><span class="k">_</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="o">}.</span><span class="n">flatMap</span> <span class="o">{</span><span class="n">x</span> <span class="k">=&gt;</span>
-</span><span class='line'>  <span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">).</span><span class="n">map</span> <span class="o">{</span><span class="n">y</span> <span class="k">=&gt;</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="mi">4</span><span class="o">)</span> <span class="n">withFilter</span><span class="o">(</span><span class="k">_</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="n">flatMap</span> <span class="o">{</span><span class="n">x</span> <span class="k">=&gt;</span>
+</span><span class='line'>  <span class="o">(</span><span class="mi">0</span> <span class="n">until</span> <span class="n">x</span><span class="o">)</span> <span class="n">map</span> <span class="o">{</span><span class="n">y</span> <span class="k">=&gt;</span>
 </span><span class='line'>    <span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">)</span>
 </span><span class='line'>  <span class="o">}</span>
 </span><span class='line'><span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">assert</span><span class="o">(</span><span class="n">f3</span> <span class="o">==</span> <span class="n">f4</span><span class="o">)</span>
 </span></code></pre></td></tr></table></div></figure>
 
+
+<p>Being lazy, <code>withFilter</code> is the preferred implementation.</p>
 
     </div>
   </div>
