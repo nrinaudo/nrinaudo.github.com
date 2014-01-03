@@ -1,0 +1,251 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Default values in Bash Scripting - Dear Future Self</title>
+  <meta name="author" content="Nicolas Rinaudo">
+
+  
+  <meta name="description" content="Default values in Bash Scripting 2013-06-04 Dear future self, I regularly have to write small bash scripts to wrap the various tools I create and &hellip;">
+  
+
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://nrinaudo.github.io/blog/2013/06/04/default-values-in-bash-scripting">
+  <link href="/images/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Dear Future Self" type="application/atom+xml">
+  <script src="/js/jquery.js"></script>
+  <script src="/js/bootstrap-collapse.js"></script>
+  <script src="/js/modernizr.js"></script>
+  <script src="/js/octopress.js" type="text/javascript"></script>
+
+  <!-- mathjax config similar to math.stackexchange -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+     jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      },
+      displayAlign: "left",
+      messageStyle: "none",
+      styles: {
+        ".math": {
+            "font-size": "80%"
+        }
+      },
+      "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+    });
+  </script>
+  <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  
+
+</head>
+
+<body   >
+  <div class="navbar navbar-inverse navbar-static-top">
+  	<div class="navbar-inner">
+  	  <div class="container">
+        <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+          <span class="fui-menu-24"></span>
+        </a>
+  	  	<div class="nav-collapse collapse navbar-responsive-collapse" style="height:0;">
+  	      <ul class="nav">
+    
+        <li ><a href="/index.html">Home</a></li>
+    
+        <li ><a href="/blog/archives/index.html">Archives</a></li>
+    
+</ul>
+
+<ul class="nav pull-right">
+    
+    <li><a href="http://github.com/nrinaudo" title="Github Profile"><i class="icon-github-sign social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://stackoverflow.com/users/1370349/nicolas-rinaudo" title="Stackoverflow Profile"><i class="icon-stackexchange social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://linkedin.com/in/nicolasrinaudo" title="Linkedin Profile"><i class="icon-linkedin-sign social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://twitter.com/NicolasRinaudo" title="Twitter Profile"><i class="icon-twitter-sign social-navbar"></i></a></li>
+    
+    
+    
+    
+</ul>
+
+  	    </div>
+  	  </div>
+  	</div>
+  </div>
+  <div class="container" id="main">
+    <div class="span12">
+      <div class="row-fluid">
+        <div id="content">
+          <div>
+<article class="hentry" role="article">
+  
+
+  <header>
+  <div class="jumbotron">
+    Default values in Bash Scripting
+	<h5>
+
+
+
+
+
+
+
+
+  
+
+
+<i class="icon-calendar-empty"></i> <time datetime="2013-06-04T09:47:00+02:00" pubdate data-updated="true">2013-06-04</time></h5>
+  </div>
+</header>
+  <div class="row-fluid">
+    <div class="span12">
+      <p>Dear future self,</p>
+
+<p>I regularly have to write small bash scripts to wrap the various tools I create and have to run in batches. Bash
+scripting is a nightmare to me - almost as bad as using <code>tar</code> without looking at the help - and I always stumble on
+the same problems.</p>
+
+<p>Not today, though. Today, I spent 15 minutes looking for the syntax of default values for shell variables for the last
+time.</p>
+
+<!-- more -->
+
+
+<p>The syntax is, to my untrained eyes, obscure and as unhelpful as possible, but this is how it works:</p>
+
+<figure class='code'><figcaption><span>script.sh</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#! /bin/bash</span>
+</span><span class='line'><span class="nv">HOST</span><span class="o">=</span><span class="nv">$1</span>
+</span><span class='line'>: <span class="k">${</span><span class="nv">HOST</span><span class="p">:=</span><span class="s2">&quot;localhost&quot;</span><span class="k">}</span>
+</span><span class='line'><span class="nb">echo</span> <span class="nv">$HOST</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Executing <code>script.sh</code> then yields:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>nicolasrinaudo:~/scripts ./script.sh 212.128.0.1
+</span><span class='line'>212.128.0.1
+</span><span class='line'>nicolasrinaudo:~/scripts ./script.sh
+</span><span class='line'>localhost
+</span></code></pre></td></tr></table></div></figure>
+
+
+    </div>
+  </div>
+
+
+
+  <footer>
+    <hr>
+    
+    <div class="row-fluid">
+      <div class="span6">
+        <p class="meta">
+        
+        
+
+
+
+  <a href="/blog/categories/bash/"><span class="badge">bash</span></a>
+
+
+
+
+        </p>
+      </div>
+    </div>
+    
+    <div class="row-fluid">
+      <div class="span12">
+        <p class="meta">
+          
+            <a class="basic-alignment left" href="/blog/2013/05/29/array-like-objects-in-scala/" title="Previous Post: Array-like objects in Scala">&laquo; Array-like objects in Scala</a>
+          
+          
+            <a class="basic-alignment right" href="/blog/2013/06/10/timer-actor/" title="Next Post: Timer Actor">Timer Actor &raquo;</a>
+          
+        </p>
+      </div>
+    </div>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+        </div>
+      </div>
+      <div class="row-fluid">
+        <footer class="footer-page" role="contentinfo">
+          <p>
+  Copyright &copy; 2014 - Nicolas Rinaudo
+</p>
+
+
+        </footer>
+      </div>
+    </div>
+  </div>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'futureself';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://nrinaudo.github.io/blog/2013/06/04/default-values-in-bash-scripting/';
+        var disqus_url = 'http://nrinaudo.github.io/blog/2013/06/04/default-values-in-bash-scripting/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

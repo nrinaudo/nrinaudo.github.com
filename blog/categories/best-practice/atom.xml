@@ -1,0 +1,505 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: best-practice | Dear Future Self]]></title>
+  <link href="http://nrinaudo.github.io/blog/categories/best-practice/atom.xml" rel="self"/>
+  <link href="http://nrinaudo.github.io/"/>
+  <updated>2014-01-03T14:47:43+01:00</updated>
+  <id>http://nrinaudo.github.io/</id>
+  <author>
+    <name><![CDATA[Nicolas Rinaudo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Always use the tailrec annotation]]></title>
+    <link href="http://nrinaudo.github.io/blog/2013/11/05/always-use-the-tailrec-annotation/"/>
+    <updated>2013-11-05T14:29:00+01:00</updated>
+    <id>http://nrinaudo.github.io/blog/2013/11/05/always-use-the-tailrec-annotation</id>
+    <content type="html"><![CDATA[<p>Deaf future self,</p>
+
+<p>I’ve been asked a few times why I try to systematically use the <code>@scala.annotation.tailrec</code> annotation - surely I’m smart
+enough to know when my code is tail-recursive?</p>
+
+<!-- more -->
+
+
+<p>The simple answer is that you cannot always know or remember all the reasons why the compiler might refuse to optimise
+your code for tail-recursion - or at least realise that your code exhibits such symptoms.</p>
+
+<p>A simple example I discovered recently is overridable methods. The following code shows a method that looks fairly
+tail-recursive (even if singularly useless) at a glance, but really isn’t:</p>
+
+<p>```scala
+class Demo {
+  def countDown(i: Int): Int =</p>
+
+<pre><code>if(i == 0) 0
+else       countDown(i - 1)
+</code></pre>
+
+<p>}</p>
+
+<p>// Causes a StackOverflowError
+new Demo().countDown(Int.MaxValue)
+```</p>
+
+<p>Adding the <code>@scala.annotation.tailrec</code> annotation allows the compiler to warn me of the issue before my code blows up in
+production: <code>error: could not optimize @tailrec annotated method countDown: it is neither private nor final so can be
+overridden.</code></p>
+
+<p>It also provides enough of a hint to work out an acceptable solution:
+```scala
+class Demo {
+  def countDown(i: Int): Int = {</p>
+
+<pre><code>@scala.annotation.tailrec
+def run(i: Int): Int =
+  if(i == 0) 0
+  else       run(i - 1)
+run(i)
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>// Runs all the way to the end.
+new Demo().countDown(Int.MaxValue)
+```</p>
+
+<p>Having the recursive code in a nested function ensures that it cannot be overridden, which allows the compiler to
+optimise it for tail-recursion. <code>countDown</code> is now safe to call, but I’d never even realised there was a potential issue
+without the <code>tailrec</code> annotation.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Type classes in Scala]]></title>
+    <link href="http://nrinaudo.github.io/blog/2013/10/21/type-classes-in-scala/"/>
+    <updated>2013-10-21T16:37:00+02:00</updated>
+    <id>http://nrinaudo.github.io/blog/2013/10/21/type-classes-in-scala</id>
+    <content type="html"><![CDATA[<p>Deaf future self,</p>
+
+<p>I've recently noticed how often <em>type classes</em> came up in discussions about Scala, and how I had no idea what it meant.
+It turns out to be a much simpler concept than expected, and a very powerfull one too.</p>
+
+<!-- more -->
+
+
+<h2>Purpose</h2>
+
+<p>Type classes are used to retroactively add features to classes <em>without modifying them</em>.</p>
+
+<p>Say, for example, that you're using an external library that exposes a <code>Person</code> class, implemented as follows:</p>
+
+<p><code>scala
+case class Person(first: String, last: String) {
+  override def toString = "%s %s" format (first, last)
+}
+</code></p>
+
+<p>Your application holds a <code>List</code> of <code>Person</code> instances, and you'd like to sort them, say, alphabetically by family name.
+At this point, if the external library hasn't already made <code>Person</code> sortable, you have very few options.</p>
+
+<p>The first one is to create an adapter that implements
+<a href="http://www.scala-lang.org/api/current/index.html#scala.math.Ordered">Ordered</a>:</p>
+
+<p>```scala
+class OrderedPerson(val wrapped: Person) extends Ordered[OrderedPerson] {
+  override def compare(that: OrderedPerson): Int = wrapped.last.compareTo(that.wrapped.last)</p>
+
+<p>  override def toString = wrapped.toString
+}
+```</p>
+
+<p>This works, but with a few flaws:</p>
+
+<ul>
+<li>you're not working with instances of <code>Person</code> anymore, and need to transform your objects back and forth (or have
+<code>OrderedPerson</code> extend <code>Person</code> and proxy every single method)</li>
+<li>implementing multiple sorting strategies (by first name, for example) is possible but requires a lot of legwork</li>
+</ul>
+
+
+<p>The other solution is using <a href="http://www.scala-lang.org/api/current/index.html#scala.math.Ordering">Ordering</a>
+as follows:</p>
+
+<p><code>scala
+implicit object LastNameOrdering extends Ordering[Person] {
+  override def compare(a: Person, b: Person): Int = a.last.compareTo(b.last)
+}
+</code></p>
+
+<p>Since all Scala methods that sort objects accept an instance of <code>Ordering</code> (<code>List.sorted</code>, <code>Sorting.quickSort</code>...),
+<code>LastNameOrdering</code> has just retrofitted <code>Person</code> with the ability to be sorted without actually modifying its code.
+Implementing another sorting strategy is simply done by writing another implementation of <code>Ordering</code>. Additionally,
+since all methods that expect an instance of <code>Ordering</code> declare it as an implicit parameter, and we've made
+<code>LastNameOrdering</code> an implicit object, we don't even need to explicitly pass it around - as long as it's in scope, it
+will be used automatically by the compiler.</p>
+
+<p><code>Ordering</code> is a perfect example of what a type class is. Using technical words, the adapter pattern uses <em>subtype
+polymorphism</em> while type classes use <em>parametric polymorphism</em>.</p>
+
+<h2>Writing a type class</h2>
+
+<p>We now have a better understanding of what a type class is. Implementing one requires surprisingly little code and,
+thanks to Scala's support of implicit parameters, can be made all but invisible to callers.</p>
+
+<p>Let's say that our application requires a facility for printing <code>Person</code> to <code>stdout</code>. A naive first implementation could
+be:</p>
+
+<p><code>scala
+object Printer {
+  def print(p: Person) = println(p)
+}
+</code></p>
+
+<p>This works, but is very limiting:</p>
+
+<ul>
+<li>the only supported format is that implemented by the <code>toString</code> method, and we'd need to write adapter classes for
+each format we want to add</li>
+<li>it only works for <code>Person</code> - what if we have another <code>Company</code> class that we'd like to print to stdout as well? Do we
+need to write an entirely different printing facility for that?</li>
+</ul>
+
+
+<p>This is were type classes really shine. Instead of letting the object being printed decide how to format itself, we
+create a trait and delegate that responsability to it:</p>
+
+<p>```scala
+// Used solely for the purpose of formatting instances of A.
+trait Formatter[A] {
+  def format(a: A): String
+}</p>
+
+<p>object Printer {
+  // Now accepts two parameters: an object to print, and an object that knows how to format it.
+  def print<a href="a:%20A,%20f:%20Formatter[A]">A</a> = println(f.format(a))
+}</p>
+
+<p>// Person specific formatter.
+object PersonFormatter extends Formatter[Person] {
+  override def format(a: Person) = a.last
+}</p>
+
+<p>// We've now entirely de-coupled Person and its formatting mechanism.
+Printer.print(new Person("Robert", "Smith"), PersonFormatter)
+```</p>
+
+<p>This is nice but a bit verbose. As usual, Scala has mechanism to reduce the verbosity: implicit parameters.</p>
+
+<p>```scala
+object Printer {
+  // The formatter is now an implicit parameter.
+  def print<a href="a:%20A">A</a>(implicit f: Formatter[A]) = println(f.format(a))
+}</p>
+
+<p>// Declares an implicit Formatter[Person] in scope.
+implicit object PersonFormatter extends Formatter[Person] {
+  override def format(a: Person) = a.last
+}</p>
+
+<p>// We can now omit the formatter entirely.
+Printer.print(new Person("Robert", "Smith"))
+```</p>
+
+<p>From Scala 2.8 onwards, the same can be achieved through context bounds:
+<code>scala
+object Printer {
+  // [A: Formatter] should be read as "class that has an associated implicit Formatter".
+  def print[A: Formatter](a: A) = println(implicitly[Formatter[A]].format(a))
+}
+</code></p>
+
+<p>Not only have we added a new formatting feature to <code>Person</code> without modifying its source code or extending it, but
+we've also done it for all possible classes. Nothing in our implementation ties us to <code>Person</code>: adding support for, say,
+dates, is simply done by writing a <code>Formatter</code> implementation for <code>Date</code>.</p>
+
+<p>```scala
+import java.util.Date</p>
+
+<p>// Formats dates as legal ISO 8601 strings.
+implicit object DateFormatter extends Formatter[Date] {
+  private val formatter = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssz")
+  override def format(date: Date) = formatter.format(date)
+}</p>
+
+<p>// Since DateFormatter is both implicit and in scope, there's no need to pass it explicitly.
+Printer.print(new Date())
+```</p>
+
+<h2>Type safety</h2>
+
+<p>Another advantage of type classes is that, since they're validated at compile time, they're inherently safe. Subtype
+polymorphism is mostly safe, but must rely on trust in some cases. The following (contrived) example compiles, but fails
+at runtime:</p>
+
+<p>```scala
+def print(a: Any) = println(a.asInstanceOf[Person].first)</p>
+
+<p>print(new java.util.Date())
+```</p>
+
+<p>Such a situation is not possible with type classes, where all types are know to and validated by the compiler.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Pattern matching as parameter]]></title>
+    <link href="http://nrinaudo.github.io/blog/2013/09/05/pattern-matching-as-parameter/"/>
+    <updated>2013-09-05T17:25:00+02:00</updated>
+    <id>http://nrinaudo.github.io/blog/2013/09/05/pattern-matching-as-parameter</id>
+    <content type="html"><![CDATA[<p>Dear future self,</p>
+
+<p>I just discovered a nice trick with pattern matching, which I thought I'd jot down before I forget about. It's a
+logical consequence of what I wrote on <a href="/blog/2013/08/03/partial-functions/">partial functions</a>, but it just recently
+clicked: a pattern match is a legal argument for higher-order functions expecting unary functions as parameters.</p>
+
+<!-- more -->
+
+
+<p>As I previously realised, pattern matching is a shortcut for partial function creation. Since partial functions are
+unary, it follows that you can pass them to higher-order functions such as, for example, <code>map</code>:</p>
+
+<p>```scala
+// Unwraps the specified sequence, replacing None by the specified default value.
+def badUnwrap<a href="la:%20Seq[Option[A]],%20da:%20A">A</a>: Seq[A] = la map {va =>
+  va match {</p>
+
+<pre><code>case Some(a) =&gt; a
+case None    =&gt; da
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>// This is doing exactly the same thing as badUnwrap, but takes advantage of the fact
+// that one can pass a pattern match directly to to map. I believe it looks much cleaner.
+def unwrap<a href="la:%20Seq[Option[A]],%20da:%20A">A</a>: Seq[A] = la map {
+  case Some(a) => a
+  case None    => da
+}
+```</p>
+
+<p>It seems obvious in hinsight, but I'd never realised that before. My OCD is probably going to force me to go and "fix"
+this in all the Scala code I ever wrote...</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Overriding abstract methods in Scala]]></title>
+    <link href="http://nrinaudo.github.io/blog/2013/08/04/overriding-abstract-methods-in-scala/"/>
+    <updated>2013-08-04T14:32:00+02:00</updated>
+    <id>http://nrinaudo.github.io/blog/2013/08/04/overriding-abstract-methods-in-scala</id>
+    <content type="html"><![CDATA[<p>Dear future self,</p>
+
+<p>When implementing abstract methods in Scala, I always use the <code>override</code> keyword. I realised today that it appears not
+to be compulsory - in fact, decompiling the generated bytecode through <code>javap</code> yields the same result whether or not
+<code>override</code> was used.</p>
+
+<p>Scala is very rarely that loose with its syntax, so I set out to understand what difference there was between the two
+declarations, if any.</p>
+
+<!-- more -->
+
+
+<p>It seems the difference is mostly (only?) at compile time: <code>override</code> is a hint to the compiler that the method being
+declared is thought to override a method of the same signature in one of the parent classes.</p>
+
+<p>For example:
+```scala
+abstract class Callable {
+  def call(): Unit
+}</p>
+
+<p>class ConcreteCallable extends Callable {
+  // Lets the compiler know that we're expecting the call method to be declared in Callable
+  override def call() {</p>
+
+<pre><code>println("Called")
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>class ConcreteCallable2 extends Callable {
+  // Doesn't give any hint to the compiler.
+  def call() {</p>
+
+<pre><code>println("Called")
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>This distinction matters when <code>Callable</code>'s contract change: if the <code>call</code> method were to disappear for whatever reason:
+```scala
+abstract class Callable {
+}</p>
+
+<p>// Fails to compile with the following message:
+// error: method call overrides nothing
+//  override def call() {
+class ConcreteCallable extends Callable {
+  override def call() {</p>
+
+<pre><code>println("Called")
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>// Compiles just fine.
+class ConcreteCallable2 extends Callable {
+  def call() {</p>
+
+<pre><code>println("Called")
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<p>I find the compilation error to be the desirable behaviour: it lets me know immediately that <code>ConcreteCallable</code> isn't
+doing what it thinks it's doing anymore, and needs reviewing. The solution might sometimes be to remove the <code>override</code>
+keyword, but more often than not, the compilation failure will forestall a hard-to-understand bug before it even has a
+chance to manifest itself.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Implementing equals in Scala]]></title>
+    <link href="http://nrinaudo.github.io/blog/2013/06/20/implementing-equals-in-scala/"/>
+    <updated>2013-06-20T12:40:00+02:00</updated>
+    <id>http://nrinaudo.github.io/blog/2013/06/20/implementing-equals-in-scala</id>
+    <content type="html"><![CDATA[<p>Dear future self,</p>
+
+<p>Writing proper <code>equals</code> methods in Java is
+<a href="http://stackoverflow.com/questions/27581/overriding-equals-and-hashcode-in-java">a bit of a pain</a>. Turns out, Scala
+is slightly better but still somewhat cumbersome. It's mostly a matter of remembering all the rules, which this post
+should help with.</p>
+
+<!-- more -->
+
+
+<h2>Basic implementation</h2>
+
+<p>Pattern matching makes a basic implementation of <code>equals</code> rather easy to read and write:
+```scala
+class Point2d(val x: Int, val y: Int) {
+  override def equals(other: Any) = other match {</p>
+
+<pre><code>// Any instance of Point2d with the same x and y as the current instance is equal to it.
+case o: Point2d =&gt; o.x == x &amp;&amp; o.y == y
+// Anything else isn't.
+case _          =&gt; false
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<h2>hashCode</h2>
+
+<p>Exactly as in Java, overriding <code>equals</code> should always be accompanied by an equivalent implementation of <code>hashCode</code>.</p>
+
+<p>Nothing tricky there, although the convention is slightly different than in Java: Scala uses the 41 magic number where
+Java uses 31.
+```scala
+class Point2d(val x: Int, val y: Int) {
+  override def hashCode() = 41 * (41 + x) + y</p>
+
+<p>  override def equals(other: Any) = other match {</p>
+
+<pre><code>case o: Point2d =&gt; o.x == x &amp;&amp; o.y == y
+case _          =&gt; false
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<h2>canEqual</h2>
+
+<p>This is where Scala becomes more cumbersome (yet more powerful) than Java.</p>
+
+<p>A proper <code>equals</code> method should be reflexive, which means that <code>x == y</code> implies that <code>y == x</code>. Common Java wisdom has
+it that to enforce this, instances of a subclass cannot be equal to instances of their parent class.</p>
+
+<p>Say, for example, that we created a <code>Point3d</code> class with a <code>z</code> coordinate. Instances of <code>Point3d</code> cannot be equal to
+instances of <code>Point2d</code>, which means that instances of <code>Point2d</code> cannot be equal to instances of <code>Point3d</code>.</p>
+
+<p>This restriction can be a bit too strict: sometimes, a class subclasses another without changing the meaning of
+instance equality. In order to deal with this cases, Scala uses the <code>Equals</code> trait:
+```scala
+class Point2d(val x: Int, val y: Int) extends Equals {
+  override def hashCode() = 41 * (41 + x) + y</p>
+
+<p>  // Anything that is an instance of <code>Point2d</code> can be equal to it.
+  def canEqual(that: Any) = that.isInstanceOf[Point2d]</p>
+
+<p>  override def equals(other: Any) = other match {</p>
+
+<pre><code>// Note the call to canEqual which makes sure that other is ok to be compared with this.
+// In our example, other would be an instance of Point3d and would refuse the comparison.
+case o: Point2d =&gt; (o canEqual this) &amp;&amp; o.x == x &amp;&amp; o.y == y
+case _          =&gt; false
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>class CustomPoint(x: Int, y: Int) extends Point2d(x, y) {
+  // custom code.
+}</p>
+
+<p>// CustomPoint doesn't override canEqual, which means that it's perfectly possible for an instance of Point2d and
+// CustomPoint to be equal. And Indeed:</p>
+
+<p>// Prints true
+println(new Point2d(1, 2) == new CustomPoint(1, 2))
+// Prints true
+println(new CustomPoint(1, 2) == new Point2d(1, 2))</p>
+
+<p>// Point3d adds a new field, which makes it impossible for an instance of Point2d and Point3d to be equal.
+class Point3d(x: Int, y: Int, val z: Int) extends Point2d(x, y) {
+  override def hashCode() = 41 * (41 + super.hashCode) + z</p>
+
+<p>  // This will cause the equals method of Point2d to return false.
+  override def canEqual(that: Any) = that.isInstanceOf[Point3d]</p>
+
+<p>  override def equals(other: Any) = other match {</p>
+
+<pre><code>case o:Point3d =&gt; (o canEqual this) &amp;&amp; z == o.z &amp;&amp; super.equals(o)
+case _         =&gt; false
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>// Point3d overrides canEqual, which makes it impossible for it to be equal to instances of Point2d. And indeed:</p>
+
+<p>// Prints false
+println(new Point2d(1, 2) == new Point3d(1, 2, 3))
+// Prints false
+println(new Point3d(1, 2, 3) == new Point2d(1, 2))
+```</p>
+
+<h2>Miscellaneous</h2>
+
+<p>There are a few other things to keep in mind when implementing <code>equals</code>. I won't dwell on them though, they're exactly
+the same as in Java:</p>
+
+<ul>
+<li>avoid using mutable fields in <code>equals</code> and <code>hashCode</code>.</li>
+<li>if <code>a == b</code>, then <code>a.hashCode == b.hashCode</code> (but the opposite doesn't need to, and often cannot, be true).</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>

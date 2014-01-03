@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: actor | Dear Future Self]]></title>
+  <link href="http://nrinaudo.github.io/blog/categories/actor/atom.xml" rel="self"/>
+  <link href="http://nrinaudo.github.io/"/>
+  <updated>2014-01-03T14:47:43+01:00</updated>
+  <id>http://nrinaudo.github.io/</id>
+  <author>
+    <name><![CDATA[Nicolas Rinaudo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Timer Actor]]></title>
+    <link href="http://nrinaudo.github.io/blog/2013/06/10/timer-actor/"/>
+    <updated>2013-06-10T11:49:00+02:00</updated>
+    <id>http://nrinaudo.github.io/blog/2013/06/10/timer-actor</id>
+    <content type="html"><![CDATA[<p>Dear future self,</p>
+
+<p>While attempting to work with <a href="http://www.scala-lang.org/api/current/index.html#scala.actors.Actor">Scala Actors</a>, I
+discovered that there wasn't a simple timer implementation (or at least that I could not find it).</p>
+
+<p>After tinkering a bit, this is what I came up with.</p>
+
+<!-- more -->
+
+
+<p>```scala
+import scala.actors.<em>
+import scala.actors.Actor.</em>
+import scala.actors.scheduler.DaemonScheduler</p>
+
+<p>// Simple timer that will send Timer.WakeUp to the target actor every timeout milliseconds.
+class Timer(val timeout: Long, val dest: Actor) extends Actor {
+  import Timer.WakeUp</p>
+
+<p>  // Might as well make it into a daemon. This probably doesn't serve much of a purpose: this implementation is
+  // configured to die as soon as its target dies anyway.
+  override def scheduler = DaemonScheduler</p>
+
+<p>  def act {</p>
+
+<pre><code>// Configures the timer to die as soon as its destination does.
+link(dest)
+
+// Somewhat arbitrary: I want the destination actor to be notified as soon as the timer is scheduled.
+// A more flexible version would accept both a period and a delay before starting.
+dest ! WakeUp
+
+// Note that it's crucial not to listen to any other message here: each handled message will reset the timer and
+// break the periodicity.
+loop {
+  reactWithin(timeout) {
+    case TIMEOUT =&gt; dest ! WakeUp
+  }
+}
+</code></pre>
+
+<p>  }
+}</p>
+
+<p>object Timer {
+  // Message sent to target actors to wake them up.
+  val WakeUp = 'WakeUp</p>
+
+<p>  // Convenience method to create and start a timer in a single call.
+  def apply(timeout: Long, dest: Actor) = new Timer(timeout, dest).start
+}</p>
+
+<p>// Test code: starts an actor and prints the number of milliseconds since it's been started every time it's woken up.
+Timer(1000, actor {
+  val time = System.currentTimeMillis
+  loop {</p>
+
+<pre><code>react {
+  case Timer.WakeUp =&gt; println("Woken up at %d".format(System.currentTimeMillis - time))
+}
+</code></pre>
+
+<p>  }
+})
+```</p>
+]]></content>
+  </entry>
+  
+</feed>

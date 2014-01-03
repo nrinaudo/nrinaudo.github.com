@@ -1,0 +1,369 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Exploring XML documents with Scala - Dear Future Self</title>
+  <meta name="author" content="Nicolas Rinaudo">
+
+  
+  <meta name="description" content="Exploring XML documents with Scala 2013-05-26 Dear future self, After I worked out how to load HTML with Scala, I had to figure out
+how to explore &hellip;">
+  
+
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://nrinaudo.github.io/blog/2013/05/26/exploring-xml-documents-with-scala">
+  <link href="/images/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Dear Future Self" type="application/atom+xml">
+  <script src="/js/jquery.js"></script>
+  <script src="/js/bootstrap-collapse.js"></script>
+  <script src="/js/modernizr.js"></script>
+  <script src="/js/octopress.js" type="text/javascript"></script>
+
+  <!-- mathjax config similar to math.stackexchange -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+     jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      },
+      displayAlign: "left",
+      messageStyle: "none",
+      styles: {
+        ".math": {
+            "font-size": "80%"
+        }
+      },
+      "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+    });
+  </script>
+  <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  
+
+</head>
+
+<body   >
+  <div class="navbar navbar-inverse navbar-static-top">
+  	<div class="navbar-inner">
+  	  <div class="container">
+        <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+          <span class="fui-menu-24"></span>
+        </a>
+  	  	<div class="nav-collapse collapse navbar-responsive-collapse" style="height:0;">
+  	      <ul class="nav">
+    
+        <li ><a href="/index.html">Home</a></li>
+    
+        <li ><a href="/blog/archives/index.html">Archives</a></li>
+    
+</ul>
+
+<ul class="nav pull-right">
+    
+    <li><a href="http://github.com/nrinaudo" title="Github Profile"><i class="icon-github-sign social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://stackoverflow.com/users/1370349/nicolas-rinaudo" title="Stackoverflow Profile"><i class="icon-stackexchange social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://linkedin.com/in/nicolasrinaudo" title="Linkedin Profile"><i class="icon-linkedin-sign social-navbar"></i></a></li>
+    
+    
+    <li><a href="http://twitter.com/NicolasRinaudo" title="Twitter Profile"><i class="icon-twitter-sign social-navbar"></i></a></li>
+    
+    
+    
+    
+</ul>
+
+  	    </div>
+  	  </div>
+  	</div>
+  </div>
+  <div class="container" id="main">
+    <div class="span12">
+      <div class="row-fluid">
+        <div id="content">
+          <div>
+<article class="hentry" role="article">
+  
+
+  <header>
+  <div class="jumbotron">
+    Exploring XML documents with Scala
+	<h5>
+
+
+
+
+
+
+
+
+  
+
+
+<i class="icon-calendar-empty"></i> <time datetime="2013-05-26T21:58:00+02:00" pubdate data-updated="true">2013-05-26</time></h5>
+  </div>
+</header>
+  <div class="row-fluid">
+    <div class="span12">
+      <p>Dear future self,</p>
+
+<p>After I worked out how to <a href="/blog/2013/05/24/bridging-cyberneko-and-scala/">load HTML</a> with Scala, I had to figure out
+how to explore the resulting documents. It&#8217;s rather straightfroward in
+<a href="/blog/2013/04/09/using-gpath-with-xmlslurper/">Groovy</a>, but it turns out to be somewhat less pleasant in Scala.</p>
+
+<!-- more -->
+
+
+<h2>Element selectors</h2>
+
+<p>Finding a specific element, or set of elements, is nicely implemented: it&#8217;s both easy to read and to write, even if
+nothing too fancy.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">import</span> <span class="nn">scala.xml._</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">val</span> <span class="n">xml</span> <span class="k">=</span> <span class="o">&lt;</span><span class="n">html</span><span class="o">&gt;&lt;</span><span class="n">body</span><span class="o">&gt;</span>
+</span><span class='line'>            <span class="o">&lt;</span><span class="n">div</span><span class="o">&gt;&lt;</span><span class="n">a</span> <span class="n">href</span><span class="o">=</span><span class="s">&quot;test.html&quot;</span><span class="o">&gt;</span><span class="nc">Test</span><span class="o">&lt;/</span><span class="n">a</span><span class="o">&gt;&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+</span><span class='line'>            <span class="o">&lt;</span><span class="n">div</span><span class="o">&gt;&lt;</span><span class="n">a</span> <span class="n">href</span><span class="o">=</span><span class="s">&quot;test2.html&quot;</span><span class="o">&gt;</span><span class="nc">Test</span> <span class="mi">2</span><span class="o">&lt;/</span><span class="n">a</span><span class="o">&gt;&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+</span><span class='line'>          <span class="o">&lt;/</span><span class="n">body</span><span class="o">&gt;&lt;/</span><span class="n">html</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// `\` returns a sequence containing all elements whose name match the right operand and are direct descendants of the</span>
+</span><span class='line'><span class="c1">// left operand.</span>
+</span><span class='line'><span class="c1">// Prints:</span>
+</span><span class='line'><span class="c1">// &lt;div&gt;&lt;a href=&quot;test.html&quot;&gt;Test&lt;/a&gt;&lt;/div&gt;</span>
+</span><span class='line'><span class="c1">// &lt;div&gt;&lt;a href=&quot;test2.html&quot;&gt;Test 2&lt;/a&gt;&lt;/div&gt;</span>
+</span><span class='line'><span class="n">xml</span> <span class="o">\</span> <span class="s">&quot;body&quot;</span> <span class="o">\</span> <span class="s">&quot;div&quot;</span> <span class="n">foreach</span> <span class="n">println</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// `\\` returns a sequence containing all elements whose name match the right operand, regardless of their depth.</span>
+</span><span class='line'><span class="c1">// Prints:</span>
+</span><span class='line'><span class="c1">// &lt;a href=&quot;test.html&quot;&gt;Test&lt;/a&gt;</span>
+</span><span class='line'><span class="c1">// &lt;a href=&quot;test2.html&quot;&gt;Test 2&lt;/a&gt;</span>
+</span><span class='line'><span class="n">xml</span> <span class="o">\\</span> <span class="s">&quot;a&quot;</span> <span class="n">foreach</span> <span class="n">println</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <code>\</code> and <code>\\</code> selectors return sequences: you can call <code>filter</code>, <code>map</code>, <code>foreach</code>&#8230; on their results.</p>
+
+<h2>Attribute selectors</h2>
+
+<p>Selecting an attribute appears simple at first. According to the documentation, you can simply use <code>@name</code> with the
+standard <code>\</code> and <code>\\</code> selectors, which sounds brilliant until you realise it doesn&#8217;t actually work as advertised.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">import</span> <span class="nn">scala.xml._</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">val</span> <span class="n">xml</span> <span class="k">=</span> <span class="o">&lt;</span><span class="n">html</span><span class="o">&gt;&lt;</span><span class="n">body</span><span class="o">&gt;</span>
+</span><span class='line'>            <span class="o">&lt;</span><span class="n">div</span><span class="o">&gt;&lt;</span><span class="n">a</span> <span class="n">href</span><span class="o">=</span><span class="s">&quot;test.html&quot;</span><span class="o">&gt;</span><span class="nc">Test</span><span class="o">&lt;/</span><span class="n">a</span><span class="o">&gt;&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+</span><span class='line'>            <span class="o">&lt;</span><span class="n">div</span><span class="o">&gt;&lt;</span><span class="n">a</span> <span class="n">href</span><span class="o">=</span><span class="s">&quot;test2.html&quot;</span><span class="o">&gt;</span><span class="nc">Test</span> <span class="mi">2</span><span class="o">&lt;/</span><span class="n">a</span><span class="o">&gt;&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+</span><span class='line'>          <span class="o">&lt;/</span><span class="n">body</span><span class="o">&gt;&lt;/</span><span class="n">html</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// This *should* match and print the href attribute of all a elements.</span>
+</span><span class='line'><span class="c1">// It doesn&#39;t actually work, though, and doesn&#39;t print anything.</span>
+</span><span class='line'><span class="n">xml</span> <span class="o">\\</span> <span class="s">&quot;a&quot;</span> <span class="o">\</span> <span class="s">&quot;@href&quot;</span> <span class="n">foreach</span> <span class="n">println</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// This does what the previous code should do. Not terribly elegant, but gets the job done.</span>
+</span><span class='line'><span class="c1">// Prints:</span>
+</span><span class='line'><span class="c1">// test.html</span>
+</span><span class='line'><span class="c1">// test2.html</span>
+</span><span class='line'><span class="n">xml</span> <span class="o">\\</span> <span class="s">&quot;a&quot;</span> <span class="n">map</span> <span class="o">{</span><span class="k">_</span> <span class="o">\</span> <span class="s">&quot;@href&quot;</span><span class="o">}</span> <span class="n">foreach</span> <span class="n">println</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Matches and prints all href attributes, regardless of their parent element.</span>
+</span><span class='line'><span class="c1">// Prints:</span>
+</span><span class='line'><span class="c1">// test.html</span>
+</span><span class='line'><span class="c1">// test2.html</span>
+</span><span class='line'><span class="n">xml</span> <span class="o">\\</span> <span class="s">&quot;@href&quot;</span> <span class="n">foreach</span> <span class="n">println</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Filtering on attribute</h2>
+
+<p>This is where things take a turn for the worse, as far as I&#8217;m concerned: you <em>can</em> filter on attributes, it&#8217;s just not
+very pleasant at all.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">import</span> <span class="nn">scala.xml._</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">val</span> <span class="n">xml</span> <span class="k">=</span> <span class="o">&lt;</span><span class="n">html</span><span class="o">&gt;&lt;</span><span class="n">body</span><span class="o">&gt;</span>
+</span><span class='line'>            <span class="o">&lt;</span><span class="n">div</span><span class="o">&gt;&lt;</span><span class="n">a</span> <span class="n">href</span><span class="o">=</span><span class="s">&quot;test.html&quot;</span><span class="o">&gt;</span><span class="nc">Test</span><span class="o">&lt;/</span><span class="n">a</span><span class="o">&gt;&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+</span><span class='line'>            <span class="o">&lt;</span><span class="n">div</span><span class="o">&gt;&lt;</span><span class="n">a</span> <span class="n">href</span><span class="o">=</span><span class="s">&quot;test2.html&quot;</span><span class="o">&gt;</span><span class="nc">Test</span> <span class="mi">2</span><span class="o">&lt;/</span><span class="n">a</span><span class="o">&gt;&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+</span><span class='line'>            <span class="o">&lt;</span><span class="n">div</span><span class="o">&gt;&lt;</span><span class="n">a</span><span class="o">&gt;</span><span class="nc">No</span> <span class="nc">Link</span><span class="o">&lt;/</span><span class="n">a</span><span class="o">&gt;&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+</span><span class='line'>          <span class="o">&lt;/</span><span class="n">body</span><span class="o">&gt;&lt;/</span><span class="n">html</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Finds all a elements whose href attribute exists.</span>
+</span><span class='line'><span class="c1">// Prints:</span>
+</span><span class='line'><span class="c1">// &lt;a href=&quot;test.html&quot;&gt;Test&lt;/a&gt;</span>
+</span><span class='line'><span class="c1">// &lt;a href=&quot;test2.html&quot;&gt;Test 2&lt;/a&gt;</span>
+</span><span class='line'><span class="n">xml</span> <span class="o">\\</span> <span class="s">&quot;a&quot;</span> <span class="n">filter</span> <span class="o">{</span><span class="n">a</span> <span class="k">=&gt;</span> <span class="o">!(</span><span class="n">a</span> <span class="o">\</span> <span class="s">&quot;@href&quot;</span><span class="o">).</span><span class="n">isEmpty</span><span class="o">}</span> <span class="n">foreach</span> <span class="n">println</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Finds all a elements whose href attribute is equal to test.html.</span>
+</span><span class='line'><span class="c1">// Prints:</span>
+</span><span class='line'><span class="c1">// &lt;a href=&quot;test.html&quot;&gt;Test&lt;/a&gt;</span>
+</span><span class='line'><span class="n">xml</span> <span class="o">\\</span> <span class="s">&quot;a&quot;</span> <span class="n">filter</span> <span class="o">{</span><span class="k">_</span> <span class="o">\</span> <span class="s">&quot;@href&quot;</span> <span class="n">contains</span> <span class="nc">Text</span><span class="o">(</span><span class="s">&quot;test.html&quot;</span><span class="o">)}</span> <span class="n">foreach</span> <span class="n">println</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+    </div>
+  </div>
+
+
+
+  <footer>
+    <hr>
+    
+    <div class="row-fluid">
+      <div class="span6">
+        <p class="meta">
+        
+        
+
+
+
+  <a href="/blog/categories/scala/"><span class="badge">scala</span></a>
+
+  <a href="/blog/categories/xml/"><span class="badge">xml</span></a>
+
+
+
+
+        </p>
+      </div>
+    </div>
+    
+    <div class="row-fluid">
+      <div class="span12">
+        <p class="meta">
+          
+            <a class="basic-alignment left" href="/blog/2013/05/26/building-immutable-collections-in-scala/" title="Previous Post: Building immutable collections in Scala">&laquo; Building immutable collections in Scala</a>
+          
+          
+            <a class="basic-alignment right" href="/blog/2013/05/29/array-like-objects-in-scala/" title="Next Post: Array-like objects in Scala">Array-like objects in Scala &raquo;</a>
+          
+        </p>
+      </div>
+    </div>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+        </div>
+      </div>
+      <div class="row-fluid">
+        <footer class="footer-page" role="contentinfo">
+          <p>
+  Copyright &copy; 2014 - Nicolas Rinaudo
+</p>
+
+
+        </footer>
+      </div>
+    </div>
+  </div>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'futureself';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://nrinaudo.github.io/blog/2013/05/26/exploring-xml-documents-with-scala/';
+        var disqus_url = 'http://nrinaudo.github.io/blog/2013/05/26/exploring-xml-documents-with-scala/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
