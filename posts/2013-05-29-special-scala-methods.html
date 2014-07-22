@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Special Scala methods</title>
+        <link rel="stylesheet" type="text/css" href="../css/style.css" />
+        <link rel="stylesheet" type="text/css" href="../css/fontjolly.css" />
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Home</a>
+                <a href="../archive.html">Archives</a>
+            </div>
+            <div id="navigation">
+                <a title="GitHub" href="https://github.com/nrinaudo"><span class="ico-social-github"></span></a>
+                <a title="Twitter" href="https://twitter.com/NicolasRinaudo"><span class="ico-social-twitter"></span></a>
+                <a title="Stack Overflow" href="http://stackoverflow.com/users/1370349/nicolas-rinaudo"><span class="ico-line-chart"></span></a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Special Scala methods</h1>
+<div class="info"><span class="date">2013-05-29</span><span class="tags"><a href="../tags/scala.html" class="tag">scala</a></span></div>
+<p>Scala has a number of methods for which it defines special syntactic sugar. Some are well known, such as <code>apply</code> or <code>update</code>, but the interraction of <code>+</code> and <code>+=</code> is somewhat less famous. This post details the special methods I know about.</p>
+<!--more-->
+<h2 id="apply">Apply</h2>
+<p>The <code>apply</code> method is special in that it allows instances of classes that have it to be treated as functions and applied directly.</p>
+<p>For example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> ApplyDemo {
+  <span class="kw">def</span> <span class="fu">apply</span>(a: <span class="dt">Int,</span> b: <span class="dt">String</span>) = b * a
+}
+
+<span class="co">// The following calls are strictly equivalent:</span>
+ApplyDemo.<span class="fu">apply</span>(<span class="dv">5</span>, <span class="st">&quot;ha&quot;</span>)
+<span class="fu">ApplyDemo</span>(<span class="dv">5</span>, <span class="st">&quot;ha&quot;</span>)</code></pre>
+<p>This is typically used with <a href="http://www.scala-lang.org/api/current/#scala.Function1">functions</a>, where the name probably originated from: you apply a function to its parameter list and get a result.</p>
+<p>Another use is for data structures, such as <a href="http://www.scala-lang.org/api/current/#scala.collection.List">lists</a> (retrieve element at index <code>i</code>) or <a href="http://www.scala-lang.org/api/current/#scala.collection.Map">maps</a> (retrieve value for key <code>k</code>).</p>
+<p>While really rather nice, the <code>apply</code> method can sometimes have unexpected side-effects if one is not careful, as in the (somewhat contrived) following example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> ApplyDemo2 {
+  <span class="kw">def</span> list: <span class="dt">List[Int]</span> = <span class="fu">List</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>)
+  <span class="kw">def</span> <span class="fu">list</span>(index: <span class="dt">Int</span>): <span class="dt">Int</span> = index * <span class="dv">4</span>
+}
+
+<span class="co">// The following line is ambiguous and will be refused by the compiler. Are we calling:</span>
+<span class="co">// - apply(index: Int) on an instance of List?</span>
+<span class="co">// - list(index: Int) on object ApplyDemo2?</span>
+ApplyDemo2.<span class="fu">list</span>(<span class="dv">1</span>)</code></pre>
+<h2 id="update">Update</h2>
+<p>The <code>update</code> method, when it has exactly two parameters, can be written in “array modification” notation:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> UpdateDemo {
+  <span class="kw">def</span> <span class="fu">update</span>(i: <span class="dt">Int,</span> v: <span class="dt">String</span>): <span class="dt">String</span> = v
+}
+
+<span class="co">// The following calls are strictly equivalent:</span>
+UpdateDemo.<span class="fu">update</span>(<span class="dv">0</span>, <span class="st">&quot;poney&quot;</span>)
+<span class="fu">UpdateDemo</span>(<span class="dv">0</span>) = <span class="st">&quot;poney&quot;</span></code></pre>
+<p>This is convenient when creating data structures, especially when coupled with <code>apply</code>, as it allows you to write very natural-looking code. This is what the <a href="http://www.scala-lang.org/api/current/#scala.collection.Map">map</a> class does, for example.</p>
+<h3 id="return-value">Return value</h3>
+<p>The return value of <code>update</code> can be whatever you wish, but there’s not very many acceptable choices:</p>
+<ul>
+<li><code>this</code> (for fluent coding)</li>
+<li>the second parameter’s value (to be coherent with <code>=</code>)</li>
+<li><code>Unit</code></li>
+</ul>
+<p>I don’t believe there’s a general rule there but most of the code I’ve seen uses the third alternative (<code>Unit</code>), and I find that this is what makes the most sense.</p>
+<h3 id="update-and-set">Update and set</h3>
+<p>Scala has special handling for the <code>+=</code>, <code>-=</code>, <code>*=</code> and <code>/=</code> operators: when used on a variable (a <code>var</code>, not a <code>val</code>) that doesn’t define it explicitely but does define the corresponding operator (<code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>), they will be replaced by a call to the corresponding operator followed by an affectation to the variable.</p>
+<p>For example, with <code>+=</code>:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> <span class="fu">PlusEq</span>(<span class="kw">var</span> value: <span class="dt">Int</span> = <span class="dv">0</span>) {
+  <span class="kw">def</span> +(inc: <span class="dt">Int</span>): <span class="dt">PlusEq</span> = <span class="fu">PlusEq</span>(value + inc)
+}
+
+<span class="kw">var</span> p = <span class="fu">PlusEq</span>()
+
+<span class="co">// The following calls are strictly equivalent:</span>
+p += <span class="dv">10</span>
+p = p.+(<span class="dv">10</span>)
+<span class="co">// At this point, p will be PlusEq(20)</span></code></pre>
+<h2 id="unary-operators">Unary operators</h2>
+<p>Scala has special support for the <code>+</code>, <code>-</code>, <code>!</code> and <code>~</code> unary operators, allowing developers to write code such as <code>-v + !c</code>.</p>
+<p>Implementing one of these operators is done by defining the correspoding <code>unary_</code> method: <code>unary_+</code>, <code>unary_-</code>, <code>unary_!</code> and <code>unary_~</code>.</p>
+<p>For example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> UnaryDemo {
+  <span class="kw">def</span> unary_+ = <span class="dv">4</span>     <span class="co">// +UnaryDemo == 4</span>
+  <span class="kw">def</span> unary_- = -<span class="dv">4</span>    <span class="co">// -UnaryDemo == -4</span>
+  <span class="kw">def</span> unary_! = <span class="kw">false</span> <span class="co">// !UnaryDemo == false</span>
+  <span class="kw">def</span> unary_~ = <span class="st">&quot;~&quot;</span>   <span class="co">// ~UnaryDemo == &quot;~&quot;</span>
+}</code></pre>
+<h2 id="field-wrappers">Field wrappers</h2>
+<p>Finally, Scala allows you to write methods that wrap, or simulate, an existing field:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> FieldDemo {
+  <span class="kw">private</span> <span class="kw">var</span> _x = <span class="dv">0</span>
+
+  <span class="kw">def</span> x = _x
+  <span class="kw">def</span> x_=(i: <span class="dt">Int</span>) = _x = i
+}
+
+<span class="co">// FieldDemo can now be used as:</span>
+FieldDemo.<span class="fu">x</span> = <span class="dv">10</span>
+<span class="fu">println</span>(FieldDemo.<span class="fu">x</span>)</code></pre>
+<p>This can be useful in classes that used to expose a mutable field but that, for one reason or another, had to add logic when it was being modified.</p>
+<p>Say, for example, that you start off with:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> FieldDemo {
+  <span class="kw">var</span> x = <span class="dv">0</span>
+}</code></pre>
+<p>It has later become crucial to log something whenever <code>x</code> is modified. <code>x_=</code> allows us to do so without changing <code>FieldDemo</code>’s interface:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> FieldDemo {
+  <span class="kw">private</span> <span class="kw">var</span> _x = <span class="dv">0</span>
+
+  <span class="kw">def</span> x = _x
+  <span class="kw">def</span> x_=(i: <span class="dt">Int</span>) = {
+    <span class="fu">println</span>(<span class="st">&quot;x is set to &quot;</span> + i)
+    _x = i
+  }
+}</code></pre>
+<p>Code that used the older version of <code>FieldDemo</code> will still compile against this one, even though under the hood, a method is being called rather than a field being set.</p>
+
+        </div>
+    </body>
+</html>

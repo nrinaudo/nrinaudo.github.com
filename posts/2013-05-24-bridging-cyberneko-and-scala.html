@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Bridging CyberNeko and Scala</title>
+        <link rel="stylesheet" type="text/css" href="../css/style.css" />
+        <link rel="stylesheet" type="text/css" href="../css/fontjolly.css" />
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Home</a>
+                <a href="../archive.html">Archives</a>
+            </div>
+            <div id="navigation">
+                <a title="GitHub" href="https://github.com/nrinaudo"><span class="ico-social-github"></span></a>
+                <a title="Twitter" href="https://twitter.com/NicolasRinaudo"><span class="ico-social-twitter"></span></a>
+                <a title="Stack Overflow" href="http://stackoverflow.com/users/1370349/nicolas-rinaudo"><span class="ico-line-chart"></span></a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Bridging CyberNeko and Scala</h1>
+<div class="info"><span class="date">2013-05-24</span><span class="tags"><a href="../tags/scala.html" class="tag">scala</a></span></div>
+<p>I just spent a few hours working out how to use my favourite HTML cleaner, <a href="http://nekohtml.sourceforge.net">CyberNeko</a>, with Scala. Web scrapping is something that I have to do rather often and I’d rather spare you the frustration I just went through.</p>
+<!--more-->
+
+<h2 id="the-problem">The Problem</h2>
+<p>What I wanted to do was to use CyberNeko to do the HTML parsing, but retrieve standard Scala XML elements in order to use their various enhancements (<code>XPath</code>-like path analysis, for example).</p>
+<p>The problem is that, in order to do that, one needs to use an instance of <a href="http://www.scala-lang.org/api/2.11.0-M2/index.html#scala.xml.package@SAXParser=javax.xml.parsers.SAXParser">SAXParser</a>, which CyberNeko doesn’t provide. Well, it does provide a <a href="http://nekohtml.sourceforge.net/javadoc/org/cyberneko/html/parsers/SAXParser.html">SAXParser</a> class, but that’s a misnomer since it’s actually an implementation of <a href="http://docs.oracle.com/javase/6/docs/api/org/xml/sax/XMLReader.html">XMLReader</a>. Confused yet?</p>
+<p>After digging through Java and Xerces’ mess of factories, factory adapters, builders, parsers and readers in order to find a one-liner, elegant way to turn CyberNeko into a proper <code>SAXParser</code>, the only conclusion I came to was that XML handling in Java is an exercise in obfuscation and it would probably be much quicker to implement a solution than to find the appropriate classes, if they even exist.</p>
+<h2 id="the-solution">The Solution</h2>
+<p>Turns out I was right. Writing a simple wrapper class for CyberNeko is as easy as:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">import</span> scala.xml._
+<span class="kw">import</span> org.xml.sax._
+
+<span class="kw">class</span> HtmlParser <span class="kw">extends</span> SAXParser {
+  <span class="co">// This is actually an instance of XMLReader. One cannot help but wonder what the !@# they were thinking.</span>
+  <span class="kw">val</span> reader = <span class="kw">new</span> org.<span class="fu">cyberneko</span>.<span class="fu">html</span>.<span class="fu">parsers</span>.<span class="fu">SAXParser</span>
+
+  <span class="co">// By default, CyberNeko turns all element names upper-case. I'm not a big fan.</span>
+  reader.<span class="fu">setProperty</span>(<span class="st">&quot;http://cyberneko.org/html/properties/names/elems&quot;</span>, <span class="st">&quot;lower&quot;</span>)
+
+  <span class="co">// Deprecated, no need to support.</span>
+  <span class="co">// This is going to generate warnings at compile time, but I don't see a way around it.</span>
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">getParser</span>(): <span class="dt">org.xml.sax.Parser</span> = <span class="kw">null</span>
+
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">getProperty</span>(name: <span class="dt">String</span>): <span class="dt">Object</span> = reader.<span class="fu">getProperty</span>(name)
+
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">getXMLReader</span>() = reader
+
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">isNamespaceAware</span>() = <span class="kw">true</span>
+
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">isValidating</span>() = <span class="kw">false</span>
+
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">setProperty</span>(name: <span class="dt">String,</span> value: <span class="dt">Object</span>) = reader.<span class="fu">setProperty</span>(name, value)
+}</code></pre>
+<p>Once this is done, parsing an HTML file can be done with one of <a href="http://www.scala-lang.org/api/2.11.0-M2/index.html#scala.xml.XML">XML</a>’s various <code>load</code> methods:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> html = XML.<span class="fu">withSAXParser</span>(<span class="kw">new</span> <span class="fu">HtmlParser</span>()).<span class="fu">loadFile</span>(<span class="kw">new</span> java.<span class="fu">io</span>.<span class="fu">File</span>(<span class="st">&quot;my/html/file.html&quot;</span>))
+
+html \\ <span class="st">&quot;div&quot;</span> foreach {div =&gt; <span class="fu">println</span>(div.<span class="fu">text</span>)}</code></pre>
+
+        </div>
+    </body>
+</html>
