@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Logarithm base in algorithm complexity</title>
+        <link rel="stylesheet" type="text/css" href="../css/style.css" />
+        <link rel="stylesheet" type="text/css" href="../css/fontjolly.css" />
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Home</a>
+                <a href="../archive.html">Archives</a>
+            </div>
+            <div id="navigation">
+                <a title="GitHub" href="https://github.com/nrinaudo"><span class="ico-social-github"></span></a>
+                <a title="Twitter" href="https://twitter.com/NicolasRinaudo"><span class="ico-social-twitter"></span></a>
+                <a title="Stack Overflow" href="http://stackoverflow.com/users/1370349/nicolas-rinaudo"><span class="ico-line-chart"></span></a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Logarithm base in algorithm complexity</h1>
+<div class="info"><span class="date">2013-09-15</span><span class="tags"></span></div>
+<p>I was reading up on algorithm complexity and found the following statement: within the context of algorithm complexity, the base of a logarithm is irrelevant.</p>
+<p>This was not demonstrated in any way and the reader was obviously expected to accept this as obvious - which is the case, unless your maths are as rusty as mine.</p>
+<!--more-->
+
+
+
+<h2 id="constants-in-algorithm-complexity">Constants in algorithm complexity</h2>
+<p>The first step to enlightenment is to remember that constants are considered irrelevant when expressing an algorithm’s complexity: <span class="math"><em>O</em>(2<em>N</em>)</span> is always written <span class="math"><em>O</em>(<em>N</em>)</span>.</p>
+<p>With that in mind, we “only” need to prove that logarithms with different bases are linked together by a constant:</p>
+<p><span class="math">∀<em>i</em>, <em>j</em> ∃<em>c</em><sub><em>i</em><em>j</em></sub> ∣ ∀<em>x</em> <em>l</em><em>o</em><em>g</em><sub><em>i</em></sub>(<em>x</em>) = <em>c</em><sub><em>i</em><em>j</em></sub> * <em>l</em><em>o</em><em>g</em><sub><em>j</em></sub>(<em>x</em>)</span></p>
+<h2 id="linking-two-logarithms-with-different-bases">Linking two logarithms with different bases</h2>
+<p>In order to find this <span class="math"><em>c</em><sub><em>i</em><em>j</em></sub></span> constant, let’s start from the definition of a logarithm:</p>
+<p><span class="math"><em>y</em> = <em>l</em><em>o</em><em>g</em><sub><em>i</em></sub>(<em>x</em>) ⇔ <em>x</em> = <em>i</em><sup><em>y</em></sup> ⇔ <em>l</em><em>o</em><em>g</em><sub><em>j</em></sub>(<em>x</em>) = <em>l</em><em>o</em><em>g</em><sub><em>j</em></sub>(<em>i</em><sup><em>y</em></sup>) ⇔ <em>l</em><em>o</em><em>g</em><sub><em>j</em></sub>(<em>x</em>) = <em>y</em> * <em>l</em><em>o</em><em>g</em><sub><em>j</em></sub>(<em>i</em>)</span></p>
+<p>Replacing <span class="math"><em>y</em></span> by its actual value, we get: <br /><span class="math"><em>l</em><em>o</em><em>g</em><sub><em>j</em></sub>(<em>x</em>) = <em>l</em><em>o</em><em>g</em><sub><em>i</em></sub>(<em>x</em>) * <em>l</em><em>o</em><em>g</em><sub><em>j</em></sub>(<em>i</em>)</span><br /></p>
+<p>Which allows us to state what we set out to prove: <br /><span class="math">∀<em>i</em>, <em>j</em>, <em>x</em> <em>l</em><em>o</em><em>g</em><sub><em>j</em></sub>(<em>x</em>) = <em>l</em><em>o</em><em>g</em><sub><em>j</em></sub>(<em>i</em>) * <em>l</em><em>o</em><em>g</em><sub><em>j</em></sub>(<em>x</em>)</span><br /></p>
+<p>That is, since there always exists a known constant that links two logarithms in different bases, and constants should be ignored when expressing an algorithm’s complexity, then the base of a logarithm is irrelevant within the context of algorithm complexity.</p>
+
+        </div>
+    </body>
+</html>
