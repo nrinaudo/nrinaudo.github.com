@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Pattern matching as parameter</title>
+        <link rel="stylesheet" type="text/css" href="../css/style.css" />
+        <link rel="stylesheet" type="text/css" href="../css/fontjolly.css" />
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Home</a>
+                <a href="../archive.html">Archives</a>
+            </div>
+            <div id="navigation">
+                <a title="GitHub" href="https://github.com/nrinaudo"><span class="ico-social-github"></span></a>
+                <a title="Twitter" href="https://twitter.com/NicolasRinaudo"><span class="ico-social-twitter"></span></a>
+                <a title="Stack Overflow" href="http://stackoverflow.com/users/1370349/nicolas-rinaudo"><span class="ico-line-chart"></span></a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Pattern matching as parameter</h1>
+<div class="info"><span class="date">2013-09-05</span><span class="tags"><a href="../tags/scala.html" class="tag">scala</a></span></div>
+<p>One of the properties of pattern matches is that, when not used within a <code>match</code> statement, they define partial functions - which makes them legal arguments to higher-order functions.</p>
+<!--more-->
+
+<p>To take a concrete example, consider the following code:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// Unwraps the specified sequence, replacing None by the specified default value.</span>
+<span class="kw">def</span> unwrap[<span class="dt">A</span>](la: <span class="dt">Seq[Option[A]],</span> da: <span class="dt">A</span>): <span class="dt">Seq[A]</span> = la map {va =&gt;
+  va <span class="kw">match</span> {
+    <span class="kw">case</span> <span class="fu">Some</span>(a) =&gt; a
+    <span class="kw">case</span> None    =&gt; da
+  }
+}</code></pre>
+<p>The anonymous function passed to <code>map</code> is essentially a wrapper for a pattern match. We can transform that into a partial function and pass it directly to <code>map</code>:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> unwrap[<span class="dt">A</span>](la: <span class="dt">Seq[Option[A]],</span> da: <span class="dt">A</span>): <span class="dt">Seq[A]</span> = {
+  <span class="kw">def</span> mapper: <span class="dt">PartialFunction[Option[A], A]</span> = {
+    <span class="kw">case</span> <span class="fu">Some</span>(a) =&gt; a
+    <span class="kw">case</span> None    =&gt; da
+  }
+  la map mapper
+}</code></pre>
+<p>There is little point, however, in using the intermediate <code>mapper</code> function. Inlining it yields a much leaner implementation, free of the boilerplate of the initial version:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> unwrap[<span class="dt">A</span>](la: <span class="dt">Seq[Option[A]],</span> da: <span class="dt">A</span>): <span class="dt">Seq[A]</span> = la map {
+  <span class="kw">case</span> <span class="fu">Some</span>(a) =&gt; a
+  <span class="kw">case</span> None    =&gt; da
+}</code></pre>
+<p>Do note that while this example only matches over a single parameter, this is not a requirement. The Scala compiler has an interesting if somewhat contentious feature that allows it to auto-box multiple parameters into a single tuple. This allows us to write code such as:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> foldD[<span class="dt">A, B</span>](la: <span class="dt">Seq[Option[A]],</span> da: <span class="dt">A,</span> init: <span class="dt">B,</span> f: <span class="dt">(B,</span> A) =&gt; B) =
+  la.<span class="fu">foldLeft</span>(init) {
+    <span class="co">// This function takes a single parameter, but foldLeft's &quot;step&quot; function takes 2 (accumulator and value).</span>
+    <span class="co">// Scala automatically tuples these, which allows us to pattern match them as follows:</span>
+    <span class="kw">case</span> (acc, <span class="fu">Some</span>(i)) =&gt; <span class="fu">f</span>(acc, i)
+    <span class="kw">case</span> (acc, None)    =&gt; <span class="fu">f</span>(acc, da)
+  }</code></pre>
+
+        </div>
+    </body>
+</html>

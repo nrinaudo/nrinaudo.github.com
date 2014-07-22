@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Type variance in Scala</title>
+        <link rel="stylesheet" type="text/css" href="../css/style.css" />
+        <link rel="stylesheet" type="text/css" href="../css/fontjolly.css" />
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Home</a>
+                <a href="../archive.html">Archives</a>
+            </div>
+            <div id="navigation">
+                <a title="GitHub" href="https://github.com/nrinaudo"><span class="ico-social-github"></span></a>
+                <a title="Twitter" href="https://twitter.com/NicolasRinaudo"><span class="ico-social-twitter"></span></a>
+                <a title="Stack Overflow" href="http://stackoverflow.com/users/1370349/nicolas-rinaudo"><span class="ico-line-chart"></span></a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Type variance in Scala</h1>
+<div class="info"><span class="date">2013-09-08</span><span class="tags"><a href="../tags/scala.html" class="tag">scala</a></span></div>
+<p>Type variance is a subject that I’ve long found confusing and counter-intuitive. Attempting to use the semi-mystical <code>[+A]</code> or <code>[-A]</code> type annotations would, more often than not, yield an obscure <code>covariant type A occurs in contravariant position in type A...</code> compilation error.</p>
+<p>I’ve finally decided to bite the bullet and make sense of it all. This post is what I came up with after hacking at / reading on type variance until I decided I had it as figured out as I was likely to for the time being.</p>
+<!--more-->
+
+
+<h2 id="type-variance">Type variance</h2>
+<p>Type variance is in itself a fairly simple concept: classes who process or store values often do not need to know the exact type of these values, or only need them to follow a known set of constraints.</p>
+<p>For example, a <code>List</code> doesn’t really need to know what it stores - it’ll behave exactly the same way whether it contains instances of <code>Int</code> or <code>String</code>.</p>
+<p>One simple way of writing the <code>List</code> class to reflect this is to have it store instances of <code>AnyRef</code>, but that would be at the cost of type safety: since there is no constraint on the stored elements, there’s nothing to prevent a <code>List</code> from storing instances of both <code>Int</code> and <code>String</code>.</p>
+<p>Parametric polymorphism allows you to turn the type of elements contained by <code>List</code> into a parameter, through the following syntax:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// A is the type manipulated by List.</span>
+<span class="kw">trait</span> List[<span class="dt">A</span>] {
+  <span class="co">// A can be referenced in List's body.</span>
+  <span class="kw">def</span> <span class="fu">cons</span>(a: <span class="dt">A</span>): <span class="dt">List[A]</span>
+<span class="dt">}</span></code></pre>
+<p>This declares a <code>List</code> trait that contains elements of type <code>A</code>, to be defined at declaration time. There’s what I feel is an unfortunate wealth of vocabulary to describe this:</p>
+<ul>
+<li><code>List</code> is <em>generic</em> (it doesn’t work with a <em>specific</em> type).</li>
+<li><code>List</code> is a type constructor (it accepts a parameter and defines a new type depending on this parameter’s value).</li>
+<li><code>List</code> varies on <code>A</code>.</li>
+</ul>
+<p>Using the previous declaration of <code>List</code>, it becomes possible to write code that is both generic and type safe:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// Declares a list that will only accept instances of Int (or subclasses).</span>
+<span class="kw">val</span> li: <span class="dt">List[Int]</span> = <span class="co">// ...</span>
+
+<span class="co">// Works fine: 1 is an Int.</span>
+li.<span class="fu">cons</span>(<span class="dv">1</span>)
+
+<span class="co">// Doesn't work: &quot;foobar&quot; is not an Int.</span>
+li.<span class="fu">cons</span>(<span class="st">&quot;foobar&quot;</span>)</code></pre>
+<p>Note that you might sometimes want to have a list of elements of any type - this is easily achieved by declaring it as <code>List[AnyRef]</code>.</p>
+<p>Type variance describes how the relation between instances of <code>List</code> vary with the value of their type parameter. I’ll explore these in the rest of this post, using the following traditionnal class hierarchy for illustration:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// A Mammal has a name.</span>
+<span class="kw">class</span> <span class="fu">Mammal</span>(<span class="kw">val</span> name: <span class="dt">String</span>)
+
+<span class="co">// A Dog is a Mammal that can bark.</span>
+<span class="kw">class</span> <span class="fu">Dog</span>(name: <span class="dt">String</span>) <span class="kw">extends</span> <span class="fu">Mammal</span>(name) {
+  <span class="kw">def</span> <span class="fu">bark</span>(): <span class="dt">Unit</span> = <span class="fu">println</span>(<span class="st">&quot;bark!&quot;</span>)
+}
+
+<span class="co">// A Cat is a Mammal that purrs.</span>
+<span class="kw">class</span> <span class="fu">Cat</span>(name: <span class="dt">String</span>) <span class="kw">extends</span> <span class="fu">Mammal</span>(name) {
+  <span class="kw">def</span> <span class="fu">purr</span>(): <span class="dt">Unit</span> = <span class="fu">println</span>(<span class="st">&quot;purrrr&quot;</span>)
+}</code></pre>
+<h2 id="invariance">Invariance</h2>
+<p>By default, generic classes are <em>invariant</em> on their parameter(s): whatever the relation between <code>A</code> and <code>B</code>, there won’t be any particular relationship between <code>List[A]</code> and <code>List[B]</code> - <code>B</code> could, for example, be a subclass of <code>A</code>, but this would have no bearing on how <code>List[B]</code> relates to <code>List[A]</code>.</p>
+<p><code>List</code> is a nice example in that it’s a well known structure that’s easy to reason about, but it’s a bit cumbersome when I wish to write actual code. Let’s declare a simple <code>Wrapper</code> class, <em>invariant</em> in <code>A</code>:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Wrapper[<span class="dt">A</span>](<span class="kw">val</span> a: <span class="dt">A</span>) {
+  <span class="co">// Retrieves the wrapped value.</span>
+  <span class="kw">def</span> <span class="fu">apply</span>() = a
+}</code></pre>
+<p>Since <code>Wrapper</code> is <em>invariant</em> on its parameter, there is no relation between <code>Wrapper[Dog]</code> and <code>Wrapper[Mammal]</code>, as shown in the following example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// Does not compile: a Wrapper[Mammal] is not an instance of Wrapper[Dog]</span>
+<span class="kw">val</span> wd: <span class="dt">Wrapper[Dog]</span> = <span class="fu">Wrapper</span>(<span class="kw">new</span> <span class="fu">Mammal</span>(<span class="st">&quot;Flipper&quot;</span>))
+
+<span class="co">// Does not compile: a Wrapper[Dog] is not an instance of Wrapper[Mammal].</span>
+<span class="kw">val</span> wm: <span class="dt">Wrapper[Mammal]</span> = Wrapper[<span class="dt">Dog</span>](<span class="kw">new</span> <span class="fu">Dog</span>(<span class="st">&quot;Lassie&quot;</span>))</code></pre>
+<p>That last one is a bit of a shame, though: since a <code>Dog</code> is a <code>Mammal</code>, surely a <code>Wrapper[Dog]</code> should be a <code>Wrapper[Mammal]</code> as well? Which smoothly leads us into our next section, <em>covariance</em>.</p>
+<h2 id="covariance">Covariance</h2>
+<p>Saying that a class <code>C</code> is <em>covariant</em> on its parameter is saying that if <code>A</code> extends <code>B</code>, then <code>C[A]</code> extends <code>C[B]</code>.</p>
+<p>In Scala, making a class <em>covariant</em> on its parameter is achieved with the <code>+</code> modifier, as in the following example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Wrapper[<span class="dt">+A</span>](<span class="kw">val</span> a: <span class="dt">A</span>) {
+  <span class="kw">def</span> <span class="fu">apply</span>(): <span class="dt">A</span> = a
+}</code></pre>
+<p>With <code>Wrapper</code> thus modified, our previous example works as expected:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// Does not compile: a Wrapper[Mammal] is not an instance of Wrapper[Dog]</span>
+<span class="kw">val</span> wd: <span class="dt">Wrapper[Dog]</span> = <span class="fu">Wrapper</span>(<span class="kw">new</span> <span class="fu">Mammal</span>(<span class="st">&quot;Flipper&quot;</span>))
+
+<span class="co">// Now compiles: Wrapper is covariant, so a Wrapper[Dog] is a Wrapper[Mammal]</span>
+<span class="kw">val</span> wm: <span class="dt">Wrapper[Mammal]</span> = Wrapper[<span class="dt">Dog</span>](<span class="kw">new</span> <span class="fu">Dog</span>(<span class="st">&quot;Lassie&quot;</span>))</code></pre>
+<h2 id="contravariance">Contravariance</h2>
+<p><em>Contravariance</em> is the exact opposite of <em>covariance</em>: saying that a class <code>C</code> is <em>contravariant</em> on its parameter is saying that if <code>A</code> extends <code>B</code>, then <code>C[B]</code> extends <code>C[A]</code>.</p>
+<p>In scala, making a class <em>contravariant</em> on its parameter is achieved with the <code>-</code> modifier, as in the following example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">trait</span> Printer[<span class="dt">-A</span>] {
+  <span class="co">// Prints its argument.</span>
+  <span class="kw">def</span> <span class="fu">apply</span>(a: <span class="dt">A</span>)
+}</code></pre>
+<p>This is a bit counter intuitive, but makes sense in the case of classes used to <em>process</em> rather than <em>store</em> others:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// Note how this calls a method defined in Dog but not in Mammal.</span>
+<span class="kw">class</span> DogPrinter <span class="kw">extends</span> Printer[<span class="dt">Dog</span>] {
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">apply</span>(a: <span class="dt">Dog</span>) {
+    <span class="fu">println</span>(a)
+    a.<span class="fu">bark</span>()
+  }
+}
+
+<span class="co">// Since Printer is contravariant, an instance of MammalPrinter is a valid instance of Printer[Dog].</span>
+<span class="kw">class</span> MammalPrinter <span class="kw">extends</span> Printer[<span class="dt">Mammal</span>] {
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">apply</span>(a: <span class="dt">Mammal</span>) {
+    <span class="fu">println</span>(a)
+  }
+}
+
+<span class="co">// Compiles: a Printer[Mammal] is a valid Printer[Dog].</span>
+<span class="kw">val</span> wd: <span class="dt">Printer[Dog]</span> = <span class="kw">new</span> <span class="fu">MammalPrinter</span>()
+
+<span class="co">// Does not compile: a Printer[Dog] is not a valid Printer[Mammal].</span>
+<span class="co">// If unsure why, consider what happens when DogPrinter calls the bark() method on an instance of Mammal.</span>
+<span class="kw">val</span> wm: <span class="dt">Printer[Mammal]</span> = <span class="kw">new</span> <span class="fu">DogPrinter</span>()</code></pre>
+<h2 id="function-variance">Function variance</h2>
+<p>Before explaining the compilation errors mentionned in the introduction of this post, we must take a closer look at functions and how they vary on their parameters and return types.</p>
+<p>In Scala, functions are instances. A unary function, for example, is an instance of <code>Function1[-T, +R]</code>, where <code>T</code> is the type of the function’s parameter and <code>R</code> that of its return value.</p>
+<p>It’s critical to understand why <code>Function1</code> is <em>contravariant</em> on its parameter type and <em>covariant</em> on its return type: most of the complexity of type variance comes from that simple fact.</p>
+<h3 id="parameter-type">Parameter type</h3>
+<p>The <code>Printer</code> trait we defined previously fulfills all the requirements of a unary function. We can in fact have it extend <code>Function1[A, Unit]</code> without changing anything else in our previous code:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">trait</span> Printer[<span class="dt">-A</span>] <span class="kw">extends</span> Function1[<span class="dt">A, Unit</span>] {
+  <span class="kw">def</span> <span class="fu">apply</span>(a: <span class="dt">A</span>): <span class="dt">Unit</span>
+<span class="dt">}</span></code></pre>
+<p>It wouldn’t be possible for <code>Printer</code> to be covariant on <code>A</code>: it would mean that a <code>Printer[Dog]</code> would be a <code>Printer[Mammal]</code>, which would allow us to apply <code>Dog</code> specific code to a <code>Mammal</code> - say, call the <code>bark</code> method on an instance of <code>Cat</code>.</p>
+<p>This is a general rule: functions are always contravariant on their parameter types.</p>
+<h3 id="return-type">Return type</h3>
+<p>Just like <code>Printer</code> fulfilled the contract of a <code>Function1[A, Unit]</code>, <code>Wrapper</code> fulfills that of a <code>Function0[A]</code>:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Wrapper[<span class="dt">+A</span>](<span class="kw">val</span> a: <span class="dt">A</span>) <span class="kw">extends</span> Function0[<span class="dt">A</span>] {
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">apply</span>(): <span class="dt">A</span> = a
+}</code></pre>
+<p><code>Wrapper</code> could not possibly be contravariant on <code>A</code>: it would mean that a <code>Wrapper[Mammal]</code> would be a valid <code>Wrapper[Dog]</code>, which would mean that a valid <code>Wrapper[Dog]</code> could return instances of <code>Cat</code>.</p>
+<p>Just as before, this is a general rule: functions are always covariant on their return values.</p>
+<h2 id="explanation-of-the-compilation-errors">Explanation of the compilation errors</h2>
+<h3 id="covariant-in-contravariant-position">Covariant in contravariant position</h3>
+<p>We now have all the necessary keys to understand the dreaded <code>covariant type A occurs in contravariant position in type A...</code> error message.</p>
+<p>Let’s first modify our <code>Wrapper</code> class to cause the issue:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Wrapper[<span class="dt">+A</span>](<span class="kw">val</span> a: <span class="dt">A</span>) {
+  <span class="kw">def</span> <span class="fu">apply</span>(): <span class="dt">A</span> = a
+
+  <span class="co">// This method will cause a compilation error message.</span>
+  <span class="kw">def</span> <span class="fu">set</span>(va: <span class="dt">A</span>): <span class="dt">Wrapper[A]</span> = <span class="fu">Wrapper</span>(va)
+}</code></pre>
+<p>Armed with our newfound type variance knowledge, this isn’t actually so hard to understand: <code>Wrapper</code> is <em>covariant</em> on <code>A</code> while <code>set</code> is <em>contravariant</em> on <code>A</code> (its parameter type).</p>
+<p>Luckily, Scala provides an easy work around through lower type bounds:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Wrapper[<span class="dt">+A</span>](<span class="kw">val</span> a: <span class="dt">A</span>) {
+  <span class="kw">def</span> <span class="fu">apply</span>(): <span class="dt">A</span> = a
+
+  <span class="co">// Notice how the signature has changed.</span>
+  <span class="kw">def</span> set[<span class="dt">B &gt;: A</span>](vb: <span class="dt">B</span>): <span class="dt">Wrapper[B]</span> = <span class="fu">Wrapper</span>(vb)
+}</code></pre>
+<p>The <code>[B &gt;: A]</code> bit is telling Scala that a local type <code>B</code> has been declared, and that <code>B</code> must always be a superclass of <code>A</code>.</p>
+<p>With that modification, <code>set</code> is no longer <em>covariant</em> on <code>A</code>, but <em>contravariant</em> on <code>B</code>, where <code>B</code> is an instance of <code>A</code> or something more general.</p>
+<p>This is all a bit theoretical, so let’s take a concrete example. Let’s pretend that the Scala compiler accepts the following code:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Wrapper[<span class="dt">+A</span>](<span class="kw">val</span> a: <span class="dt">A</span>) {
+  <span class="kw">def</span> <span class="fu">apply</span>(): <span class="dt">A</span> = a
+  <span class="kw">def</span> <span class="fu">set</span>(va: <span class="dt">A</span>): <span class="dt">Wrapper[A]</span> = <span class="fu">Wrapper</span>(va)
+}</code></pre>
+<p>If this were to be considered correct, we’d be able to write the following:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">class</span> <span class="fu">BorkedWrapper</span>(i: <span class="dt">Dog</span>) <span class="kw">extends</span> Wrapper[<span class="dt">Dog</span>](i) {
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">set</span>(vd: <span class="dt">Dog</span>): <span class="dt">Wrapper[Dog]</span> = {
+    <span class="co">// Pay attention to the fact that we're calling bark(), that's the important bit.</span>
+    vd.<span class="fu">bark</span>()
+    <span class="kw">new</span> <span class="fu">BorkedWrapper</span>(vd)
+  }
+}
+
+<span class="co">// Wrapper is covariant on A, and Dog is a subtype of Mammal: an instance of Wrapper[Dog] is a legal instance of</span>
+<span class="co">// Wrapper[Mammal]. The following line is perfectly legal.</span>
+<span class="kw">val</span> wd: <span class="dt">Wrapper[Mammal]</span> = <span class="kw">new</span> <span class="fu">BorkedWrapper</span>(<span class="kw">new</span> <span class="fu">Dog</span>(<span class="st">&quot;Lassie&quot;</span>))
+
+<span class="co">// A `Cat` is a legal instance of `Mammal`, there's nothing wrong with setting one to a Wrapper[Mammal]</span>
+wd.<span class="fu">set</span>(<span class="kw">new</span> <span class="fu">Cat</span>(<span class="st">&quot;Duchess&quot;</span>))</code></pre>
+<p>Scala just let us write code that calls the <code>bark</code> method of <code>Cat</code>, which is obviously impossible - that’s where the compilation error comes from. If were, however, to use lower type bounds, we’d find we can’t provoque such a scenario anymore:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Wrapper[<span class="dt">+A</span>](<span class="kw">val</span> a: <span class="dt">A</span>) {
+  <span class="kw">def</span> <span class="fu">apply</span>(): <span class="dt">A</span> = a
+  <span class="kw">def</span> set[<span class="dt">B &gt;: A</span>](vb: <span class="dt">B</span>): <span class="dt">Wrapper[B]</span> = <span class="fu">Wrapper</span>(vb)
+}
+
+<span class="co">// This class doesn't compile anymore: the set method doesn't actually overwrite Wrapper's, since they don't share</span>
+<span class="co">// parameter types. As an aside, that's as perfect an example of the benefit of explicitely writing override as I'm</span>
+<span class="co">// likely to find: not using it here would allow the code to compile, and figuring out that we're actually declaring</span>
+<span class="co">// two different set methods might take a while.</span>
+<span class="kw">class</span> <span class="fu">BorkedWrapper</span>(i: <span class="dt">Dog</span>) <span class="kw">extends</span> Wrapper[<span class="dt">Dog</span>](i) {
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">set</span>(vd: <span class="dt">Dog</span>): <span class="dt">Wrapper[Dog]</span> = {
+    vd.<span class="fu">bark</span>()
+    <span class="kw">new</span> <span class="fu">BorkedWrapper</span>(vd)
+  }
+}
+
+<span class="co">// This doesn't compile either:</span>
+<span class="co">// - B doesn't have a bark method</span>
+<span class="co">// - new DogWrapper(vb) is not legal, since vb is not necessarily an instance of Dog.</span>
+<span class="kw">class</span> <span class="fu">DogWrapper</span>(d: <span class="dt">Dog</span>) <span class="kw">extends</span> Wrapper[<span class="dt">Dog</span>](d) {
+  <span class="kw">override</span> <span class="kw">def</span> set[<span class="dt">B &gt;: Dog</span>](vb: <span class="dt">B</span>): <span class="dt">Wrapper[B]</span> = {
+    vb.<span class="fu">bark</span>()
+    <span class="kw">new</span> <span class="fu">DogWrapper</span>(vb)
+  }
+}
+
+<span class="kw">val</span> wd: <span class="dt">Wrapper[Dog]</span> = <span class="fu">Wrapper</span>(<span class="kw">new</span> <span class="fu">Dog</span>(<span class="st">&quot;Lassie&quot;</span>))
+
+<span class="co">// This is now legal: Mammal is a superclass of Dog, so it can be passed to set.</span>
+<span class="co">// Note that the returned value is no longer an instance of Wrapper[Dog] but of Wrapper[Mammal].</span>
+<span class="kw">val</span> wm: <span class="dt">Wrapper[Mammal]</span> = wd.<span class="fu">set</span>(<span class="kw">new</span> <span class="fu">Cat</span>(<span class="st">&quot;Duchess&quot;</span>))</code></pre>
+<h3 id="contravariant-in-covariant-position">Contravariant in covariant position</h3>
+<p>There is of course a symmetrical issue for <em>contravariance</em>, which can be seen with the following code:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">trait</span> Printer[<span class="dt">-A</span>] {
+   <span class="kw">def</span> <span class="fu">apply</span>(a: <span class="dt">A</span>): <span class="dt">A</span>
+<span class="dt">}</span></code></pre>
+<p>This causes the following compilation error: <code>error: contravariant type A occurs in covariant position in type (a: A)A of method apply</code>.</p>
+<p>Now that we have a good understanding of <em>contravariance</em>, <em>covariance</em> and how a function varies, this actually makes sense: <code>Printer</code> is <em>contravariant</em> on <code>A</code> while <code>apply</code> is <em>covariant</em> on it (since <code>A</code> is its return value).</p>
+<p>We fix this the same way we did before, with type bounds - although this time we use an upper bound:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">trait</span> Printer[<span class="dt">-A</span>] {
+   <span class="kw">def</span> apply[<span class="dt">B &lt;: A</span>](b: <span class="dt">B</span>): <span class="dt">B</span>
+<span class="dt">}</span></code></pre>
+<p>I’d love to give a concrete example here, but I’ve failed to find a convincing one so far. I’ll update this post if I ever do.</p>
+<h2 id="mutable-types-and-variance">Mutable types and variance</h2>
+<p>A last note about type variance: <em>contravariance</em> and <em>covariance</em> only work with immutable structures. Mutable ones can be <em>invariant</em>, but they cannot be made anything else.</p>
+<p>As a demonstration, let’s try to make <code>Wrapper</code> mutable:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Wrapper[<span class="dt">+A</span>](<span class="kw">private</span> <span class="kw">var</span> a: <span class="dt">A</span>) {
+  <span class="kw">def</span> get: <span class="dt">A</span> = a
+
+  <span class="co">// This won't work: a is an instance of A and cannot be used to store instances of B, since</span>
+  <span class="co">// B is necessarily a superclass of A.</span>
+  <span class="co">// The only way for this to work is to force B to be the same as A - which means making</span>
+  <span class="co">// Wrapper invariant.</span>
+  <span class="kw">def</span> set[<span class="dt">B &gt;: A</span>](vb: <span class="dt">B</span>): <span class="dt">Unit</span> = a = vb
+}</code></pre>
+
+        </div>
+    </body>
+</html>
