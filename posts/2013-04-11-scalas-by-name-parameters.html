@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Scala's by-name parameters</title>
+        <link rel="stylesheet" type="text/css" href="../css/style.css" />
+        <link rel="stylesheet" type="text/css" href="../css/fontjolly.css" />
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Home</a>
+                <a href="../archive.html">Archives</a>
+            </div>
+            <div id="navigation">
+                <a title="GitHub" href="https://github.com/nrinaudo"><span class="ico-social-github"></span></a>
+                <a title="Twitter" href="https://twitter.com/NicolasRinaudo"><span class="ico-social-twitter"></span></a>
+                <a title="Stack Overflow" href="http://stackoverflow.com/users/1370349/nicolas-rinaudo"><span class="ico-line-chart"></span></a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Scala's by-name parameters</h1>
+<div class="info"><span class="date">2013-04-11</span><span class="tags"><a href="../tags/Scala.html" class="tag">Scala</a></span></div>
+<p><em>By-name parameters</em>, or <em>pass by name</em>, is a parameter evaluation strategy, just like <em>pass by value</em> or <em>pass by address</em>, that allows for lazy evaluation of a function’s parameters - with a somewhat tricky twist.</p>
+<!--more-->
+
+
+
+<h2 id="motivation">Motivation</h2>
+<p>Lazy evaluation is a simple concept: an expression’s value is not computed until it’s actually needed. There are many applications to this, but I’ll just take a simple example and run with it here: conditional execution.</p>
+<p>Take the <code>or</code> function, implemented as follows:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> <span class="fu">or</span>(a: <span class="dt">Boolean,</span> b: <span class="dt">Boolean</span>) =
+  <span class="kw">if</span>(a) a
+  <span class="kw">else</span>  b</code></pre>
+<p>You can see that if <code>a = true</code>, <code>b</code>’s value is ignored - evaluating it is a waste of CPU cycles. It doesn’t look like a big deal, but let’s look at the following code:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="co">// Checking whether the user is logged is cheap and can be done instantly.</span>
+<span class="kw">def</span> <span class="fu">isUserLogged</span>(name: <span class="dt">String</span>) = <span class="kw">true</span>
+
+<span class="co">// Checking whether a user is valid requires database queries and is expensive, sleep 10s.</span>
+<span class="kw">def</span> <span class="fu">isUserValid</span>(name: <span class="dt">String,</span> password: <span class="dt">String</span>)  = {
+  Thread.<span class="fu">sleep</span>(<span class="dv">10000</span>)
+  <span class="kw">true</span>
+}
+
+<span class="co">// Accepts a user if it's either already logged or valid.</span>
+<span class="kw">def</span> <span class="fu">acceptUser</span>(name: <span class="dt">String,</span> password: <span class="dt">String</span>) =
+  <span class="fu">or</span>(<span class="fu">isUserLogged</span>(name), <span class="fu">isUserValid</span>(name, password))
+
+<span class="co">// This takes 10 seconds to run.</span>
+<span class="fu">println</span>(<span class="fu">acceptUser</span>(<span class="st">&quot;j.smith&quot;</span>, <span class="st">&quot;poney&quot;</span>))</code></pre>
+<p>The <code>acceptUser</code> function takes a user’s name and password and evaluates to <code>true</code> if the corresponding user is either already logged in or valid.</p>
+<p>In the current implementation, both <code>isUserLogged</code> and <code>isUserValid</code> will be evaluated, which is a shame: <code>isUserValid</code> is expensive (a whole 10 seconds!) and not necessary at all since <code>isUserLogged</code> will evaluate to <code>true</code>.</p>
+<p>Lazy evaluation would allow us to bypass <code>isUserValid</code> entirely and return <code>true</code> immediately.</p>
+<h2 id="naive-implementation-higher-order-functions">Naive implementation: higher-order functions</h2>
+<p>Scala unfortunately does not (<a href="https://issues.scala-lang.org/browse/SI-240">yet</a>) support lazy parameter evaluation, which means that we have to hack something together with the tools at our disposal - and in Scala, that’s often function composition.</p>
+<p>We want the <code>b</code> parameter of our <code>or</code> function to only be evaluated if <code>a</code> is <code>false</code> - the simplest way of doing that is rewriting <code>or</code> so that <code>b</code> is a function that evaluates to a <code>Boolean</code>:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> <span class="fu">or</span>(a: <span class="dt">Boolean,</span> b: <span class="dt">(</span>) =&gt; Boolean): <span class="dt">Boolean</span> =
+  <span class="kw">if</span>(a) a
+  <span class="kw">else</span>  <span class="fu">b</span>()</code></pre>
+<p>Note how <code>b</code> is now of type <code>() =&gt; Boolean</code> rather than simply <code>Boolean</code>.</p>
+<p>We could modify <code>a</code> the same way, but that would serve little practical purpose: it will always be evaluated and we gain nothing by delaying the inevitable.</p>
+<p>Now that <code>or</code>’s signature has changed, we need to modify <code>acceptUser</code> accordingly:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> <span class="fu">acceptUser</span>(name: <span class="dt">String,</span> password: <span class="dt">String</span>) =
+  <span class="fu">or</span>(<span class="fu">isUserLogged</span>(name), () =&gt; <span class="fu">isUserValid</span>(name, password))</code></pre>
+<p>Running our code, it behaves as expected: <code>isUserValid</code> is not called and <code>acceptUser</code> evaluated instantly.</p>
+<h2 id="better-implementation-by-name-parameters">Better implementation: by-name parameters</h2>
+<p>While we achieved exactly what we set out to do, the result is still somewhat unsatisfactory: the <code>() =&gt;</code> bits that we had to add to our code make it harder to read and do not bring anything to our understanding of what it actually does - they’re boilerplate.</p>
+<p>One of the things to enjoy about Scala is its absolute hatred for boilerplate, and this case is no exception: we can use <em>by-name parameters</em> to simplify our code without loosing functionality.</p>
+<p>A by-name parameter is a special syntax that tells the compiler that the parameter should be wrapped in a 0-arg function:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> <span class="fu">or</span>(a: <span class="dt">Boolean,</span> b: <span class="dt">=&gt;</span> Boolean): <span class="dt">Boolean</span> =
+  <span class="kw">if</span>(a) a
+  <span class="kw">else</span>  b</code></pre>
+<p><code>b</code> is now declared with the special <code>: =&gt; Boolean</code> type, and is treated as a variable rather than a function in the rest of the code.</p>
+<p>We need to change our <code>acceptUser</code> function back:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> <span class="fu">acceptUser</span>(name: <span class="dt">String,</span> password: <span class="dt">String</span>) =
+  <span class="fu">or</span>(<span class="fu">isUserLogged</span>(name), <span class="fu">isUserValid</span>(name, password))</code></pre>
+<p>This code is, in my opinion, much clearer and easy to understand: <code>acceptUser</code> declares what it does without a need for specific syntax, and the body of <code>or</code> is trivial.</p>
+<p>Running it yields the expected behaviour: <code>isUserValid</code> is not called and <code>acceptUser</code> evaluated instantly.</p>
+<h2 id="pitfall-not-actually-a-lazy-parameter">Pitfall: not actually a lazy parameter</h2>
+<p>The tricky bit with by-name parameters is that they’re not actually lazy, but a function that is evaluated <em>each time</em> the value of the parameter is needed.</p>
+<p>Let’s change our <code>or</code> method code to add logging:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> <span class="fu">or</span>(a: <span class="dt">Boolean,</span> b: <span class="dt">=&gt;</span> Boolean): <span class="dt">Boolean</span> =
+  <span class="kw">if</span>(a) a
+  <span class="kw">else</span>  {
+    <span class="fu">println</span>(<span class="st">&quot;a evaluated to false, b is &quot;</span> + b)
+    b
+  }</code></pre>
+<p>Whenever <code>a</code> evaluates to <code>false</code>, <code>b</code> will be evaluated <em>twice</em>. To convince ourselves, let’s run the following code:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> verboseB = {
+  <span class="fu">println</span>(<span class="st">&quot;evaluating b&quot;</span>)
+  <span class="kw">true</span>
+}
+
+<span class="fu">or</span>(<span class="kw">false</span>, verboseB)</code></pre>
+<p>And this will indeed print <code>evaluating b</code> twice.</p>
+<p>Should this be an issue however, it can be worked around fairly easily by modifying the code as follows:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> <span class="fu">or</span>(a: <span class="dt">Boolean,</span> b: <span class="dt">=&gt;</span> Boolean): <span class="dt">Boolean</span> = {
+  <span class="kw">lazy</span> <span class="kw">val</span> actualB = b
+  <span class="kw">if</span>(a) a
+  <span class="kw">else</span>  {
+    <span class="fu">println</span>(<span class="st">&quot;a evaluated to false, b is &quot;</span> + actualB)
+    actualB
+  }
+}</code></pre>
+<ul>
+<li><code>b</code> is a function that evaluates to a <code>Boolean</code>.</li>
+<li><code>actualB</code> is a lazy variable that will evaluate <code>b</code> once and return the same value on any subsequent call.</li>
+</ul>
+<p>Note that while the workaround exists, it’s not terribly elegant and requires a fair amount of boilerplate code. Lazy parameters would be a preferable solution, if and when they are implemented.</p>
+
+        </div>
+    </body>
+</html>

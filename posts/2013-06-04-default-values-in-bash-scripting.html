@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Default values in Bash Scripting</title>
+        <link rel="stylesheet" type="text/css" href="../css/style.css" />
+        <link rel="stylesheet" type="text/css" href="../css/fontjolly.css" />
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Home</a>
+                <a href="../archive.html">Archives</a>
+            </div>
+            <div id="navigation">
+                <a title="GitHub" href="https://github.com/nrinaudo"><span class="ico-social-github"></span></a>
+                <a title="Twitter" href="https://twitter.com/NicolasRinaudo"><span class="ico-social-twitter"></span></a>
+                <a title="Stack Overflow" href="http://stackoverflow.com/users/1370349/nicolas-rinaudo"><span class="ico-line-chart"></span></a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Default values in Bash Scripting</h1>
+<div class="info"><span class="date">2013-06-04</span><span class="tags"><a href="../tags/bash.html" class="tag">bash</a></span></div>
+<p>I regularly have to write small bash scripts to wrap around the various tools I create and need to run in batches. Bash scripting is an absolute nightmare to me - I find the syntax makes very little sense, and the fact that the presence or absence of whitespace around operators changes their meaning just seems unholy.</p>
+<p>The most common issue I have is defining default values for command line arguments that were not specified.</p>
+<!--more-->
+
+<p>I don’t pretend to understand precisely how or why this works, nor, to be honest, do I really want to, but this is how you do it:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="co">#! /bin/bash</span>
+<span class="ot">HOST=$1</span>
+<span class="kw">:</span> <span class="ot">${HOST:=</span><span class="st">&quot;localhost&quot;</span><span class="ot">}</span>
+<span class="kw">echo</span> <span class="ot">$HOST</span></code></pre>
+<p>Executing the scripts then yields:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">nicolasrinaudo</span>:~/scripts ./script.sh 212.128.0.1
+<span class="kw">212.128.0.1</span>
+<span class="kw">nicolasrinaudo</span>:~/scripts ./script.sh
+<span class="kw">localhost</span></code></pre>
+
+        </div>
+    </body>
+</html>
