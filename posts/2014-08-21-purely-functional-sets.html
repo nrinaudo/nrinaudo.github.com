@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Purely functional sets</title>
+        <link rel="stylesheet" type="text/css" href="../css/style.css" />
+        <link rel="stylesheet" type="text/css" href="../css/fontjolly.css" />
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Home</a>
+                <a href="../archive.html">Archives</a>
+            </div>
+            <div id="navigation">
+                <a title="GitHub" href="https://github.com/nrinaudo"><span class="ico-social-github"></span></a>
+                <a title="Twitter" href="https://twitter.com/NicolasRinaudo"><span class="ico-social-twitter"></span></a>
+                <a title="Stack Overflow" href="http://stackoverflow.com/users/1370349/nicolas-rinaudo"><span class="ico-line-chart"></span></a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Purely functional sets</h1>
+<div class="info"><span class="date">2014-08-21</span><span class="tags"><a href="../tags/scala.html" class="tag">scala</a> | <a href="../tags/haskell.html" class="tag">haskell</a></span></div>
+<p>I <a href="2014-08-11-collections-as-typeclasses.html">previously talked</a> about implementing collections as type classes, and gave a simple example with <code>Stack</code>. This new post is very similar, but with sets and binary search trees.</p>
+<!--more-->
+
+<h2 id="abstract-definition-of-a-set">Abstract definition of a Set</h2>
+<p>A set is a fairly simple abstract data structure: all it does is store unique values. The way these values are store is unspecified - in particular, there is no constraint on the order in which these values are stored, or even on whether that order is stable. In their rawest forms, sets do not even need to offer a way to iterate over the values they contain.</p>
+<p>Their interest lies in the unicity constraint: a value can never be present more than once in a given set. Or, to put it in more mathy terms: the value insertion operation is idempotent. That is, there is no difference between calling it once or any non-0 number of times for the same value.</p>
+<p>The minimum set of operations that a set must support are:</p>
+<ul>
+<li><code>isEmpty</code>: checks whether the set is empty.</li>
+<li><code>insert</code>: inserts a value in the set.</li>
+<li><code>contains</code>: checks whether a value is contained in the set.</li>
+</ul>
+<p>Note that since we’re talking about a purely functional set, it must be immutable - that is, calling <code>insert</code> on a set <code>S</code> must not modify it, but return a copy of <code>S</code> that also contains the new value.</p>
+<h3 id="scala-definition">Scala definition</h3>
+<p>In a previous post, I’ve shown how to define <a href="2014-08-11-collections-as-typeclasses.html">collections as type classes</a>. We’ll do the exact same thing here.</p>
+<p>First, we need to define the behaviour of set-like data structures:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">import</span> scala.language.higherKinds
+
+<span class="kw">trait</span> SetLike[<span class="dt">Impl[_]</span>] {
+  <span class="kw">def</span> isEmpty[<span class="dt">A</span>](as: <span class="dt">Impl[A]</span>)       : <span class="dt">Boolean</span>
+  <span class="kw">def</span> insert[<span class="dt">A</span>](a: <span class="dt">A,</span> as: <span class="dt">Impl[A]</span>)  : <span class="dt">Impl[A]</span>
+  <span class="kw">def</span> contains[<span class="dt">A</span>](a: <span class="dt">A,</span> as: <span class="dt">Impl[A]</span>): <span class="dt">Boolean</span>
+<span class="dt">}</span></code></pre>
+<p>Note that since sets require their values to be unique, we must be able to compare them. We could have sneaked in an <code>Eq</code> type constraint here, but since it’s not strictly necessary, we can let implementations deal with this - especially since some, such as binary search trees, require something more than simple equality.</p>
+<p>That done, we need to define the <code>Set</code> trait, for data structures that are actual sets:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">trait</span> Set[<span class="dt">A</span>] <span class="kw">extends</span> (A =&gt; Boolean) {
+  <span class="kw">def</span> isEmpty       : <span class="dt">Boolean</span>
+  <span class="kw">def</span> <span class="fu">insert</span>(a: <span class="dt">A</span>)  : <span class="dt">Set[A]</span>
+  <span class="kw">def</span> <span class="fu">contains</span>(a: <span class="dt">A</span>): <span class="dt">Boolean</span>
+
+  <span class="co">// Technically, we can consider a set to be a predicate: it's a function that takes one parameter and returns a</span>
+  <span class="co">// boolean value.</span>
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">apply</span>(a: <span class="dt">A</span>): <span class="dt">Boolean</span> = <span class="fu">contains</span>(a)
+}</code></pre>
+<p>Finally, we must write an implicit conversion from set-like things to actual sets:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">implicit</span> <span class="kw">class</span> Wrapped[<span class="dt">A, Impl[_]</span>](<span class="kw">val</span> set: <span class="dt">Impl[A]</span>)(<span class="kw">implicit</span> setLike: <span class="dt">SetLike[Impl]</span>) <span class="kw">extends</span> Set[<span class="dt">A</span>] {
+  <span class="kw">override</span> <span class="kw">def</span> isEmpty        = setLike.<span class="fu">isEmpty</span>(set)
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">insert</span>(a: <span class="dt">A</span>)   = <span class="kw">new</span> <span class="fu">Wrapped</span>(setLike.<span class="fu">insert</span>(a, set))
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">contains</span>(a: <span class="dt">A</span>) = setLike.<span class="fu">contains</span>(a, set)
+}</code></pre>
+<p>Note that instead of using a context bound when declaring <code>Impl</code>, we’ve, err, explicitly declared the implicit parameter. Both are strictly equivalent, and since use <code>setLike</code> quite a bit in the implementation, it’s more convenient than having to use <code>implicitly[SetLike]</code> everywhere.</p>
+<h3 id="haskell-definition">Haskell definition</h3>
+<p>The definition of a Haskell set is quite a bit simpler than in Scala:</p>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Set</span> s <span class="kw">where</span>
+<span class="ot">  isEmpty  ::</span> s a <span class="ot">-&gt;</span> <span class="dt">Bool</span>
+<span class="ot">  insert   ::</span> s a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> s a
+<span class="ot">  contains ::</span> s a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></code></pre>
+<p>Note that this differs from Chris Okasaki’s definition, which requires an <code>empty :: s a</code> function to be defined.</p>
+<p>The first reason I have omitted this is that I don’t think it’s either necessary nor very clean: since it doesn’t take parameters, type inference cannot be used to guess at the return type and you must explicitly state what you expect - that is, tie your code to a specific implementation of <code>Set</code>. As long as you’re going to do that, you might directly call that implementation’s constructor, which I find somewhat cleaner: the type can be implied by your code rather than requiring to be explicitly stated.</p>
+<p>The second reason is less a matter of taste and more practical: all other functions take a fully constructed instance of <code>Set</code>, allowing us to ignore class constraints entirely. If we already have a valid instance of <code>Set</code>, it must mean that the values it contains already verify whatever constraints our underlying implementation requires.</p>
+<p>If we had that <code>empty :: s a</code> method, this would not be true anymore and we’d need <code>Set</code> to somehow be aware of the possible class constraints its implementations might require. While certainly possible, I’m too much of a Haskell beginner to want to tackle these issues.</p>
+<h2 id="binary-search-trees-as-sets">Binary Search Trees as Sets</h2>
+<p>The simplest set implementation I know of is the binary search tree: a binary tree such that, for any given node <code>n</code>, all the values to its left are smaller than <code>n</code> and all the values to its right are larger than <code>n</code>.</p>
+<div class="figure">
+<img src="../images/graphs/binarysearchtrees/simple.svg" alt="Fig. 1: Simple binary search tree" /><p class="caption">Fig. 1: Simple binary search tree</p>
+</div>
+<p>You can see in figure 1 that the nodes to the left of <code>8</code> are <code>5</code>, <code>6</code> and <code>3</code>, which are all smaller than <code>8</code>. Similarly, the nodes to its right are <code>10</code>, <code>9</code> and <code>12</code>, which are all larger than <code>8</code>.</p>
+<p>In the rest of this post, I’ll use the term <em>leaf</em> to mean a leaf in the <a href="http://mathworld.wolfram.com/ExtendedBinaryTree.html">extended representation</a> of the tree: a leaf does not contain a value, but represents the end of a tree.</p>
+<h3 id="isempty-algorithm">“isEmpty” algorithm</h3>
+<p>Checking whether a binary search tree is empty is trivial: if the root is a leaf, then it’s empty. Otherwise, it’s not.</p>
+<h3 id="contains-algorithm">“contains” algorithm</h3>
+<p>The algorithm for the <code>contains</code> operation is a straightforward recursion starting at the root of the tree:</p>
+<ul>
+<li>if the current node is a leaf, return <code>false</code>.</li>
+<li>otherwise, if the desired value is smaller than the current node’s, look in the left sub-tree.</li>
+<li>otherwise, if the desired value is larger than the current node’s, look in the right sub-tree.</li>
+<li>otherwise, return <code>true</code>.</li>
+</ul>
+<p>Let’s take a few examples and run the algorithm.</p>
+<div class="figure">
+<img src="../images/graphs/binarysearchtrees/contains9.svg" alt="Fig. 2: Looking for an existing value" /><p class="caption">Fig. 2: Looking for an existing value</p>
+</div>
+<p>Trying to find <code>9</code> yields the following steps:</p>
+<ul>
+<li><code>9</code> is larger than <code>8</code>, explore the left right-tree</li>
+<li><code>8</code> is smaller than <code>10</code>, explore the left sub-tree</li>
+<li>we’ve found <code>9</code>.</li>
+</ul>
+<div class="figure">
+<img src="../images/graphs/binarysearchtrees/contains4.svg" alt="Fig. 3: Looking for a non-existing value" /><p class="caption">Fig. 3: Looking for a non-existing value</p>
+</div>
+<p>Trying to find <code>4</code> yields the following steps:</p>
+<ul>
+<li><code>4</code> is smaller than <code>8</code>, explore the left sub-tree</li>
+<li><code>4</code> is smaller than <code>5</code>, explore the left sub-tree</li>
+<li><code>4</code> is larger than <code>3</code>, explore the right sub-tree</li>
+<li>we’re at leaf, the set does not contain <code>4</code>.</li>
+</ul>
+<h3 id="insert-algorithm">“insert” algorithm</h3>
+<p>Modification of purely functional data structures can be tricky: it requires cloning the source structure and updating it just enough to reflect the desired modifications, while at the same time re-using as much of it as possible.</p>
+<p>Note that re-using parts of purely functional data structures is not unsafe: since they’re immutable by definition, it’s not possible for modifications in one to be reflected in another.</p>
+<p>Insertion in binary search trees is fairly straightforward: recursively look for the node in which the desired value should be inserted, cloning all explored nodes along the way and re-using the sub-tree that is <em>not</em> impacted by the modification.</p>
+<p>The only two special cases are leafs (in which case we found where to insert the value) or nodes that already contain the value (in which case we do not in fact need to insert it and we can abort).</p>
+<p>This is more easily explained with a graph (blue nodes are created during insertion, black ones are the original tree):</p>
+<div class="figure">
+<img src="../images/graphs/binarysearchtrees/insert4.svg" alt="Fig. 4: Inserting a value" /><p class="caption">Fig. 4: Inserting a value</p>
+</div>
+<p>Figure 4 shows the result of inserting <code>4</code> in our example tree.</p>
+<p>In our first recusive step, we find that <code>4</code> is smaller than <code>8</code>: we need to clone the current node and insert <code>4</code> in its left sub-tree.</p>
+<p><code>4</code> is also smaller than <code>5</code>: we need to clone it and insert <code>4</code> in its left sub-tree.</p>
+<p><code>4</code> is larger than <code>3</code>: we need to clone it and insert <code>4</code> in its right sub-tree.</p>
+<p>Finally, we’ve found a leaf and return a new node whose value is <code>4</code>.</p>
+<p>The result is a new tree that re-uses as much of the source one as possible: <code>10</code> and all its descendants, as well as <code>6</code> and all its descendants, are shared by the original and output trees.</p>
+<h2 id="scala-implementation-of-a-binary-search-tree">Scala implementation of a binary search tree</h2>
+<h3 id="binarysearchtree">BinarySearchTree</h3>
+<p>We’ll implement binary search trees as an algebraic data type. In Scala, this means starting by a sealed trait to define the common operations:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">sealed</span> <span class="kw">trait</span> BinarySearchTree[<span class="dt">A</span>] {
+  <span class="kw">def</span> isEmpty       : <span class="dt">Boolean</span>
+  <span class="kw">def</span> <span class="fu">add</span>(a: <span class="dt">A</span>)     : <span class="dt">BinarySearchTree[A]</span>
+  <span class="kw">def</span> <span class="fu">contains</span>(a: <span class="dt">A</span>): <span class="dt">Boolean</span>
+<span class="dt">}</span></code></pre>
+<p>Note that both our <code>add</code> and <code>contains</code> algorithms require <code>A</code> to be ordered. Since we can only work with ordered data, we’d like to state that constraint explicitely in the trait’s type signature:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">sealed</span> <span class="kw">trait</span> BinarySearchTree[<span class="dt">A: Ordering</span>] {...}</code></pre>
+<p>This is, unfortunately, impossible: context bounds are compiled as implicit parameters, which means our previous code would compile to a trait with a constructor expecting one implicit parameter:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">sealed</span> <span class="kw">trait</span> BinarySearchTree[<span class="dt">A</span>](<span class="kw">implicit</span> ord: <span class="dt">Ordering[A]</span>) {...}</code></pre>
+<p>Since Scala trait constructors cannot have parameters, the above code cannot compile.</p>
+<p>We could also mark <code>add</code> and <code>contains</code> with an <code>Ordering</code> context bound, but that would come back and haunt us later when we try to write a <code>SetLike</code> implementation. Take the signature of <code>SetLike</code>’s <code>insert</code> method, for example:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> insert[<span class="dt">A</span>](a: <span class="dt">A,</span> as: <span class="dt">Impl[A]</span>): <span class="dt">Impl[A]</span></code></pre>
+<p>It does not expect an <code>Ordering[A]</code> as a parameter, either implicitly or explicitly - we would not have an ordering to pass to <code>BinarySearchTree</code>’s <code>add</code> method and no way to get one.</p>
+<h3 id="leaf">Leaf</h3>
+<p>Having written our algebraic data type’s contract, we must implement its alternatives. Let’s start with the simple one, <code>Leaf</code>:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Leaf[<span class="dt">A: Ordering</span>]() <span class="kw">extends</span> BinarySearchTree[<span class="dt">A</span>] {
+  <span class="co">// A leaf is always empty.</span>
+  <span class="kw">override</span> <span class="kw">def</span> isEmpty = <span class="kw">true</span>
+
+  <span class="co">// A leaf never contains anything.</span>
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">contains</span>(a: <span class="dt">A</span>) = <span class="kw">false</span>
+
+  <span class="co">// Inserting a value in a leaf is always done by creating a new tree.</span>
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">add</span>(a: <span class="dt">A</span>) = <span class="fu">Node</span>(a, <span class="kw">this</span>, <span class="kw">this</span>)
+}</code></pre>
+<p>There are a few things to note in this implementation.</p>
+<p>The first one is how neatly this implements the bottom cases of the recursive algorithms we defined for <code>insert</code> and <code>contains</code> - a leaf never contains anything, and inserting a new value in a leaf is always done by creating a new node.</p>
+<p>Another interesting point is that <code>Leaf</code> has a type constraint on <code>A</code>: there must be an implicit instance of <code>Ordering[A]</code> in scope. The reason for this might not be immediately obvious, but it’s required by <code>add</code>’s implementation: we’ll see later that <code>Node</code>’s constructor require an implicit <code>Ordering[A]</code>.</p>
+<p>Finally, <code>Leaf</code> is a bit of a strange beast: it’s a case class with no field, but not a case object. This is sub-optimal, as it means that we’ll have a new instance of <code>Leaf</code> for each leaf in our trees rather than a single instance shared across all trees.</p>
+<p>The reason for this implementation is that I’m more interested in the data structures themselves than Scala plumbing at this point, and in order for <code>Leaf</code> to be a case object, I’d need <code>BinarySearchTree</code> to be covariant and <code>Leaf</code> to be a <code>BinarySearchTree[Nothing]</code>. Adding covariance to the juggling I’m already doing with the type system will only add confusion - I’m sure it’s possible, and I’d absolutely do it if I thought my collection implementations had the slightest chance of being used by anyone, but that’s really not the purpose of this post.</p>
+<h3 id="node">Node</h3>
+<p>We can finally implement the meat of our <code>BinarySearchTree</code>: <code>Node</code>.</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Node[<span class="dt">A</span>](value: <span class="dt">A,</span> left: <span class="dt">BinarySearchTree[A],</span> right: <span class="dt">BinarySearchTree[A]</span>)(<span class="kw">implicit</span> ord: <span class="dt">Ordering[A]</span>)
+  <span class="kw">extends</span> BinarySearchTree[<span class="dt">A</span>] {
+  <span class="co">// A node is never empty.</span>
+  <span class="kw">override</span> <span class="kw">def</span> isEmpty = <span class="kw">false</span>
+
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">add</span>(a: <span class="dt">A</span>) =
+    <span class="kw">if</span>(ord.<span class="fu">lt</span>(a, value))      <span class="fu">copy</span>(left  = left + a)
+    <span class="kw">else</span> <span class="kw">if</span>(ord.<span class="fu">gt</span>(a, value)) <span class="fu">copy</span>(right = right + a)
+    <span class="kw">else</span>                      <span class="kw">this</span>
+
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">contains</span>(a: <span class="dt">A</span>) =
+    <span class="kw">if</span>(ord.<span class="fu">lt</span>(a, value))      left.<span class="fu">contains</span>(a)
+    <span class="kw">else</span> <span class="kw">if</span>(ord.<span class="fu">gt</span>(a, value)) right.<span class="fu">contains</span>(a)
+    <span class="kw">else</span>                      <span class="kw">true</span>
+}</code></pre>
+<p>The first thing to point out in this implementation is that it can be optimised: both <code>add</code> and <code>contains</code> are recursive, but neither of them are tail-recursive. That’s fine for demonstration purposes, and makes the code quite a bit more legible, but it’d probably be a desirable implementation if <code>Node</code> were to be used in a production a environment.</p>
+<p>Note how clearly case classes allow us to express our cloning algorithm: the <code>copy</code> method makes it obvious that the only difference between the current node and the one that is returned is the sub-tree in which we drill down.</p>
+<p>On the other hand, I’m a bit annoyed that I couldn’t find a sane way to use operators such as <code>&lt;</code> and <code>&gt;</code> rather than the more verbose <code>ord.lt</code> and <code>ord.gt</code>. It feels like an obvious way to make the code clearer, but I just didn’t manage to get it to work.</p>
+<h3 id="implicit-conversion-to-set">Implicit conversion to <code>Set</code></h3>
+<p>In order for our <code>BinarySearchTree</code> to be usable as a <code>Set</code>, we still need to write the corresponding, trivial <code>SetLike</code> implementation:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">implicit</span> <span class="kw">object</span> AsSet <span class="kw">extends</span> SetLike[<span class="dt">BinarySearchTree</span>] {
+  <span class="kw">override</span> <span class="kw">def</span> isEmpty[<span class="dt">A</span>](as: <span class="dt">BinarySearchTree[A]</span>)        = as.<span class="fu">isEmpty</span>
+  <span class="kw">override</span> <span class="kw">def</span> insert[<span class="dt">A</span>](a: <span class="dt">A,</span> as: <span class="dt">BinarySearchTree[A]</span>)   = as + a
+  <span class="kw">override</span> <span class="kw">def</span> contains[<span class="dt">A</span>](a: <span class="dt">A,</span> as: <span class="dt">BinarySearchTree[A]</span>) = as.<span class="fu">contains</span>(a)
+}</code></pre>
+<h2 id="haskell-implementation-of-a-binary-search-tree">Haskell implementation of a binary search tree</h2>
+<h3 id="binarysearchtree-1">BinarySearchTree</h3>
+<p>As with our Scala implementation, we’ll define binary search trees as an algebraic data type:</p>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">{-# LANGUAGE ExistentialQuantification #-}</span>
+
+<span class="kw">data</span> <span class="dt">BinarySearchTree</span> a <span class="fu">=</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Node</span> a (<span class="dt">BinarySearchTree</span> a) (<span class="dt">BinarySearchTree</span> a)
+                        <span class="fu">|</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Leaf</span></code></pre>
+<p>We need <code>ExistentialQuantification</code> to be allowed to declare type constraints at the data constructor level. This allows us to ensure that only values that can be ordered are added in our binary search trees, the same way we did for the Scala implementation.</p>
+<h3 id="set-implementation">Set implementation</h3>
+<p>Now that we have our data structure, we need to turn it into a valid <code>Set</code> implementation:</p>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Set</span> <span class="dt">BinarySearchTree</span> <span class="kw">where</span>
+  isEmpty <span class="dt">Leaf</span> <span class="fu">=</span> <span class="dt">True</span>
+  isEmpty _    <span class="fu">=</span> <span class="dt">False</span>
+
+  contains <span class="dt">Leaf</span> _ <span class="fu">=</span> <span class="dt">False</span>
+  contains (<span class="dt">Node</span> v l r) a
+    <span class="fu">|</span> a <span class="fu">&lt;</span> v     <span class="fu">=</span> contains l a
+    <span class="fu">|</span> a <span class="fu">&gt;</span> v     <span class="fu">=</span> contains r a
+    <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">True</span>
+
+  insert <span class="dt">Leaf</span> a <span class="fu">=</span> <span class="dt">Node</span> a <span class="dt">Leaf</span> <span class="dt">Leaf</span>
+  insert s<span class="fu">@</span>(<span class="dt">Node</span> v l r) a
+    <span class="fu">|</span> a <span class="fu">&lt;</span> v <span class="fu">=</span> <span class="dt">Node</span> v (insert l a) r
+    <span class="fu">|</span> a <span class="fu">&gt;</span> v <span class="fu">=</span> <span class="dt">Node</span> v l (insert r a)
+    <span class="fu">|</span> otherwise <span class="fu">=</span> s</code></pre>
+<p>There really isn’t anything special to say about this code, aside from noting how clear it is. Provided you can read Haskell, this could almost be the specifications for our binary search tree algorithms.</p>
+
+        </div>
+    </body>
+</html>

@@ -34,8 +34,8 @@
 <p>Abstract data structures do not define how things are implemented, but rather what operations they must support. A <code>Stack</code>, for example, is an abstract data structure that supports:</p>
 <ul>
 <li>checking whether it’s empty (<code>isEmpty</code>)</li>
-<li>adding an element at its top (<code>push</code>)</li>
-<li>reading the element at its top (<code>top</code>)</li>
+<li>adding a value at its top (<code>push</code>)</li>
+<li>reading the value at its top (<code>top</code>)</li>
 <li>removing its top (<code>pop</code>)</li>
 </ul>
 <p>A variety of concrete data structures can support these operations - for the sake of argument, let’s use the functional list, with:</p>
@@ -58,7 +58,7 @@
   <span class="co">// Checks whether the stack is empty.</span>
   <span class="kw">def</span> isEmpty[<span class="dt">A</span>](as: <span class="dt">Impl[A]</span>): <span class="dt">Boolean</span>
 
-  <span class="co">// Pushes an element onto the stack.</span>
+  <span class="co">// Pushes a value onto the stack.</span>
   <span class="kw">def</span> push[<span class="dt">A</span>](a: <span class="dt">A,</span> as: <span class="dt">Impl[A]</span>): <span class="dt">Impl[A]</span>
 
   <span class="co">// Returns the top of the stack.</span>
@@ -95,13 +95,13 @@
   <span class="co">// Checks whether the stack is empty.</span>
   <span class="kw">def</span> isEmpty: <span class="dt">Boolean</span>
 
-  <span class="co">// Pushes an element at the top of the stack.</span>
+  <span class="co">// Pushes a value at the top of the stack.</span>
   <span class="kw">def</span> <span class="fu">push</span>(a: <span class="dt">A</span>): <span class="dt">Stack[A]</span>
 
-  <span class="co">// Returns the element at the top of the stack.</span>
+  <span class="co">// Returns the value at the top of the stack.</span>
   <span class="kw">def</span> top: <span class="dt">A</span>
 
-  <span class="co">// Removes the element at the top of the stack.</span>
+  <span class="co">// Removes the value at the top of the stack.</span>
   <span class="kw">def</span> <span class="fu">pop</span>(): <span class="dt">Stack[A]</span>
 <span class="dt">}</span></code></pre>
 <p>We now have a trait that defines what a stack is, and another that allows us to treat arbitrary data structures as stack-like ones. All we need is a simple way to go from one to the other, which sounds like a perfect job for Scala’s implicit conversion mechanism:</p>
@@ -135,7 +135,7 @@
   <span class="co">-- Checks whether the stack is empty.</span>
 <span class="ot">  isEmpty ::</span> f a <span class="ot">-&gt;</span> <span class="dt">Bool</span>
 
-  <span class="co">-- Pushes an element onto the stack.</span>
+  <span class="co">-- Pushes an value onto the stack.</span>
 <span class="ot">  push ::</span> a <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f a
 
   <span class="co">-- Returns the top of the stack.</span>
