@@ -20,7 +20,14 @@ main = hakyll $ do
 
   -- Images ------------------------------------------------------------------------------------------------------------
   ----------------------------------------------------------------------------------------------------------------------
-  match "images/*" $ do
+  -- Compile dot files as SVG.
+  match "images/**.dot" $ do
+    route   $ setExtension "svg"
+    compile $ getResourceString >>=
+      withItemBody (unixFilter "dot" ["-Tsvg"])
+
+  -- Other images are simply copied.
+  match "images/**" $ do
     route   idRoute
     compile copyFileCompiler
 
@@ -87,15 +94,6 @@ main = hakyll $ do
 
   -- Tags --------------------------------------------------------------------------------------------------------------
   ----------------------------------------------------------------------------------------------------------------------
-  -- create ["tags.html"] $ do
-  --   route idRoute
-  --   compile $ do
-  --     let tagCtx = listField "tag" defaultContext (map fst (tagsMap tags))
-
-  --     makeItem ""
-  --       >>= loadAndApplyTemplate "templates/archive.html" tagCtx
-  --       >>= relativizeUrls
-
   tagsRules tags $ \tag pattern -> do
     route idRoute
     compile $ do

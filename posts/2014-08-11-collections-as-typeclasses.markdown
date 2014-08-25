@@ -1,6 +1,6 @@
 ---
 title: Collections as type classes
-tags: scala haskell
+tags: scala, haskell
 ---
 
 I've been reading Chris Okasaki's [Purely Functional Data Structures](http://www.amazon.co.uk/gp/product/B00AKE1V04/ref=s9_simh_gw_p351_d3_i1?pf_rd_m=A3P5ROKL5A1OLE&pf_rd_s=center-2&pf_rd_r=02B6DPVTMCQXB84VAF5F&pf_rd_t=101&pf_rd_p=455344027&pf_rd_i=468294)
@@ -22,8 +22,8 @@ Abstract data structures do not define how things are implemented, but rather wh
 `Stack`, for example, is an abstract data structure that supports:
 
 * checking whether it's empty (`isEmpty`)
-* adding an element at its top (`push`)
-* reading the element at its top (`top`)
+* adding a value at its top (`push`)
+* reading the value at its top (`top`)
 * removing its top (`pop`)
 
 A variety of concrete data structures can support these operations - for the sake of argument, let's use the functional
@@ -63,7 +63,7 @@ trait StackLike[Impl[_]] {
   // Checks whether the stack is empty.
   def isEmpty[A](as: Impl[A]): Boolean
 
-  // Pushes an element onto the stack.
+  // Pushes a value onto the stack.
   def push[A](a: A, as: Impl[A]): Impl[A]
 
   // Returns the top of the stack.
@@ -122,13 +122,13 @@ trait Stack[A] {
   // Checks whether the stack is empty.
   def isEmpty: Boolean
 
-  // Pushes an element at the top of the stack.
+  // Pushes a value at the top of the stack.
   def push(a: A): Stack[A]
 
-  // Returns the element at the top of the stack.
+  // Returns the value at the top of the stack.
   def top: A
 
-  // Removes the element at the top of the stack.
+  // Removes the value at the top of the stack.
   def pop(): Stack[A]
 }
 ```
@@ -186,7 +186,7 @@ class Stack f where
   -- Checks whether the stack is empty.
   isEmpty :: f a -> Bool
 
-  -- Pushes an element onto the stack.
+  -- Pushes an value onto the stack.
   push :: a -> f a -> f a
 
   -- Returns the top of the stack.
