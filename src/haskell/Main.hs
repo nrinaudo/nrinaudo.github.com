@@ -8,8 +8,17 @@ import Text.Blaze.Html             (toHtml, toValue, (!))
 import Text.Blaze.Html5            (Html, a)
 import Text.Blaze.Html5.Attributes (href, class_)
 
+hakyllConf :: Configuration
+hakyllConf = defaultConfiguration {
+  providerDirectory    = "./src/hakyll/",
+  destinationDirectory = "./tmp/site",
+  storeDirectory       = "./tmp/cache",
+  tmpDirectory         = "./tmp/tmp"
+  }
+
+
 main :: IO ()
-main = hakyll $ do
+main = hakyllWith hakyllConf $ do
   tags <- buildTags "posts/*" (fromCapture "tags/*.html")
 
   let postContext = dateField   "date"   "%F"      <>
