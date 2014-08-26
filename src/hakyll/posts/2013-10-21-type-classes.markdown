@@ -76,7 +76,7 @@ correct one to `list.sorted`, either implicitly or explicitly.
 and this is materialized by the `LastNameOrdering` type class instance.
 
 It's also important to note that, using this mechanism, we've just augmented `Person`, a final class, with features it
-did not have to begin with, and we've do so without modifying or recompiling it, or without wrapping it into adapter
+did not have to begin with, and we've done so without modifying or recompiling it, or without wrapping it into adapter
 classes.
 
 Another important insight is that thanks to this mechanism, as long as something can conceivably be ordered, we'll be

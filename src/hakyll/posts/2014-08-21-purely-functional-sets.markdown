@@ -9,16 +9,15 @@ gave a simple example with `Stack`. This new post is very similar, but with sets
 <!--more-->
 
 ## Abstract definition of a Set
-A set is a fairly simple abstract data structure: all it does is store unique values. The way these values are store
-is unspecified - in particular, there is no constraint on the order in which these values are stored, or even on whether
-that order is stable. In their rawest forms, sets do not even need to offer a way to iterate over the values they
-contain.
+A set is a fairly simple abstract data structure: all it does is store unique values. The way these values are stored
+is unspecified - in particular, there is no constraint on their order, or even on whether that order is stable. In their
+rawest forms, sets do not even need to offer a way to iterate over their values.
 
 Their interest lies in the unicity constraint: a value can never be present more than once in a given set. Or, to put
 it in more mathy terms: the value insertion operation is idempotent. That is, there is no difference between calling it
-once or any non-0 number of times for the same value.
+once or many times for the same value.
 
-The minimum set of operations that a set must support are:
+The core operations that a set must support are:
 
 * `isEmpty`: checks whether the set is empty.
 * `insert`: inserts a value in the set.
@@ -116,7 +115,7 @@ Similarly, the nodes to its right are `10`, `9` and `12`, which are all larger t
 
 In the rest of this post, I'll use the term _leaf_ to mean a leaf in the
 [extended representation](http://mathworld.wolfram.com/ExtendedBinaryTree.html) of the tree: a leaf does not contain a
-value, but represents the end of a tree.
+value, but represents the end of a branch.
 
 ### "isEmpty" algorithm
 
@@ -138,7 +137,7 @@ Let's take a few examples and run the algorithm.
 
 Trying to find `9` yields the following steps:
 
-* `9` is larger than `8`, explore the left right-tree
+* `9` is larger than `8`, explore the right sub-tree
 * `8` is smaller than `10`, explore the left sub-tree
 * we've found `9`.
 
