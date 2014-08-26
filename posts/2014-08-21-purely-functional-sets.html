@@ -99,7 +99,7 @@
 <p>Trying to find <code>9</code> yields the following steps:</p>
 <ul>
 <li><code>9</code> is larger than <code>8</code>, explore the right sub-tree</li>
-<li><code>8</code> is smaller than <code>10</code>, explore the left sub-tree</li>
+<li><code>9</code> is smaller than <code>10</code>, explore the left sub-tree</li>
 <li>we’ve found <code>9</code>.</li>
 </ul>
 <div class="figure">
@@ -110,13 +110,13 @@
 <li><code>4</code> is smaller than <code>8</code>, explore the left sub-tree</li>
 <li><code>4</code> is smaller than <code>5</code>, explore the left sub-tree</li>
 <li><code>4</code> is larger than <code>3</code>, explore the right sub-tree</li>
-<li>we’re at leaf, the set does not contain <code>4</code>.</li>
+<li>we’re at a leaf, the set does not contain <code>4</code>.</li>
 </ul>
 <h3 id="insert-algorithm">“insert” algorithm</h3>
 <p>Modification of purely functional data structures can be tricky: it requires cloning the source structure and updating it just enough to reflect the desired modifications, while at the same time re-using as much of it as possible.</p>
 <p>Note that re-using parts of purely functional data structures is not unsafe: since they’re immutable by definition, it’s not possible for modifications in one to be reflected in another.</p>
 <p>Insertion in binary search trees is fairly straightforward: recursively look for the node in which the desired value should be inserted, cloning all explored nodes along the way and re-using the sub-tree that is <em>not</em> impacted by the modification.</p>
-<p>The only two special cases are leafs (in which case we found where to insert the value) or nodes that already contain the value (in which case we do not in fact need to insert it and we can abort).</p>
+<p>The only two special cases are leafs (in which case we found where to insert the value) or nodes that already contain the value (in which case we do not in fact need to insert it and can abort).</p>
 <p>This is more easily explained with a graph (blue nodes are created during insertion, black ones are the original tree):</p>
 <div class="figure">
 <img src="../images/graphs/binarysearchtrees/insert4.svg" alt="Fig. 4: Inserting a value" /><p class="caption">Fig. 4: Inserting a value</p>
@@ -129,7 +129,7 @@
 <p>The result is a new tree that re-uses as much of the source one as possible: <code>10</code> and all its descendants, as well as <code>6</code> and all its descendants, are shared by the original and output trees.</p>
 <h2 id="scala-implementation-of-a-binary-search-tree">Scala implementation of a binary search tree</h2>
 <h3 id="binarysearchtree">BinarySearchTree</h3>
-<p>We’ll implement binary search trees as an algebraic data type. In Scala, this means starting by a sealed trait to define the common operations:</p>
+<p>We’ll implement binary search trees as an algebraic data type. In Scala, this means starting with a sealed trait to define the common operations:</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">sealed</span> <span class="kw">trait</span> BinarySearchTree[<span class="dt">A</span>] {
   <span class="kw">def</span> isEmpty       : <span class="dt">Boolean</span>
   <span class="kw">def</span> <span class="fu">add</span>(a: <span class="dt">A</span>)     : <span class="dt">BinarySearchTree[A]</span>
@@ -177,7 +177,7 @@
     <span class="kw">else</span> <span class="kw">if</span>(ord.<span class="fu">gt</span>(a, value)) right.<span class="fu">contains</span>(a)
     <span class="kw">else</span>                      <span class="kw">true</span>
 }</code></pre>
-<p>The first thing to point out in this implementation is that it can be optimised: both <code>add</code> and <code>contains</code> are recursive, but neither of them are tail-recursive. That’s fine for demonstration purposes, and makes the code quite a bit more legible, but it’d probably be a desirable implementation if <code>Node</code> were to be used in a production a environment.</p>
+<p>The first thing to point out in this implementation is that it can be optimised: both <code>add</code> and <code>contains</code> are recursive, but neither of them is tail-recursive. That’s fine for demonstration purposes, and makes the code quite a bit more legible, but it’d probably be a desirable optimsation if <code>Node</code> were to be used in a production a environment.</p>
 <p>Note how clearly case classes allow us to express our cloning algorithm: the <code>copy</code> method makes it obvious that the only difference between the current node and the one that is returned is the sub-tree in which we drill down.</p>
 <p>On the other hand, I’m a bit annoyed that I couldn’t find a sane way to use operators such as <code>&lt;</code> and <code>&gt;</code> rather than the more verbose <code>ord.lt</code> and <code>ord.gt</code>. It feels like an obvious way to make the code clearer, but I just didn’t manage to get it to work.</p>
 <h3 id="implicit-conversion-to-set">Implicit conversion to <code>Set</code></h3>
