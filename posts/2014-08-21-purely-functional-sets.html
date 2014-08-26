@@ -28,9 +28,9 @@
 <!--more-->
 
 <h2 id="abstract-definition-of-a-set">Abstract definition of a Set</h2>
-<p>A set is a fairly simple abstract data structure: all it does is store unique values. The way these values are store is unspecified - in particular, there is no constraint on the order in which these values are stored, or even on whether that order is stable. In their rawest forms, sets do not even need to offer a way to iterate over the values they contain.</p>
-<p>Their interest lies in the unicity constraint: a value can never be present more than once in a given set. Or, to put it in more mathy terms: the value insertion operation is idempotent. That is, there is no difference between calling it once or any non-0 number of times for the same value.</p>
-<p>The minimum set of operations that a set must support are:</p>
+<p>A set is a fairly simple abstract data structure: all it does is store unique values. The way these values are stored is unspecified - in particular, there is no constraint on their order, or even on whether that order is stable. In their rawest forms, sets do not even need to offer a way to iterate over their values.</p>
+<p>Their interest lies in the unicity constraint: a value can never be present more than once in a given set. Or, to put it in more mathy terms: the value insertion operation is idempotent. That is, there is no difference between calling it once or many times for the same value.</p>
+<p>The core operations that a set must support are:</p>
 <ul>
 <li><code>isEmpty</code>: checks whether the set is empty.</li>
 <li><code>insert</code>: inserts a value in the set.</li>
@@ -81,7 +81,7 @@
 <img src="../images/graphs/binarysearchtrees/simple.svg" alt="Fig. 1: Simple binary search tree" /><p class="caption">Fig. 1: Simple binary search tree</p>
 </div>
 <p>You can see in figure 1 that the nodes to the left of <code>8</code> are <code>5</code>, <code>6</code> and <code>3</code>, which are all smaller than <code>8</code>. Similarly, the nodes to its right are <code>10</code>, <code>9</code> and <code>12</code>, which are all larger than <code>8</code>.</p>
-<p>In the rest of this post, I’ll use the term <em>leaf</em> to mean a leaf in the <a href="http://mathworld.wolfram.com/ExtendedBinaryTree.html">extended representation</a> of the tree: a leaf does not contain a value, but represents the end of a tree.</p>
+<p>In the rest of this post, I’ll use the term <em>leaf</em> to mean a leaf in the <a href="http://mathworld.wolfram.com/ExtendedBinaryTree.html">extended representation</a> of the tree: a leaf does not contain a value, but represents the end of a branch.</p>
 <h3 id="isempty-algorithm">“isEmpty” algorithm</h3>
 <p>Checking whether a binary search tree is empty is trivial: if the root is a leaf, then it’s empty. Otherwise, it’s not.</p>
 <h3 id="contains-algorithm">“contains” algorithm</h3>
@@ -98,7 +98,7 @@
 </div>
 <p>Trying to find <code>9</code> yields the following steps:</p>
 <ul>
-<li><code>9</code> is larger than <code>8</code>, explore the left right-tree</li>
+<li><code>9</code> is larger than <code>8</code>, explore the right sub-tree</li>
 <li><code>8</code> is smaller than <code>10</code>, explore the left sub-tree</li>
 <li>we’ve found <code>9</code>.</li>
 </ul>

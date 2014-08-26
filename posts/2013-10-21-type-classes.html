@@ -52,7 +52,7 @@
 <pre class="sourceCode scala"><code class="sourceCode scala">list.<span class="fu">sorted</span></code></pre>
 <p>Supporting multiple sort orders is done by having an implementation of <code>Ordering[Person]</code> for each and passing the correct one to <code>list.sorted</code>, either implicitly or explicitly.</p>
 <p><code>Ordering</code> is an example of type class: <code>Person</code> is not ordered, but it can be used as something that has an order, and this is materialized by the <code>LastNameOrdering</code> type class instance.</p>
-<p>It’s also important to note that, using this mechanism, we’ve just augmented <code>Person</code>, a final class, with features it did not have to begin with, and we’ve do so without modifying or recompiling it, or without wrapping it into adapter classes.</p>
+<p>It’s also important to note that, using this mechanism, we’ve just augmented <code>Person</code>, a final class, with features it did not have to begin with, and we’ve done so without modifying or recompiling it, or without wrapping it into adapter classes.</p>
 <p>Another important insight is that thanks to this mechanism, as long as something can conceivably be ordered, we’ll be able to sort a list of it. The sorting problem is dealt with once and for all, and for all possible types of data.</p>
 <h2 id="writing-a-type-class">Writing a type class</h2>
 <p>We now have a better understanding of what a type class is. Implementing one requires surprisingly little code and, thanks to Scala’s support of implicit parameters, can be made all but invisible to callers.</p>
