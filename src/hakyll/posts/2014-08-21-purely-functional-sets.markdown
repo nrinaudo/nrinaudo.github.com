@@ -138,7 +138,7 @@ Let's take a few examples and run the algorithm.
 Trying to find `9` yields the following steps:
 
 * `9` is larger than `8`, explore the right sub-tree
-* `8` is smaller than `10`, explore the left sub-tree
+* `9` is smaller than `10`, explore the left sub-tree
 * we've found `9`.
 
 
@@ -149,7 +149,7 @@ Trying to find `4` yields the following steps:
 * `4` is smaller than `8`, explore the left sub-tree
 * `4` is smaller than `5`, explore the left sub-tree
 * `4` is larger than `3`, explore the right sub-tree
-* we're at leaf, the set does not contain `4`.
+* we're at a leaf, the set does not contain `4`.
 
 
 ### "insert" algorithm
@@ -164,7 +164,7 @@ should be inserted, cloning all explored nodes along the way and re-using the su
 the modification.
 
 The only two special cases are leafs (in which case we found where to insert the value) or nodes that already contain
-the value (in which case we do not in fact need to insert it and we can abort).
+the value (in which case we do not in fact need to insert it and can abort).
 
 This is more easily explained with a graph (blue nodes are created during insertion, black ones are the original tree):
 
@@ -188,7 +188,7 @@ The result is a new tree that re-uses as much of the source one as possible: `10
 ## Scala implementation of a binary search tree
 
 ### BinarySearchTree
-We'll implement binary search trees as an algebraic data type. In Scala, this means starting by a sealed trait to
+We'll implement binary search trees as an algebraic data type. In Scala, this means starting with a sealed trait to
 define the common operations:
 
 ```scala
@@ -284,8 +284,8 @@ case class Node[A](value: A, left: BinarySearchTree[A], right: BinarySearchTree[
 ```
 
 The first thing to point out in this implementation is that it can be optimised: both `add` and `contains` are
-recursive, but neither of them are tail-recursive. That's fine for demonstration purposes, and makes the code quite a
-bit more legible, but it'd probably be a desirable implementation if `Node` were to be used in a production a
+recursive, but neither of them is tail-recursive. That's fine for demonstration purposes, and makes the code quite a
+bit more legible, but it'd probably be a desirable optimsation if `Node` were to be used in a production a
 environment.
 
 Note how clearly case classes allow us to express our cloning algorithm: the `copy` method makes it obvious that the
