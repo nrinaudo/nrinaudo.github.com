@@ -79,27 +79,28 @@ than having to use `implicitly[SetLike]` everywhere.
 The definition of a Haskell set is quite a bit simpler than in Scala:
 
 ```haskell
+import GHC.Prim
+
 class Set s where
+  -- Constraints on elements that s can contains.
+  -- None by default.
+  type SetEntry s a :: Constraint
+  type SetEntry s a = ()
+
+  empty    :: SetEntry s a => s a
   isEmpty  :: s a -> Bool
-  insert   :: s a -> a -> s a
+  insert   :: SetEntry s a => s a -> a -> s a
   contains :: s a -> a -> Bool
 ```
 
-Note that this differs from Chris Okasaki's definition, which requires an `empty :: s a` function to be defined.
+The tricky bit here is the `SetEntry` type constraint: it allows us to let instances of `Set` impose constraints on
+the data they contain. Binary search trees, for example, require ordered data, but this constraint is not applicable
+to all possible `Set` implementations.
 
-The first reason I have omitted this is that I don't think it's either necessary nor very clean: since it doesn't take
-parameters, type inference cannot be used to guess at the return type and you must explicitly state what you expect -
-that is, tie your code to a specific implementation of `Set`. As long as you're going to do that, you might
-directly call that implementation's constructor, which I find somewhat cleaner: the type can be implied by your code
-rather than requiring to be explicitly stated.
+Note that we've also added an `empty` method, used to create empty sets. This is probably not strictly necessary, but
+that's how Chris Okasaki implements it - odds are good it's the smart thing to do.
 
-The second reason is less a matter of taste and more practical: all other functions take a fully constructed instance
-of `Set`, allowing us to ignore class constraints entirely. If we already have a valid instance of `Set`, it must mean
-that the values it contains already verify whatever constraints our underlying implementation requires.
-
-If we had that `empty :: s a` method, this would not be true anymore and we'd need `Set` to somehow be aware of the
-possible class constraints its implementations might require. While certainly possible, I'm too much of a Haskell
-beginner to want to tackle these issues.
+This code requires the `TypeFamilies` and `ConstraintKinds` flags to compile.
 
 
 ## Binary Search Trees as Sets
@@ -313,22 +314,26 @@ implicit object AsSet extends SetLike[BinarySearchTree] {
 As with our Scala implementation, we'll define binary search trees as an algebraic data type:
 
 ```haskell
-{-# LANGUAGE ExistentialQuantification #-}
-
 data BinarySearchTree a = Ord a => Node a (BinarySearchTree a) (BinarySearchTree a)
                         | Ord a => Leaf
 
 ```
 
-We need `ExistentialQuantification` to be allowed to declare type constraints at the data constructor level. This allows
-us to ensure that only values that can be ordered are added in our binary search trees, the same way we did for the
-Scala implementation.
+Note that we'll need the `ExistentialQuantification` to be able to declare type constraints at the data constructor
+level. This allows us to ensure that only values that can be ordered are added in our binary search trees, the same way
+we did for the Scala implementation.
+
 
 
 ### Set implementation
 Now that we have our data structure, we need to turn it into a valid `Set` implementation:
+
 ```haskell
 instance Set BinarySearchTree where
+  type SetEntry BinarySearchTree a = Ord a
+
+  empty = Leaf
+
   isEmpty Leaf = True
   isEmpty _    = False
 
@@ -344,6 +349,9 @@ instance Set BinarySearchTree where
     | a > v = Node v l (insert r a)
     | otherwise = s
 ```
+
+In order for this to compile, we'll need a mess of compiler flags: `TypeFamilies`, `MultiParamTypeClasses` and
+`FlexibleInstances`.
 
 There really isn't anything special to say about this code, aside from noting how clear it is. Provided you can read
 Haskell, this could almost be the specifications for our binary search tree algorithms.
