@@ -30,7 +30,7 @@
 <h2 id="binary-search-tree">Binary Search Tree</h2>
 <p>A binary search tree is a binary tree such that, for any given node <code>n</code>, all the values to its left are smaller than <code>n</code> and all the values to its right are larger than <code>n</code>.</p>
 <div class="figure">
-<img src="../images/graphs/binarysearchtrees/simple.svg" alt="Fig. 1: Simple binary search tree" /><p class="caption">Fig. 1: Simple binary search tree</p>
+<img src="../images/binary-search-trees/simple.svg" alt="Fig. 1: Simple binary search tree" /><p class="caption">Fig. 1: Simple binary search tree</p>
 </div>
 <p>You can see in figure 1 that the nodes to the left of <code>8</code> are <code>5</code>, <code>6</code> and <code>3</code>, which are all smaller than <code>8</code>. Similarly, the nodes to its right are <code>10</code>, <code>9</code> and <code>12</code>, which are all larger than <code>8</code>.</p>
 <p>In the rest of this post, I’ll use the term <em>leaf</em> to mean a leaf in the <a href="http://mathworld.wolfram.com/ExtendedBinaryTree.html">extended representation</a> of the tree: a leaf does not contain a value, but represents the end of a branch.</p>
@@ -46,7 +46,7 @@
 </ul>
 <p>Let’s take a few examples and run the algorithm.</p>
 <div class="figure">
-<img src="../images/graphs/binarysearchtrees/contains9.svg" alt="Fig. 2: Looking for an existing value" /><p class="caption">Fig. 2: Looking for an existing value</p>
+<img src="../images/binary-search-trees/contains9.svg" alt="Fig. 2: Looking for an existing value" /><p class="caption">Fig. 2: Looking for an existing value</p>
 </div>
 <p>Trying to find <code>9</code> yields the following steps:</p>
 <ul>
@@ -55,7 +55,7 @@
 <li>we’ve found <code>9</code>.</li>
 </ul>
 <div class="figure">
-<img src="../images/graphs/binarysearchtrees/contains4.svg" alt="Fig. 3: Looking for a non-existing value" /><p class="caption">Fig. 3: Looking for a non-existing value</p>
+<img src="../images/binary-search-trees/contains4.svg" alt="Fig. 3: Looking for a non-existing value" /><p class="caption">Fig. 3: Looking for a non-existing value</p>
 </div>
 <p>Trying to find <code>4</code> yields the following steps:</p>
 <ul>
@@ -71,7 +71,7 @@
 <p>The only two special cases are leafs (in which case we found where to insert the value) or nodes that already contain the value (in which case we do not in fact need to insert it and can abort).</p>
 <p>This is more easily explained with a graph (blue nodes are created during insertion, black ones are the original tree):</p>
 <div class="figure">
-<img src="../images/graphs/binarysearchtrees/insert4.svg" alt="Fig. 4: Inserting a value" /><p class="caption">Fig. 4: Inserting a value</p>
+<img src="../images/binary-search-trees/insert4.svg" alt="Fig. 4: Inserting a value" /><p class="caption">Fig. 4: Inserting a value</p>
 </div>
 <p>Figure 4 shows the result of inserting <code>4</code> in our example tree.</p>
 <p>In our first recusive step, we find that <code>4</code> is smaller than <code>8</code>: we need to clone the current node and insert <code>4</code> in its left sub-tree.</p>
