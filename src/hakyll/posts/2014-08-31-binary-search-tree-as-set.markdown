@@ -14,7 +14,7 @@ A binary search tree is a binary tree such that, for any given node `n`, all the
 and all the values to its right are larger than `n`.
 
 
-![Fig. 1: Simple binary search tree](/images/graphs/binarysearchtrees/simple.svg)
+![Fig. 1: Simple binary search tree](/images/binary-search-trees/simple.svg)
 
 You can see in figure 1 that the nodes to the left of `8` are `5`, `6` and `3`, which are all smaller than `8`.
 Similarly, the nodes to its right are `10`, `9` and `12`, which are all larger than `8`.
@@ -39,7 +39,7 @@ The algorithm for the `contains` operation is a straightforward recursion starti
 
 Let's take a few examples and run the algorithm.
 
-![Fig. 2: Looking for an existing value](/images/graphs/binarysearchtrees/contains9.svg)
+![Fig. 2: Looking for an existing value](/images/binary-search-trees/contains9.svg)
 
 Trying to find `9` yields the following steps:
 
@@ -48,7 +48,7 @@ Trying to find `9` yields the following steps:
 * we've found `9`.
 
 
-![Fig. 3: Looking for a non-existing value](/images/graphs/binarysearchtrees/contains4.svg)
+![Fig. 3: Looking for a non-existing value](/images/binary-search-trees/contains4.svg)
 
 Trying to find `4` yields the following steps:
 
@@ -74,7 +74,7 @@ the value (in which case we do not in fact need to insert it and can abort).
 
 This is more easily explained with a graph (blue nodes are created during insertion, black ones are the original tree):
 
-![Fig. 4: Inserting a value](/images/graphs/binarysearchtrees/insert4.svg)
+![Fig. 4: Inserting a value](/images/binary-search-trees/insert4.svg)
 
 Figure 4 shows the result of inserting `4` in our example tree.
 
