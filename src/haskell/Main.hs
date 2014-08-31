@@ -1,9 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 import Data.Monoid                 ((<>), mconcat)
 import Data.List                   (intersperse)
-import qualified Data.Map          as M
 import Hakyll
-import Hakyll.Web.Tags
 import Text.Blaze.Html             (toHtml, toValue, (!))
 import Text.Blaze.Html5            (Html, a)
 import Text.Blaze.Html5.Attributes (href, class_)
