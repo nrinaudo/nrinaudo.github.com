@@ -1,5 +1,5 @@
 digraph simple {
-    node  [shape=circle fontname=CabinSketch]
+    node  [shape=circle]
     graph [ordering=out]
 
     8  [fontcolor=blue color=blue]
