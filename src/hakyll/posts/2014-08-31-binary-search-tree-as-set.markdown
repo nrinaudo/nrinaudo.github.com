@@ -230,7 +230,7 @@ we did for the Scala implementation.
 
 
 
-### Set implementation
+### Set instance
 Now that we have our data structure, we need to turn it into a valid `Set` implementation:
 
 ```haskell
