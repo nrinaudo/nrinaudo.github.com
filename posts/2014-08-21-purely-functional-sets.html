@@ -27,7 +27,7 @@
 <p>I <a href="2014-08-11-collections-as-typeclasses.html">previously talked</a> about implementing collections as type classes, using <code>Stack</code> as an example. This post shows the basic contract for a purely functional <code>Set</code>, with actual implementation examples to follow.</p>
 <!--more-->
 
-<h2 id="abstract-definition-of-a-set">Abstract definition of a Set</h2>
+<h2 id="abstract-definition">Abstract definition</h2>
 <p>A set is a fairly simple abstract data structure: all it does is store unique values. The way these values are stored is unspecified - in particular, there is no constraint on their order, or even on whether that order is stable. In their rawest forms, sets do not even need to offer a way to iterate over their values.</p>
 <p>Their interest lies in the unicity constraint: a value can never be present more than once in a given set. Or, to put it in more mathy terms: the value insertion operation is idempotent. That is, there is no difference between calling it once or many times for the same value.</p>
 <p>The core operations that a set must support are:</p>
