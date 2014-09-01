@@ -27,11 +27,11 @@
 <p>Heaps are another simple data structure that can easily be implemented as type classes. Just as with sets, this first post will explain what a heap is and how to define it, while later ones will show actual implementations.</p>
 <!--more-->
 
-<h2 id="abstract-definition-of-a-heap">Abstract definition of a Heap</h2>
+<h2 id="abstract-definition">Abstract definition</h2>
 <p>There seems to be some confusion as to what exactly constitutes a heap.</p>
-<p>According to some sources (such as <a href="http://en.wikipedia.org/wiki/Heap_(data_structure)">Wikipedia</a>), a heap is tree-like structure that satisfies the <em>heap property</em>, which states that the value at each node is not greater than the value of its descendants.</p>
+<p>According to some sources (such as <a href="http://en.wikipedia.org/wiki/Heap_(data_structure)">Wikipedia</a>), a heap is tree-like structure that satisfies the <em>heap property</em>, which states that the value of each node is not greater than the value of its descendants.</p>
 <p>Others, such as Chris Okasaki, define a heap as synonymous to a priority queue, an abstract data structure that provides primitives for acccess to and removal of its element with the smallest value (or lowest priority).</p>
-<p>Within the context of this post, we’ll use a somewhat custom-made definition that, while possibly not correct, seems like an acceptable compromise.</p>
+<p>Within the context of this post, we’ll use a somewhat custom-made definition that, while possibly not entirely correct, seems like an acceptable compromise.</p>
 <p>A heap, then, is an abstract data type that supports the following operations:</p>
 <ul>
 <li><code>isEmpty</code>: checks whether the heap is empty.</li>
@@ -39,8 +39,8 @@
 <li><code>findMin</code>: finds the minimum value in the heap.</li>
 <li><code>deleteMin</code>: returns a new heap that does not contain the previous one’s minimum element.</li>
 </ul>
-<p>Within this context, the Wikipedia definition describes <em>heap-ordered trees</em>, a family of concrete implementations of the heap abstrat data type (such as splay heap, leftist heap, binomial heap…).</p>
-<p>Note that, technically, this is the definition of a min-heap, not a generic heap. Since we’ll be working with customisable orderings, however, this isn’t much an issue: turning a min-heap into a max-heap is as simple as inverting the ordering.</p>
+<p>Within this context, the Wikipedia definition is that of <em>heap-ordered trees</em>, a family of concrete implementations of the heap abstract data type (such as splay heap, leftist heap, binomial heap…).</p>
+<p>Note that, technically, we’ve just defined a min-heap, not a generic one. Since we’ll be working with customisable orderings however, this isn’t much an issue: turning a min-heap into a max-heap is as simple as inverting the ordering.</p>
 <h2 id="scala-definition">Scala definition</h2>
 <p>As usual, we start with the behaviour of heap-like data structures:</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">import</span> scala.language.higherKinds
@@ -51,6 +51,7 @@
   <span class="kw">def</span> findMin[<span class="dt">A</span>](a: <span class="dt">Impl[A]</span>)      : <span class="dt">Option[A]</span>
   <span class="kw">def</span> deleteMin[<span class="dt">A</span>](a: <span class="dt">Impl[A]</span>)    : <span class="dt">Impl[A]</span>
 <span class="dt">}</span></code></pre>
+<p>Nothing special there, it’s essentialy the same thing we did for <a href="2014-08-21-purely-functional-sets.html#scala-definition">sets</a>.</p>
 <p>We could technically require an <code>Ordering</code> instance of <code>A</code> for all these methods, but it’s not strictly required nor really useful: <code>HeapLike</code> does not contain any code that actually needs its elements to be ordered.</p>
 <p>That done, we can define the <code>Heap</code> trait for data structures that are actual heaps:</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">trait</span> Heap[<span class="dt">A</span>] {
