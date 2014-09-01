@@ -1,6 +1,6 @@
 ---
 title: Binary Search Trees as Sets
-tags: scala, haskell
+tags: purely functional data structures, scala, haskell
 ---
 
 Binary search trees are the simplest implementation I know of a Set. This post shows how to write a `BinarySearchTree`

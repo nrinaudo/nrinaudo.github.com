@@ -1,6 +1,6 @@
 ---
 title: Purely functional sets
-tags: scala, haskell
+tags: purely functional data structures, scala, haskell
 ---
 
 I [previously talked](2014-08-11-collections-as-typeclasses.html) about implementing collections as type classes, using

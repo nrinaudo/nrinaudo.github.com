@@ -1,6 +1,6 @@
 ---
 title: Collections as type classes
-tags: scala, haskell
+tags: purely functional data structures, scala, haskell
 ---
 
 I've been reading Chris Okasaki's [Purely Functional Data Structures](http://www.amazon.co.uk/gp/product/B00AKE1V04/ref=s9_simh_gw_p351_d3_i1?pf_rd_m=A3P5ROKL5A1OLE&pf_rd_s=center-2&pf_rd_r=02B6DPVTMCQXB84VAF5F&pf_rd_t=101&pf_rd_p=455344027&pf_rd_i=468294)
