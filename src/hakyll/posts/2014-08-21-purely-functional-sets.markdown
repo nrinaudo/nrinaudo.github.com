@@ -9,7 +9,7 @@ examples to follow.
 
 <!--more-->
 
-## Abstract definition of a Set
+## Abstract definition
 A set is a fairly simple abstract data structure: all it does is store unique values. The way these values are stored
 is unspecified - in particular, there is no constraint on their order, or even on whether that order is stable. In their
 rawest forms, sets do not even need to offer a way to iterate over their values.

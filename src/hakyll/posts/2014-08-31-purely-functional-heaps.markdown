@@ -8,18 +8,18 @@ post will explain what a heap is and how to define it, while later ones will sho
 
 <!--more-->
 
-## Abstract definition of a Heap
+## Abstract definition
 There seems to be some confusion as to what exactly constitutes a heap.
 
 According to some sources (such as [Wikipedia](http://en.wikipedia.org/wiki/Heap_(data_structure))), a heap is tree-like
-structure that satisfies the _heap property_, which states that the value at each node is not greater than the value of
+structure that satisfies the _heap property_, which states that the value of each node is not greater than the value of
 its descendants.
 
 Others, such as Chris Okasaki, define a heap as synonymous to a priority queue, an abstract data structure that provides
 primitives for acccess to and removal of its element with the smallest value (or lowest priority).
 
-Within the context of this post, we'll use a somewhat custom-made definition that, while possibly not correct, seems
-like an acceptable compromise.
+Within the context of this post, we'll use a somewhat custom-made definition that, while possibly not entirely correct,
+seems like an acceptable compromise.
 
 A heap, then, is an abstract data type that supports the following operations:
 
@@ -28,11 +28,11 @@ A heap, then, is an abstract data type that supports the following operations:
 * `findMin`: finds the minimum value in the heap.
 * `deleteMin`: returns a new heap that does not contain the previous one's minimum element.
 
-Within this context, the Wikipedia definition describes _heap-ordered trees_, a family of concrete implementations of
-the heap abstrat data type (such as splay heap, leftist heap, binomial heap...).
+Within this context, the Wikipedia definition is that of _heap-ordered trees_, a family of concrete implementations of
+the heap abstract data type (such as splay heap, leftist heap, binomial heap...).
 
-Note that, technically, this is the definition of a min-heap, not a generic heap. Since we'll be working with
-customisable orderings, however, this isn't much an issue: turning a min-heap into a max-heap is as simple as inverting
+Note that, technically, we've just defined a min-heap, not a generic one. Since we'll be working with customisable
+orderings however, this isn't much an issue: turning a min-heap into a max-heap is as simple as inverting
 the ordering.
 
 
@@ -48,6 +48,9 @@ trait HeapLike[Impl[_]] {
   def deleteMin[A](a: Impl[A])    : Impl[A]
 }
 ```
+
+Nothing special there, it's essentialy the same thing we did for
+[sets](2014-08-21-purely-functional-sets.html#scala-definition).
 
 We could technically require an `Ordering` instance of `A` for all these methods, but it's not strictly required nor
 really useful: `HeapLike` does not contain any code that actually needs its elements to be ordered.
