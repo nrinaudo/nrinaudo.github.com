@@ -5,7 +5,7 @@ digraph simple {
     8 [nodetype=marked]
     5 [nodetype=marked]
     3 [nodetype=marked]
-    na [label="∅" nodetype=error]
+    na [label="∅" shape=none nodetype=error]
 
     8 -> 5 [edgetype=marked]
     8 -> 10
@@ -13,7 +13,7 @@ digraph simple {
     5 -> 3 [edgetype=marked]
     5 -> 6
 
-    3 -> na [edgetype=marked]
+    3 -> na [edgetype=error]
 
     10 -> 9
     10 -> 12
