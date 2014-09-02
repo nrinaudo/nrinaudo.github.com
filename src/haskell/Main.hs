@@ -30,7 +30,8 @@ main = hakyllWith hakyllConf $ do
   -- Compile dot files as SVG.
   match "images/**.dot" $ do
     route   $ setExtension "svg"
-    compile $ getResourceString >>=
+    compile $ getResourceString                                                >>=
+      withItemBody (unixFilter "gvpr" ["-c", "-f", "src/graphviz/style.gvpr"]) >>=
       withItemBody (unixFilter "dot" ["-Tsvg"])
 
   -- Other images are simply copied.

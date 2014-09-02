@@ -1,0 +1,33 @@
+BEG_G {
+    bgcolor="transparent";
+}
+
+N {
+    color="white";
+    fontcolor="white";
+}
+
+N[nodetype == "marked"] {
+    color="blue";
+    fontcolor="blue";
+}
+
+N[nodetype == "error"] {
+    color="red";
+    fontcolor="red";
+}
+
+E {
+    color="white";
+    fontcolor="white";
+}
+
+E[edgetype == "marked"] {
+    color="blue";
+    fontcolor="blue";
+}
+
+E[edgetype == "error"] {
+    color="red";
+    fontcolor="red";
+}

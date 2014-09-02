@@ -2,18 +2,18 @@ digraph simple {
     node  [shape=circle]
     graph [ordering=out]
 
-    8 [fontcolor=blue color=blue]
-    5 [fontcolor=blue color=blue]
-    3 [fontcolor=blue color=blue]
-    na [label="∅" shape=none fontcolor=red color=red]
+    8 [nodetype=marked]
+    5 [nodetype=marked]
+    3 [nodetype=marked]
+    na [label="∅" nodetype=error]
 
-    8 -> 5 [color=blue]
+    8 -> 5 [edgetype=marked]
     8 -> 10
 
-    5 -> 3 [color=blue]
+    5 -> 3 [edgetype=marked]
     5 -> 6
 
-    3 -> na [color=red]
+    3 -> na [edgetype=marked]
 
     10 -> 9
     10 -> 12

@@ -1,27 +1,28 @@
 digraph simple {
+    bgcolor="transparent"
     node  [shape=circle]
     graph [ordering=out]
 
-    b8 [label="8" color=blue fontcolor=blue]
-    b5 [label="5" color=blue fontcolor=blue]
-    b3 [label="3" color=blue fontcolor=blue]
-    4 [color=blue fontcolor=blue]
-    na [label="∅" shape=none fontcolor=blue]
+    b8 [label="8" nodetype=marked]
+    b5 [label="5" nodetype=marked]
+    b3 [label="3" nodetype=marked]
+    4  [nodetype=marked]
+    na [label="∅" shape=none nodetype=marked]
 
-    b8 -> b5 [color=blue]
-    b8 -> 10 [color=blue]
+    b8 -> b5 [edgetype=marked]
+    b8 -> 10 [edgetype=marked]
 
     8 -> 5
     8 -> 10
 
-    b5 -> b3 [color=blue]
-    b5 -> 6  [color=blue]
+    b5 -> b3 [edgetype=marked]
+    b5 -> 6  [edgetype=marked]
 
     5 -> 3
     5 -> 6
 
-    b3 -> na [color=blue]
-    b3 -> 4  [color=blue]
+    b3 -> na [edgetype=marked]
+    b3 -> 4  [edgetype=marked]
 
     10 -> 9
     10 -> 12

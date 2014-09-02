@@ -28,15 +28,17 @@
 /* - Generic styles -------------------------------------------------------------------------------------------------
    ------------------------------------------------------------------------------------------------------------------ */
 body {
-    font-family:   CabinSketch;
-    color:         black;
-    font-size:     20px;
-    margin:        0px auto 200px auto;
-    min-width:     600px;
-    max-width:     1000px;
-    padding-left:  20px;
-    padding-right: 20px;
-    text-align:    justify;
+    background:            radial-gradient(#888, #333);
+    background-attachment: fixed;
+    color:                 white;
+    font-family:           CabinSketch;
+    font-size:             20px;
+    margin:                0px auto 200px auto;
+    min-width:             600px;
+    max-width:             1000px;
+    padding-left:          20px;
+    padding-right:         20px;
+    text-align:            justify;
 }
 
 a, a:visited {
@@ -52,7 +54,7 @@ a, a:visited {
 
 a:hover, a:visited:hover {
     border:             none;
-    color:              #1a9ff4;
+    color:              #8cdcce;
     transition:         all 150ms ease-in-out;
     -webkit-transition: all 150ms ease-in-out;
     -moz-transition:    all 150ms ease-in-out;
@@ -68,7 +70,7 @@ h3 { font-size: 1.1em;}
 
 em {
     font-style: normal;
-    color:      green;
+    color:      #8cdcce;
 }
 
 table {
@@ -93,7 +95,7 @@ div#header {
 }
 
 div#header a, div#header a:visited {
-    color: black;
+    color: white;
 }
 
 div#header a:hover, div#header a:visited:hover { color: blue; }
@@ -122,7 +124,7 @@ div.info { font-size: .7em; }
 }
 
 .info .tags .tag {
-    color:          green;
+    color:          #8cdcce;
     text-transform: uppercase;
     margin-left:    3px;
     margin-right:   3px;
@@ -138,7 +140,7 @@ div.info { font-size: .7em; }
     float:         right;
 }
 
-.article h2 a, .article h2 a:visited { color: black; }
+.article h2 a, .article h2 a:visited { color: white; }
 
 .article h2 a:hover, .article h2 a:visited:hover { color: blue; }
 
@@ -165,7 +167,7 @@ div.info { font-size: .7em; }
 }
 
 .archive-entry a, .archive-entry a:visited {
-    color: black;
+    color: white;
 }
 
 .archive-entry a:hover, .archive-entry a:visited:hover {
@@ -207,8 +209,12 @@ p.caption {
 }
 
 pre, code {
-    font-family:      SourceCodePro;
-    font-size:        .85em;
+    font-family: SourceCodePro;
+    font-size:   .85em;
+}
+
+pre {
+    color:        black;
 }
 
 code {

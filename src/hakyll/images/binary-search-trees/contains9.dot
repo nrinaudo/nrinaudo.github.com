@@ -1,17 +1,18 @@
 digraph simple {
+    bgcolor="transparent"
     node  [shape=circle]
     graph [ordering=out]
 
-    8  [fontcolor=blue color=blue]
-    10 [fontcolor=blue color=blue]
-    9  [fontcolor=blue color=blue]
+    8  [nodetype=marked]
+    10 [nodetype=marked]
+    9  [nodetype=marked]
 
     8 -> 5
-    8 -> 10 [color=blue]
+    8 -> 10 [edgetype=marked]
 
     5 -> 3
     5 -> 6
 
-    10 -> 9 [color=blue]
+    10 -> 9 [edgetype=marked]
     10 -> 12
 }
