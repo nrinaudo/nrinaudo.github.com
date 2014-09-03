@@ -10,18 +10,18 @@
 <title>simple</title>
 <!-- 8 -->
 <g id="node1" class="node"><title>8</title>
-<ellipse fill="none" stroke="lightgreen" cx="100" cy="-166" rx="18" ry="18"/>
-<text text-anchor="middle" x="100" y="-161.8" font-family="Times,serif" font-size="14.00" fill="lightgreen">8</text>
+<ellipse fill="none" stroke="#8cdcce" cx="100" cy="-166" rx="18" ry="18"/>
+<text text-anchor="middle" x="100" y="-161.8" font-family="Times,serif" font-size="14.00" fill="#8cdcce">8</text>
 </g>
 <!-- 10 -->
 <g id="node2" class="node"><title>10</title>
-<ellipse fill="none" stroke="lightgreen" cx="73" cy="-93" rx="18.4268" ry="18.9007"/>
-<text text-anchor="middle" x="73" y="-88.8" font-family="Times,serif" font-size="14.00" fill="lightgreen">10</text>
+<ellipse fill="none" stroke="#8cdcce" cx="73" cy="-93" rx="18.4268" ry="18.9007"/>
+<text text-anchor="middle" x="73" y="-88.8" font-family="Times,serif" font-size="14.00" fill="#8cdcce">10</text>
 </g>
 <!-- 8&#45;&gt;10 -->
 <g id="edge1" class="edge"><title>8&#45;&gt;10</title>
-<path fill="none" stroke="lightgreen" d="M93.8733,-148.889C90.6861,-140.508 86.7081,-130.047 83.0822,-120.512"/>
-<polygon fill="lightgreen" stroke="lightgreen" points="86.305,-119.14 79.479,-111.037 79.7621,-121.628 86.305,-119.14"/>
+<path fill="none" stroke="#8cdcce" d="M93.8733,-148.889C90.6861,-140.508 86.7081,-130.047 83.0822,-120.512"/>
+<polygon fill="#8cdcce" stroke="#8cdcce" points="86.305,-119.14 79.479,-111.037 79.7621,-121.628 86.305,-119.14"/>
 </g>
 <!-- 5 -->
 <g id="node3" class="node"><title>5</title>
@@ -35,13 +35,13 @@
 </g>
 <!-- 9 -->
 <g id="node4" class="node"><title>9</title>
-<ellipse fill="none" stroke="lightgreen" cx="18" cy="-19" rx="18" ry="18"/>
-<text text-anchor="middle" x="18" y="-14.8" font-family="Times,serif" font-size="14.00" fill="lightgreen">9</text>
+<ellipse fill="none" stroke="#8cdcce" cx="18" cy="-19" rx="18" ry="18"/>
+<text text-anchor="middle" x="18" y="-14.8" font-family="Times,serif" font-size="14.00" fill="#8cdcce">9</text>
 </g>
 <!-- 10&#45;&gt;9 -->
 <g id="edge3" class="edge"><title>10&#45;&gt;9</title>
-<path fill="none" stroke="lightgreen" d="M61.8699,-77.4297C54.1659,-67.3444 43.7669,-53.7312 35.0271,-42.29"/>
-<polygon fill="lightgreen" stroke="lightgreen" points="37.591,-39.8807 28.7392,-34.0586 32.0283,-44.13 37.591,-39.8807"/>
+<path fill="none" stroke="#8cdcce" d="M61.8699,-77.4297C54.1659,-67.3444 43.7669,-53.7312 35.0271,-42.29"/>
+<polygon fill="#8cdcce" stroke="#8cdcce" points="37.591,-39.8807 28.7392,-34.0586 32.0283,-44.13 37.591,-39.8807"/>
 </g>
 <!-- 12 -->
 <g id="node5" class="node"><title>12</title>
