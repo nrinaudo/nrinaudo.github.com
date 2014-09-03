@@ -23,15 +23,31 @@
     src:         url("../fonts/SourceCodePro-Regular.otf") format("opentype");
 }
 
+@font-face {
+    font-family: "Quicksand";
+    font-style: normal;
+    font-weight: 400;
+    src: url("../fonts/quicksand.woff") format("woff");
+}
+
+
+@font-face {
+    font-family: "Quicksand";
+    font-style: normal;
+    font-weight: 700;
+    src: url("../fonts/quicksand_bold.woff") format("woff");
+}
+
+
 
 
 /* - Generic styles -------------------------------------------------------------------------------------------------
    ------------------------------------------------------------------------------------------------------------------ */
 body {
-    background:            radial-gradient(#888, #333);
+    background:            radial-gradient(#14487c, #103457);
     background-attachment: fixed;
     color:                 white;
-    font-family:           CabinSketch;
+    font-family:           Quicksand;
     font-size:             20px;
     margin:                0px auto 200px auto;
     min-width:             600px;
@@ -44,7 +60,7 @@ body {
 a, a:visited {
     border:             none;
     text-decoration:    none;
-    color:              blue;
+    color:              #8cdcce;
     transition:         all 150ms ease-in-out;
     -webkit-transition: all 150ms ease-in-out;
     -moz-transition:    all 150ms ease-in-out;
@@ -54,7 +70,7 @@ a, a:visited {
 
 a:hover, a:visited:hover {
     border:             none;
-    color:              #8cdcce;
+    color:              #1fd0e7;
     transition:         all 150ms ease-in-out;
     -webkit-transition: all 150ms ease-in-out;
     -moz-transition:    all 150ms ease-in-out;
@@ -62,15 +78,23 @@ a:hover, a:visited:hover {
     -ms-transition:     all 150ms ease-in-out;
 }
 
-h1 { font-size: 2em; }
+h1 {
+    font-family: CabinSketch;
+    font-size:   3em;
+}
 
-h2 { font-size: 1.5em; }
+h2 {
+    font-family: CabinSketch;
+    font-size: 2em;
+}
 
-h3 { font-size: 1.1em;}
+h3 {
+    font-family: CabinSketch;
+    font-size: 1.5em;
+}
 
 em {
-    font-style: normal;
-    color:      #8cdcce;
+    font-style: italic;
 }
 
 table {
@@ -92,24 +116,26 @@ ul {
 div#header {
     margin-bottom: 30px;
     padding:       12px 0px 12px 0px;
+    font-family:   CabinSketch;
 }
 
 div#header a, div#header a:visited {
     color: white;
+
 }
 
-div#header a:hover, div#header a:visited:hover { color: blue; }
+div#header a:hover, div#header a:visited:hover { color: #8cdcce; }
 
 div#logo { float: left; }
 
 div#header #navigation { text-align: right; }
 
 div#header a {
-    font-size:      1.5em;
+    font-size:      2em;
     text-transform: uppercase;
 }
 
-div#header #navigation a { font-size: 1.5em; }
+div#header #navigation a { font-size: 2em; }
 
 div#header #logo a { margin-right: 12px; }
 
@@ -140,19 +166,21 @@ div.info { font-size: .7em; }
     float:         right;
 }
 
-.article h2 a, .article h2 a:visited { color: white; }
+.article h2 a, .article h2 a:visited { color: white }
 
-.article h2 a:hover, .article h2 a:visited:hover { color: blue; }
+.article h2 a:hover, .article h2 a:visited:hover { color: #8cdcce; }
 
 .article .meta {
-    margin-top:     5px;
-    width:          140px;
-    white-space:    nowrap;
-    float: left;
+    font-family:   CabinSketch;
+    margin-top:    5px;
+    width:         160px;
+    white-space:   nowrap;
+    float:         left;
+    font-size:     1.5em;
 }
 
 .article .content {
-    width: 85%;
+    width: 75%;
     float: right;
 }
 
@@ -164,6 +192,7 @@ div.info { font-size: .7em; }
    ------------------------------------------------------------------------------------------------------------------ */
 .archive-entry {
     margin-bottom: .5em;
+    font-family:   CabinSketch;
 }
 
 .archive-entry a, .archive-entry a:visited {
@@ -171,7 +200,7 @@ div.info { font-size: .7em; }
 }
 
 .archive-entry a:hover, .archive-entry a:visited:hover {
-    color: blue;
+    color: #8cdcce;
 }
 
 .archive-entry .bullet {

@@ -8,13 +8,13 @@ N {
 }
 
 N[nodetype == "marked"] {
-    color="blue";
-    fontcolor="blue";
+    color="lightgreen";
+    fontcolor="lightgreen";
 }
 
 N[nodetype == "error"] {
-    color="#b50015";
-    fontcolor="#b50015";
+    color="#e05848";
+    fontcolor="#e05848";
 }
 
 E {
@@ -23,11 +23,11 @@ E {
 }
 
 E[edgetype == "marked"] {
-    color="blue";
-    fontcolor="blue";
+    color="lightgreen";
+    fontcolor="lightgreen";
 }
 
 E[edgetype == "error"] {
-    color="#b50015";
-    fontcolor="#b50015";
+    color="#e05848";
+    fontcolor="#e05848";
 }

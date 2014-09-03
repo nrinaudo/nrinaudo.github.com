@@ -72,7 +72,7 @@ the modification.
 The only two special cases are leafs (in which case we found where to insert the value) or nodes that already contain
 the value (in which case we do not in fact need to insert it and can abort).
 
-This is more easily explained with a graph (blue nodes are created during insertion, black ones are the original tree):
+This is more easily explained with a graph (green nodes are created during insertion, white ones are the original tree):
 
 ![Fig. 4: Inserting a value](/images/binary-search-trees/insert4.svg)
 
