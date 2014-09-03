@@ -69,7 +69,7 @@
 <p>Note that re-using parts of purely functional data structures is not unsafe: since they’re immutable by definition, it’s not possible for modifications in one to be reflected in another.</p>
 <p>Insertion in binary search trees is fairly straightforward: recursively look for the node in which the desired value should be inserted, cloning all explored nodes along the way and re-using the sub-tree that is <em>not</em> impacted by the modification.</p>
 <p>The only two special cases are leafs (in which case we found where to insert the value) or nodes that already contain the value (in which case we do not in fact need to insert it and can abort).</p>
-<p>This is more easily explained with a graph (blue nodes are created during insertion, black ones are the original tree):</p>
+<p>This is more easily explained with a graph (green nodes are created during insertion, white ones are the original tree):</p>
 <div class="figure">
 <img src="../images/binary-search-trees/insert4.svg" alt="Fig. 4: Inserting a value" /><p class="caption">Fig. 4: Inserting a value</p>
 </div>
