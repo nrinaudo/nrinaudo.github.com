@@ -10,7 +10,7 @@ is and how to define it, while later ones will show actual implementations.
 <!--more-->
 
 ## Abstract definition
-There seems to be some confusion as to what exactly constitutes a heap.
+There seems to be some debate as to what exactly constitutes a heap.
 
 According to some sources (such as [Wikipedia](http://en.wikipedia.org/wiki/Heap_(data_structure))), a heap is tree-like
 structure that satisfies the _heap property_, which states that the value of each node is not greater than the value of

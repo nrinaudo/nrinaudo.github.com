@@ -13,9 +13,9 @@
 
 @font-face {
     font-family: 'STIXSizeOneSym';
-    src: url('../fonts/STIXSizOneSymBol.otf') format('opentype');
+    src:         url('../fonts/STIXSizOneSymBol.otf') format('opentype');
     font-weight: bold;
-    font-style: normal;
+    font-style:  normal;
 }
 
 @font-face {
@@ -25,17 +25,17 @@
 
 @font-face {
     font-family: "Quicksand";
-    font-style: normal;
+    font-style:  normal;
     font-weight: 400;
-    src: url("../fonts/quicksand.woff") format("woff");
+    src:         url("../fonts/quicksand.woff") format("woff");
 }
 
 
 @font-face {
     font-family: "Quicksand";
-    font-style: normal;
+    font-style:  normal;
     font-weight: 700;
-    src: url("../fonts/quicksand_bold.woff") format("woff");
+    src:         url("../fonts/quicksand_bold.woff") format("woff");
 }
 
 
@@ -85,12 +85,12 @@ h1 {
 
 h2 {
     font-family: CabinSketch;
-    font-size: 2em;
+    font-size:   2em;
 }
 
 h3 {
     font-family: CabinSketch;
-    font-size: 1.5em;
+    font-size:   1.5em;
 }
 
 em {
@@ -99,14 +99,14 @@ em {
 
 table {
 	border-collapse: collapse;
-	border-spacing: 0;
+	border-spacing:  0;
 }
 
 ul {
     list-style-position: inside;
     padding-left:        0;
-    padding-top: 0;
-    margin-top: 0;
+    padding-top:         0;
+    margin-top:          0;
 }
 
 
@@ -124,22 +124,34 @@ div#header a, div#header a:visited {
 
 }
 
-div#header a:hover, div#header a:visited:hover { color: #8cdcce; }
+div#header a:hover, div#header a:visited:hover {
+    color: #8cdcce;
+}
 
-div#logo { float: left; }
+div#logo {
+    float: left;
+}
 
-div#header #navigation { text-align: right; }
+div#header #navigation {
+    text-align: right;
+}
 
 div#header a {
     font-size:      2em;
     text-transform: uppercase;
 }
 
-div#header #navigation a { font-size: 2em; }
+div#header #navigation a {
+    font-size: 2em;
+}
 
-div#header #logo a { margin-right: 12px; }
+div#header #logo a {
+    margin-right: 12px;
+}
 
-div.info { font-size: .7em; }
+div.info {
+    font-size: .7em;
+}
 
 
 
@@ -166,9 +178,13 @@ div.info { font-size: .7em; }
     float:         right;
 }
 
-.article h2 a, .article h2 a:visited { color: white }
+.article h2 a, .article h2 a:visited {
+    color: white;
+}
 
-.article h2 a:hover, .article h2 a:visited:hover { color: #8cdcce; }
+.article h2 a:hover, .article h2 a:visited:hover {
+    color: #8cdcce;
+}
 
 .article .meta {
     font-family:   CabinSketch;
@@ -184,7 +200,9 @@ div.info { font-size: .7em; }
     float: right;
 }
 
-.article .content h2 { margin-top: 0; }
+.article .content h2 {
+    margin-top: 0;
+}
 
 
 
@@ -209,7 +227,7 @@ div.info { font-size: .7em; }
 
 .archive-entry .date {
     font-size: .7em;
-    float: right;
+    float:     right;
 }
 
 
@@ -244,11 +262,6 @@ pre, code {
 
 pre {
     color:        black;
-}
-
-code {
-    margin-left:  4px;
-    margin-right: 4px;
 }
 
 pre {

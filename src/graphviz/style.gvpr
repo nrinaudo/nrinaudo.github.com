@@ -8,8 +8,8 @@ N {
 }
 
 N[nodetype == "marked"] {
-    color="lightgreen";
-    fontcolor="lightgreen";
+    color="#8cdcce";
+    fontcolor="#8cdcce";
 }
 
 N[nodetype == "error"] {
@@ -23,8 +23,8 @@ E {
 }
 
 E[edgetype == "marked"] {
-    color="lightgreen";
-    fontcolor="lightgreen";
+    color="#8cdcce";
+    fontcolor="#8cdcce";
 }
 
 E[edgetype == "error"] {
