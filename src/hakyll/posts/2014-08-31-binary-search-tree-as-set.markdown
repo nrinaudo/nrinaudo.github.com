@@ -4,7 +4,7 @@ tags: purely functional data structures, scala, haskell
 ---
 
 Binary search trees are the simplest implementation I know of a Set. This post shows how to write a `BinarySearchTree`
-implementation that works with the [previous post](2014-08-21-purely-functional-sets.html)'s `Set` definition.
+implementation that works with the [previous post](/posts/2014-08-21-purely-functional-sets.html)'s `Set` definition.
 
 <!--more-->
 

@@ -3,9 +3,9 @@ title: Purely functional sets
 tags: purely functional data structures, scala, haskell
 ---
 
-I [previously talked](2014-08-11-collections-as-typeclasses.html) about implementing collections as type classes, using
-`Stack` as an example. This post shows the basic contract for a purely functional `Set`, with actual implementation
-examples to follow.
+I [previously talked](./posts/2014-08-11-collections-as-typeclasses.html) about implementing collections as type
+classes, using `Stack` as an example. This post shows the basic contract for a purely functional `Set`, with actual
+implementation examples to follow.
 
 <!--more-->
 

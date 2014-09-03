@@ -4,7 +4,7 @@ tags: purely functional data structures, scala, haskell
 ---
 
 Heaps are another simple data structure that can easily be implemented as type classes. Just as with
-[sets](http://nrinaudo.github.io/posts/2014-08-21-purely-functional-sets.html), this first post will explain what a heap
+[sets](/posts/2014-08-21-purely-functional-sets.html), this first post will explain what a heap
 is and how to define it, while later ones will show actual implementations.
 
 <!--more-->
