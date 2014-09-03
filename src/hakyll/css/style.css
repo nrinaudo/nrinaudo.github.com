@@ -81,16 +81,19 @@ a:hover, a:visited:hover {
 h1 {
     font-family: CabinSketch;
     font-size:   3em;
+    text-align:  left;
 }
 
 h2 {
     font-family: CabinSketch;
     font-size:   2em;
+    text-align:  left;
 }
 
 h3 {
     font-family: CabinSketch;
     font-size:   1.5em;
+    text-align:  left;
 }
 
 em {
@@ -251,8 +254,9 @@ p.caption {
 }
 
 .math em {
-    color:      black;
-    font-style: italic;
+    color: white;
+    font-style: normal;
+    font-size: .8em;
 }
 
 pre, code {
@@ -261,7 +265,7 @@ pre, code {
 }
 
 pre {
-    color:        black;
+    color: black;
 }
 
 pre {
