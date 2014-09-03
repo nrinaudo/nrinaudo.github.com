@@ -1,5 +1,4 @@
 digraph simple {
-    bgcolor="transparent"
     node  [shape=circle]
     graph [ordering=out]
 
