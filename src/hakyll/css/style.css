@@ -97,8 +97,17 @@ h3 {
     text-align:  left;
 }
 
+h4 {
+    font-family: CabinSketch;
+    font-size:   1.2em;
+    text-align:  left;
+}
+
 em {
-    font-style: italic;
+    font-family: CabinSketch;
+    font-weight: bold;
+    font-style:  normal;
+
 }
 
 table {
@@ -255,9 +264,10 @@ p.caption {
 }
 
 .math em {
-    color: white;
-    font-style: normal;
-    font-size: .8em;
+    font-family: STIXSizeOneSym;
+    color:       white;
+    font-style:  normal;
+    font-size:   .8em;
 }
 
 pre, code {

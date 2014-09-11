@@ -1,0 +1,39 @@
+digraph simple {
+    compound=true
+    node  [shape=circle]
+    graph [ordering=out]
+
+	subgraph cluster_1 {
+        n3[label=3]
+        n5[label=5]
+        n9[label=9]
+
+        n3 -> n5
+        n5 -> n9
+	}
+
+    n3 -> n4[lhead=cluster_2]
+
+    subgraph cluster_2 {
+        color=white
+
+        subgraph sub_2_1 {
+            n4[label=4]
+            n6_1[label=6]
+            n8_2[label=8]
+            n6_2[label=6]
+
+            n4   -> n6_1
+            n6_1 -> n8_2
+            n6_1 -> n6_2
+        }
+
+        n4 -> n6_3[lhead=cluster_3]
+
+        subgraph cluster_3 {
+            color=white
+            n6_3[label=6 nodetype=marked]
+            n8_1[label=8 nodetype=marked]
+        }
+	}
+}

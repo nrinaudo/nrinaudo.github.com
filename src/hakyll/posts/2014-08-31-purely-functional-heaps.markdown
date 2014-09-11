@@ -29,8 +29,8 @@ A heap, then, is an abstract data type that supports the following operations:
 * `findMin`: finds the minimum value in the heap.
 * `deleteMin`: returns a new heap that does not contain the previous one's minimum element.
 
-Within this context, the Wikipedia definition is that of _heap-ordered trees_, a family of concrete implementations of
-the heap abstract data type (such as splay heap, leftist heap, binomial heap...).
+Within this context, the Wikipedia definition is that of _heap-ordered trees_, or _min trees_, a family of concrete
+implementations of the heap abstract data type (such as splay heap, leftist heap, binomial heap...).
 
 Note that, technically, we've just defined a min-heap, not a generic one. Since we'll be working with customisable
 orderings however, this isn't much an issue: turning a min-heap into a max-heap is as simple as inverting

@@ -1,5 +1,7 @@
 BEG_G {
     bgcolor="transparent";
+    color="transparent";
+    style="rounded";
 }
 
 N {

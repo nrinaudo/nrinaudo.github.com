@@ -1,0 +1,21 @@
+digraph simple {
+    node  [shape=circle]
+    graph [ordering=out]
+
+    a6[label=6]
+    b6[label=6]
+    a8[label=8]
+    b8[label=8]
+
+    2 -> 4
+    2 -> 3
+
+    4 -> a6
+    4 -> a8
+
+    a6 -> b8
+    a6 -> b6
+
+    3 -> 5
+    5 -> 9
+}

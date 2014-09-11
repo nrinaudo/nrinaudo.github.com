@@ -10,9 +10,10 @@ implementation that works with the [previous post](/posts/2014-08-21-purely-func
 
 ## Binary Search Tree
 
-A binary search tree is a binary tree such that, for any given node `n`, all the values to its left are smaller than `n`
-and all the values to its right are larger than `n`.
+A binary search tree is a binary tree such that:
+$$\forall n:\neg leaf(n), value(n_{left}) \leq value(n) \leq value(n_{right})$$
 
+Or, in plain english: smaller values go to the left, larger ones to the right.
 
 ![Fig. 1: Simple binary search tree](/images/binary-search-trees/simple.svg)
 
@@ -23,12 +24,22 @@ In the rest of this post, I'll use the term _leaf_ to mean a leaf in the
 [extended representation](http://mathworld.wolfram.com/ExtendedBinaryTree.html) of the tree: a leaf does not contain a
 value, but represents the end of a branch.
 
-### "isEmpty" algorithm
+
+## Set operations
+As we've seen [previously](/posts/2014-08-21-purely-functional-sets.html), the key set operations are:
+
+* `isEmpty`
+* `insert`
+* `contains`
+
+
+
+### isEmpty
 
 Checking whether a binary search tree is empty is trivial: if the root is a leaf, then it's empty. Otherwise, it's not.
 
 
-### "contains" algorithm
+### contains
 
 The algorithm for the `contains` operation is a straightforward recursion starting at the root of the tree:
 
@@ -58,7 +69,7 @@ Trying to find `4` yields the following steps:
 * we're at a leaf, the set does not contain `4`.
 
 
-### "insert" algorithm
+### insert
 Modification of purely functional data structures can be tricky: it requires cloning the source structure and updating
 it just enough to reflect the desired modifications, while at the same time re-using as much of it as possible.
 
@@ -202,7 +213,7 @@ the more verbose `ord.lt` and `ord.gt`. It feels like an obvious way to make the
 to get it to work.
 
 
-### Implicit conversion to `Set`
+### Set instance
 In order for our `BinarySearchTree` to be usable as a `Set`, we still need to write the corresponding, trivial `SetLike`
 implementation:
 
