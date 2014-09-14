@@ -26,10 +26,9 @@ root (that's essentially what being a min tree means).
 The rest appears to be chaos - `8`, for example, is found at different depths of the tree, with different parents. The
 `rank` function is what drives this chaos.
 
-And that's it, really. Merging two leftist heaps is the most complex operation, and it can be simplified to a merge-sort
-of the right spline of both trees (more on that later). Once you know how to merge two trees, you have
-everything you need: deleting the minimum value is done by merging the roots descendants, and inserting a new value is
-done by merging it into the tree.
+And that's it, really. Merging two leftist heaps is the most complex operation, and it can be seen as a merge-sort
+of the right spline of both trees (more on that later). Once you know how to merge two trees, you're essentially done,
+as most other primitives can be derived from that.
 
 Let's now discuss what a _min tree_ is, and how to pick a _rank_ function, in more details.
 
@@ -50,6 +49,7 @@ of the tree. This affords us a guaranteed `O(1)` `findMin` operation.
 We often refer to such as trees as _heap-ordered_.
 
 
+
 ### Rank function
 The _rank_ function must obey the following laws:
 
@@ -66,7 +66,7 @@ Different `rank` functions define different types of leftist heaps, but do not c
 A common definition of `rank` is the length of the shortest path from a node to a leaf, and defined as:
 $$\forall n:\neg leaf(n),rank(n) = min(rank(n_{left}), rank(n_{right})) + 1$$
 
-This defines a height-biased leftist heap. The following graph shows the `rank` value for all nodes:
+This creates a height-biased leftist heap. The following graph shows the `rank` value for all nodes:
 
 ![Fig. 3: Height-biased leftist heap](/images/leftist-heaps/height-biased.svg)
 
@@ -80,7 +80,7 @@ Another definition of `rank` is the number of nodes contained in the subtree wit
 as:
 $$\forall n:\neg leaf(n),rank(n) = rank(n_{left}) + rank(n_{right}) + 1$$
 
-This defines a weight-biased leftist heap. The following graph shows the `rank` value for all nodes:
+This creates a weight-biased leftist heap. The following graph shows the `rank` value for all nodes:
 
 ![Fig. 4: Weight-biased leftist heap](/images/leftist-heaps/weight-biased.svg)
 
@@ -196,73 +196,101 @@ can simply merge its left and right descendants.
 
 
 ## Scala implementation
-
 ### LeftistHeap
+We'll implement leftist heaps as an algebraic data type. As usual, we start with the root trait:
+
 ```scala
 sealed trait LeftistHeap[A] {
-  def rank: Int
-  def isEmpty: Boolean
+  def rank                     : Int
+  def isEmpty                  : Boolean
   def merge(as: LeftistHeap[A]): LeftistHeap[A]
-  def insert(a: A): LeftistHeap[A]
-  def deleteMin(): LeftistHeap[A]
-  def min: Option[A]
+  def insert(a: A)             : LeftistHeap[A]
+  def deleteMin()              : LeftistHeap[A]
+  def findMin                  : Option[A]
+
+  def +(a: A): LeftistHeap[A] = insert(a)
+  def nonEmpty = !isEmpty
+}
+```
+
+As we did with [binary search trees](/posts/2014-08-31-binary-search-tree-as-set.html), `A` is not marked as requiring
+an implicit `Ordering` in scope. Concrete implementations will deal with that.
+
+
+
+### Leaf
+`Leaf` represents the end of a branch, *after* the last value. As noted before, this is not the standard definition of
+a leaf, but the one used in the extended representation of a tree.
+
+Leafs are trivial to implement:
+
+```scala
+case class Leaf[A: Ordering]() extends LeftistHeap[A] {
+  override val rank                      = 0
+  override val isEmpty                   = true
+  override def merge(as: LeftistHeap[A]) = as
+  override def insert(a: A)              = Node(a, 1, this, this)
+  override def deleteMin()               = throw new UnsupportedOperationException("Leaf.deleteMin")
+  override val findMin                   = None
 }
 ```
 
 
 ### Node
+Nodes are slightly more complicated to implement than `Leaf`:
+
 ```scala
-case class Node[A: Ordering](value: A, rank: Int, left: LeftistHeap[A], right: LeftistHeap[A]) extends LeftistHeap[A] {
-  private def lessThan(a: A, b: A): Boolean = implicitly[Ordering[A]].lt(a, b)
+case class Node[A](value: A, rank: Int, left: LeftistHeap[A], right: LeftistHeap[A])(implicit ord: Ordering[A])
+  extends LeftistHeap[A] {
+  private def sortRank(a: A, d1: LeftistHeap[A], d2: LeftistHeap[A]): LeftistHeap[A] =
+    if(d1.rank > d2.rank) Node(a, d1.rank + 1, d1, d2)
+    else                  Node(a, d2.rank + 1, d2, d1)
 
-  private def tag(a: A, left: LeftistHeap[A], right: LeftistHeap[A]): LeftistHeap[A] =
-    if(left.rank > right.rank) Node(a, left.rank + 1, left, right)
-    else                       Node(a, right.rank + 1, right, left)
-
-  override def isEmpty = false
+  override val isEmpty = false
 
   override def merge(as: LeftistHeap[A]) = as match {
     case Leaf()                         => this
     case Node(value2, _, left2, right2) =>
-      if(lessThan(value, value2)) tag(value,  left,  right.merge(as))
-      else                        tag(value2, left2, this.merge(right2))
+      if(ord.lt(value, value2)) sortRank(value,  left,  right.merge(as))
+      else                      sortRank(value2, left2, this.merge(right2))
   }
 
   override def insert(a: A) = merge(Node(a, 1, Leaf(), Leaf()))
-  override def deleteMin()  = left.merge(right)
-  override def min          = Some(value)
-}
+  override def deleteMin() = left.merge(right)
+  override def findMin = Some(value)
+  }
 ```
 
+A lot of this is a direct translation of the algorithms we wrote before and is not really worth discussing -
+for example, the `deleteMin` implementation is beautifully simple and requires no explanation.
 
-### Leaf
-```scala
-case class Leaf[A: Ordering]() extends LeftistHeap[A] {
-  override val rank                      = 0
-  override def isEmpty                   = true
-  override def merge(as: LeftistHeap[A]) = as
-  override def insert(a: A)              = Node(a, 1, this, this)
-  override def deleteMin()               = throw new UnsupportedOperationException("Leaf.deleteMin")
-  override def min                       = None
-}
-```
+The tricky bit is the `merge` method and is interesting to look into as it explicitly states something that I struggled
+with explaining before: how to choose which sub-tree goes to the left and which goes to the right when merging along
+the right spline.
+
+Attentive readers will also notice that we've hard-coded the `rank` function in this implementation: we're using a
+height-biased leftist heap.
 
 
 ### Heap instance
+Now that we have a working leftist heap, we can write the corresponding `HeapLike` instance. This proves particularly
+unchallenging, since a leftist heap already is a heap:
+
 ```scala
-implicit object AsHeap$$ extends HeapLike[LeftistHeap] {
+implicit object AsHeap extends HeapLike[LeftistHeap] {
   override def isEmpty[A](a: LeftistHeap[A])         = a.isEmpty
   def merge[A](a: LeftistHeap[A], b: LeftistHeap[A]) = a.merge(b)
   override def insert[A](a: A, as: LeftistHeap[A])   = as.insert(a)
-  override def findMin[A](a: LeftistHeap[A])             = a.min
+  override def findMin[A](a: LeftistHeap[A])         = a.findMin
   override def deleteMin[A](a: LeftistHeap[A])       = a.deleteMin()
 }
 ```
 
 
 ## Haskell implementation
-
 ### LeftistHeap
+As with Scala, we start by declaring a `LeftistHeap` algebraic data type, as well as the various basic functions we
+need for interacting with it:
 ```haskell
 data LeftistHeap a = Ord a => Node a Int (LeftistHeap a) (LeftistHeap a)
                    | Ord a => Leaf
@@ -281,17 +309,26 @@ merge :: (Ord a) => LeftistHeap a -> LeftistHeap a -> LeftistHeap a
 merge Leaf t    = t
 merge t    Leaf = t
 merge t1@(Node a1 _ l1 r1) t2@(Node a2 _ l2 r2)
-  | a1 < a2   = tag a1 l1 (merge r1 t2)
-  | otherwise = tag a2 (merge t1 l2) r2
+  | a1 < a2   = sortRank a1 l1 (merge r1 t2)
+  | otherwise = sortRank a2 (merge t1 l2) r2
 
 -- Creates a leftist tree with the specified value and left and right children.
-tag :: Ord a => a -> LeftistHeap a -> LeftistHeap a -> LeftistHeap a
-tag a l r = if   rank l > rank r
+sortRank :: Ord a => a -> LeftistHeap a -> LeftistHeap a -> LeftistHeap a
+sortRank a l r = if   rank l > rank r
             then Node a (rank l + 1) l r
             else Node a (rank r + 1) r l
 ```
 
+Note how, aside from pure syntax, the largest difference between this and the Scala implementation is how code is
+"grouped" together: Haskell groups it by functionality, and Scala by type.
+
+To be more explicit: in Haskell, one defines the function and all its possible implementation at declaration time. For
+example, we define `rank`'s behaviour for both leafs and nodes at the same point in our code. In Scala, we have an
+implementation for leafs and one for nodes.
+
+
 ### Heap instance
+Having written a leftist heap with the bare minimum functionalities, we can now write a `Heap` instance for it:
 ```haskell
 instance Heap LeftistHeap where
   type HeapEntry LeftistHeap a = Ord a
