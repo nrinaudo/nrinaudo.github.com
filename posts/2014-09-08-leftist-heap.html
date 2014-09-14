@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Leftist Heaps</title>
+        <link rel="stylesheet" type="text/css" href="../css/style.css" />
+        <link rel="stylesheet" type="text/css" href="../css/fontjolly.css" />
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Home</a>
+                <a href="../archive.html">Archives</a>
+            </div>
+            <div id="navigation">
+                <a title="GitHub" href="https://github.com/nrinaudo"><span class="ico-social-github"></span></a>
+                <a title="Twitter" href="https://twitter.com/NicolasRinaudo"><span class="ico-social-twitter"></span></a>
+                <a title="Stack Overflow" href="http://stackoverflow.com/users/1370349/nicolas-rinaudo"><span class="ico-line-chart"></span></a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Leftist Heaps</h1>
+<div class="info"><span class="date">2014-09-08</span><span class="tags"><a href="../tags/purely%20functional%20data%20structures.html" class="tag">purely functional data structures</a> | <a href="../tags/scala.html" class="tag">scala</a> | <a href="../tags/haskell.html" class="tag">haskell</a></span></div>
+<p>Leftist heaps are relatively easy to implement as purely functional data structures, and are a good default implementation for our <a href="../posts/2014-08-31-purely-functional-heaps.html">heap</a> typeclass.</p>
+<!--more-->
+
+<h2 id="overview">Overview</h2>
+<p>Structurally, a leftist heap is a <em>min tree</em> where each node is marked with a <em>rank</em> value.</p>
+<p>We’ll get into precisely what these mean and the interesting properties they bring, but first, let’s try to develop an intuition for what a leftist heap is.</p>
+<p>A leftist heap, then, is a purposefully unbalanced binary tree (leaning to the left, hence the name) that keeps its smallest value at the top and has an inexpensive merge operation. It looks something like this:</p>
+<div class="figure">
+<img src="../images/leftist-heaps/leftist-heap.svg" alt="Fig. 1: A leftist heap" /><p class="caption">Fig. 1: A leftist heap</p>
+</div>
+<p>As you can see, there is no apparent order to these values - there is no easy logic such as smaller values going to left as in binary search trees, for example. We can see, however, that the smallest value of each subtree is always in its root (that’s essentially what being a min tree means).</p>
+<p>The rest appears to be chaos - <code>8</code>, for example, is found at different depths of the tree, with different parents. The <code>rank</code> function is what drives this chaos.</p>
+<p>And that’s it, really. Merging two leftist heaps is the most complex operation, and it can be seen as a merge-sort of the right spline of both trees (more on that later). Once you know how to merge two trees, you’re essentially done, as most other primitives can be derived from that.</p>
+<p>Let’s now discuss what a <em>min tree</em> is, and how to pick a <em>rank</em> function, in more details.</p>
+<h3 id="min-tree">Min tree</h3>
+<p>A <em>min tree</em> is one such that: <br /><span class="math">∀<em>n</em>, <em>v</em><em>a</em><em>l</em><em>u</em><em>e</em>(<em>n</em><sub><em>l</em><em>e</em><em>f</em><em>t</em></sub>) ≥ <em>v</em><em>a</em><em>l</em><em>u</em><em>e</em>(<em>n</em>) ∧ <em>v</em><em>a</em><em>l</em><em>u</em><em>e</em>(<em>n</em><sub><em>r</em><em>i</em><em>g</em><em>h</em><em>t</em></sub>) ≥ <em>v</em><em>a</em><em>l</em><em>u</em><em>e</em>(<em>n</em>)</span><br /></p>
+<p>Or, in plain english: the value of each node is no greater than that of its descendants.</p>
+<p>For example:</p>
+<div class="figure">
+<img src="../images/leftist-heaps/min-tree.svg" alt="Fig. 2: Min tree" /><p class="caption">Fig. 2: Min tree</p>
+</div>
+<p>This property is interesting for heaps in that it makes it trivial to find the minimum value: it’s always at the root of the tree. This affords us a guaranteed <code>O(1)</code> <code>findMin</code> operation.</p>
+<p>We often refer to such as trees as <em>heap-ordered</em>.</p>
+<h3 id="rank-function">Rank function</h3>
+<p>The <em>rank</em> function must obey the following laws:</p>
+<p><span class="math">∀<em>n</em> : <em>l</em><em>e</em><em>a</em><em>f</em>(<em>n</em>), <em>r</em><em>a</em><em>n</em><em>k</em>(<em>n</em>) = 0</span> <br /><span class="math">∀<em>n</em> : ¬<em>l</em><em>e</em><em>a</em><em>f</em>(<em>n</em>), <em>r</em><em>a</em><em>n</em><em>k</em>(<em>n</em><sub><em>l</em><em>e</em><em>f</em><em>t</em></sub>) ≥ <em>r</em><em>a</em><em>n</em><em>k</em>(<em>n</em><sub><em>r</em><em>i</em><em>g</em><em>h</em><em>t</em></sub>)</span><br /></p>
+<p>In plain english: the rank of any left child is no smaller than that its right sibling. This is also known as the <em>leftist property</em>.</p>
+<p>Different <code>rank</code> functions define different types of leftist heaps, but do not change the underlying algorithms.</p>
+<h3 id="height-biased-leftist-heap">Height-biased leftist heap</h3>
+<p>A common definition of <code>rank</code> is the length of the shortest path from a node to a leaf, and defined as: <br /><span class="math">∀<em>n</em> : ¬<em>l</em><em>e</em><em>a</em><em>f</em>(<em>n</em>), <em>r</em><em>a</em><em>n</em><em>k</em>(<em>n</em>) = <em>m</em><em>i</em><em>n</em>(<em>r</em><em>a</em><em>n</em><em>k</em>(<em>n</em><sub><em>l</em><em>e</em><em>f</em><em>t</em></sub>), <em>r</em><em>a</em><em>n</em><em>k</em>(<em>n</em><sub><em>r</em><em>i</em><em>g</em><em>h</em><em>t</em></sub>)) + 1</span><br /></p>
+<p>This creates a height-biased leftist heap. The following graph shows the <code>rank</code> value for all nodes:</p>
+<div class="figure">
+<img src="../images/leftist-heaps/height-biased.svg" alt="Fig. 3: Height-biased leftist heap" /><p class="caption">Fig. 3: Height-biased leftist heap</p>
+</div>
+<p>All leafs have a rank of 0. For all other nodes, notice that the rank value is exactly equal to the length of the right spline of the subtree defined by a node. The root of the whole tree, for example, has a value of <code>2</code>, which is the number of nodes from it (included) to the closest leaf.</p>
+<h3 id="weight-biased-leftist-heap">Weight-biased leftist heap</h3>
+<p>Another definition of <code>rank</code> is the number of nodes contained in the subtree with a given node as a root, and defined as: <br /><span class="math">∀<em>n</em> : ¬<em>l</em><em>e</em><em>a</em><em>f</em>(<em>n</em>), <em>r</em><em>a</em><em>n</em><em>k</em>(<em>n</em>) = <em>r</em><em>a</em><em>n</em><em>k</em>(<em>n</em><sub><em>l</em><em>e</em><em>f</em><em>t</em></sub>) + <em>r</em><em>a</em><em>n</em><em>k</em>(<em>n</em><sub><em>r</em><em>i</em><em>g</em><em>h</em><em>t</em></sub>) + 1</span><br /></p>
+<p>This creates a weight-biased leftist heap. The following graph shows the <code>rank</code> value for all nodes:</p>
+<div class="figure">
+<img src="../images/leftist-heaps/weight-biased.svg" alt="Fig. 4: Weight-biased leftist heap" /><p class="caption">Fig. 4: Weight-biased leftist heap</p>
+</div>
+<p>All leafs have a rank of 0, as per definition of <code>rank</code>. All other nodes have a rank equal to the number of non-leaf nodes below them (included). For example, the root has a rank of <code>9</code> because the tree contains exactly <code>9</code> non-leaf (white) nodes.</p>
+<h2 id="key-operation-merging">Key operation: merging</h2>
+<p>First, a quick point of vocabulary. Depending on the author, this operation is either referred to as <em>merging</em> or <em>melding</em>. These two terms are not, in fact, interchangeable:</p>
+<ul>
+<li><em>melding</em> is a destructive operation. Once two heaps have been melded, both are lost and only the result remains.</li>
+<li><em>merging</em> produces a new heap without modifying the two original ones.</li>
+</ul>
+<p>In our case, since we’re dealing with purely functional data structures, we need to merge trees, not meld them.</p>
+<p>Merging leftist heaps looks more complicated than it really is. We’ll take a step-by-step example soon, but the general principle is that merging two leftist heaps is done by merging their right splines as you would two sorted lists, and flipping left and right descendants as required by the <code>rank</code> function.</p>
+<p>Keeping that in mind, let’s take a concrete example.</p>
+<div class="figure">
+<img src="../images/leftist-heaps/merging-step1.svg" alt="Step 1" /><p class="caption">Step 1</p>
+</div>
+<p>Let’s consider both heaps’ right splines as sorted list. The first one is <code>[4, 8]</code>, the second one <code>[3, 6]</code>.</p>
+<p>Merging these two lists is done by taking their respective heads, comparing them and taking the smallest one as the head of our new list.</p>
+<p>In leftist heaps terms, this means that we’ll create a new tree whose root is <code>3</code> (the smallest of the two roots) and whose descendants are:</p>
+<ul>
+<li><code>3</code>’s left descendant.</li>
+<li>the result of merging <code>3</code>’s right descendant with the tree whose root is <code>4</code>.</li>
+</ul>
+<p>We can’t yet decide which one goes on the left and which one on the right: this requires comparing both trees’ ranks, and one of them isn’t known yet.</p>
+<p>Note that we said <em>create a new tree</em>. This is important, and is the key difference between merging and melding: rather than modifying <code>3</code>’s descendants, we create an entirely new tree and reuse as much of the structure of the previous one’s as we can (in this case, the left descendant, which we know won’t be modified).</p>
+<div class="figure">
+<img src="../images/leftist-heaps/merging-step2.svg" alt="Step 2" /><p class="caption">Step 2</p>
+</div>
+<p>We’re now merging the trees whose roots (<code>4</code> and <code>6</code>) are marked in the graph. Since <code>4</code> is smaller than <code>6</code>, the result is a new tree with a value of <code>4</code> and whose descendants are:</p>
+<ul>
+<li><code>4</code>’s left descendant.</li>
+<li>the result of merging <code>4</code>’s right descendant with the tree whose root is <code>6</code>.</li>
+</ul>
+<div class="figure">
+<img src="../images/leftist-heaps/merging-step3.svg" alt="Step 3" /><p class="caption">Step 3</p>
+</div>
+<p>We’re applying the same algorithm again, merging the <code>6</code> and <code>8</code> trees. This results in a single tree with the smallest value at its root.</p>
+<p>Since neither <code>6</code> nor <code>8</code> have descendants, we’ve reached the bottom case of our recursion and can start “climbing” back up. Since all trees are now known, we also know their ranks and can start flipping descendants as necessary.</p>
+<div class="figure">
+<img src="../images/leftist-heaps/merging-step4.svg" alt="Step 4" /><p class="caption">Step 4</p>
+</div>
+<p>The tree whose root is <code>4</code> is now complete and obeys the leftist property (whether we’re working with weight- or height-biased leftist heaps).</p>
+<p><code>4</code>’s rank is now known, and we can decide whether it should be the left or right descendant of <code>3</code>.</p>
+<div class="figure">
+<img src="../images/leftist-heaps/merging-step5.svg" alt="Step 5" /><p class="caption">Step 5</p>
+</div>
+<p>Since <code>4</code>’s rank is higher (whether we’re working with weight- or height-biased leftist heaps), it becomes <code>3</code>’s left descendant, and <code>5</code> its right one.</p>
+<p>At this point, we’ve succesfully merged both leftist heaps into a new one where all invariants are respected:</p>
+<ul>
+<li>the smallest value is always at the root (heap order).</li>
+<li>the highest rank values are always on the left (leftist property).</li>
+</ul>
+<h2 id="heap-operations">Heap operations</h2>
+<p>As we’ve seen <a href="../posts/2014-08-31-purely-functional-heaps.html">previously</a>, the key heap operations are:</p>
+<ul>
+<li><code>isEmpty</code></li>
+<li><code>findMin</code></li>
+<li><code>insert</code></li>
+<li><code>deleteMin</code></li>
+</ul>
+<p>Now that we understand the properties of a leftist heap and how to merge them, these operations are fairly simple to implement.</p>
+<h3 id="isempty">isEmpty</h3>
+<p>Just as with <a href="../posts/2014-08-31-binary-search-tree-as-set.html">binary search trees</a>, this operation is trivial: leafs are empty, all other nodes aren’t.</p>
+<p>Note that, in this post as before, <em>leaf</em> is used in the extended representation sense and represents the end of branch.</p>
+<h3 id="findmin">findMin</h3>
+<p>Since leftist heaps are <em>heap-ordered</em>, finding the minimum value is simply achieved through returning the value found at the tree’s root.</p>
+<h3 id="insert">insert</h3>
+<p>Value insertion can easily be implemented in terms of <code>merge</code>: adding a value to a leftist heap is done by merging the heap with another that has a single node with the desired value.</p>
+<h3 id="deletemin">deleteMin</h3>
+<p>Since leftist heaps are <em>heap-ordered</em>, deleting the minimum value is done by removing the tree’s root, after which we can simply merge its left and right descendants.</p>
+<h2 id="scala-implementation">Scala implementation</h2>
+<h3 id="leftistheap">LeftistHeap</h3>
+<p>We’ll implement leftist heaps as an algebraic data type. As usual, we start with the root trait:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">sealed</span> <span class="kw">trait</span> LeftistHeap[<span class="dt">A</span>] {
+  <span class="kw">def</span> rank                     : <span class="dt">Int</span>
+  <span class="kw">def</span> isEmpty                  : <span class="dt">Boolean</span>
+  <span class="kw">def</span> <span class="fu">merge</span>(as: <span class="dt">LeftistHeap[A]</span>): <span class="dt">LeftistHeap[A]</span>
+  <span class="kw">def</span> <span class="fu">insert</span>(a: <span class="dt">A</span>)             : <span class="dt">LeftistHeap[A]</span>
+  <span class="kw">def</span> <span class="fu">deleteMin</span>()              : <span class="dt">LeftistHeap[A]</span>
+  <span class="kw">def</span> findMin                  : <span class="dt">Option[A]</span>
+
+  <span class="kw">def</span> +(a: <span class="dt">A</span>): <span class="dt">LeftistHeap[A]</span> = <span class="fu">insert</span>(a)
+  <span class="kw">def</span> nonEmpty = !isEmpty
+}</code></pre>
+<p>As we did with <a href="../posts/2014-08-31-binary-search-tree-as-set.html">binary search trees</a>, <code>A</code> is not marked as requiring an implicit <code>Ordering</code> in scope. Concrete implementations will deal with that.</p>
+<h3 id="leaf">Leaf</h3>
+<p><code>Leaf</code> represents the end of a branch, <em>after</em> the last value. As noted before, this is not the standard definition of a leaf, but the one used in the extended representation of a tree.</p>
+<p>Leafs are trivial to implement:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Leaf[<span class="dt">A: Ordering</span>]() <span class="kw">extends</span> LeftistHeap[<span class="dt">A</span>] {
+  <span class="kw">override</span> <span class="kw">val</span> rank                      = <span class="dv">0</span>
+  <span class="kw">override</span> <span class="kw">val</span> isEmpty                   = <span class="kw">true</span>
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">merge</span>(as: <span class="dt">LeftistHeap[A]</span>) = as
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">insert</span>(a: <span class="dt">A</span>)              = <span class="fu">Node</span>(a, <span class="dv">1</span>, <span class="kw">this</span>, <span class="kw">this</span>)
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">deleteMin</span>()               = <span class="kw">throw</span> <span class="kw">new</span> <span class="fu">UnsupportedOperationException</span>(<span class="st">&quot;Leaf.deleteMin&quot;</span>)
+  <span class="kw">override</span> <span class="kw">val</span> findMin                   = None
+}</code></pre>
+<h3 id="node">Node</h3>
+<p>Nodes are slightly more complicated to implement than <code>Leaf</code>:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Node[<span class="dt">A</span>](value: <span class="dt">A,</span> rank: <span class="dt">Int,</span> left: <span class="dt">LeftistHeap[A],</span> right: <span class="dt">LeftistHeap[A]</span>)(<span class="kw">implicit</span> ord: <span class="dt">Ordering[A]</span>)
+  <span class="kw">extends</span> LeftistHeap[<span class="dt">A</span>] {
+  <span class="kw">private</span> <span class="kw">def</span> <span class="fu">sortRank</span>(a: <span class="dt">A,</span> d1: <span class="dt">LeftistHeap[A],</span> d2: <span class="dt">LeftistHeap[A]</span>): <span class="dt">LeftistHeap[A]</span> =
+    <span class="kw">if</span>(d1.<span class="fu">rank</span> &gt; d2.<span class="fu">rank</span>) <span class="fu">Node</span>(a, d1.<span class="fu">rank</span> + <span class="dv">1</span>, d1, d2)
+    <span class="kw">else</span>                  <span class="fu">Node</span>(a, d2.<span class="fu">rank</span> + <span class="dv">1</span>, d2, d1)
+
+  <span class="kw">override</span> <span class="kw">val</span> isEmpty = <span class="kw">false</span>
+
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">merge</span>(as: <span class="dt">LeftistHeap[A]</span>) = as <span class="kw">match</span> {
+    <span class="kw">case</span> <span class="fu">Leaf</span>()                         =&gt; <span class="kw">this</span>
+    <span class="kw">case</span> <span class="fu">Node</span>(value2, _, left2, right2) =&gt;
+      <span class="kw">if</span>(ord.<span class="fu">lt</span>(value, value2)) <span class="fu">sortRank</span>(value,  left,  right.<span class="fu">merge</span>(as))
+      <span class="kw">else</span>                      <span class="fu">sortRank</span>(value2, left2, <span class="kw">this</span>.<span class="fu">merge</span>(right2))
+  }
+
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">insert</span>(a: <span class="dt">A</span>) = <span class="fu">merge</span>(<span class="fu">Node</span>(a, <span class="dv">1</span>, <span class="fu">Leaf</span>(), <span class="fu">Leaf</span>()))
+  <span class="kw">override</span> <span class="kw">def</span> <span class="fu">deleteMin</span>() = left.<span class="fu">merge</span>(right)
+  <span class="kw">override</span> <span class="kw">def</span> findMin = <span class="fu">Some</span>(value)
+  }</code></pre>
+<p>A lot of this is a direct translation of the algorithms we wrote before and is not really worth discussing - for example, the <code>deleteMin</code> implementation is beautifully simple and requires no explanation.</p>
+<p>The tricky bit is the <code>merge</code> method and is interesting to look into as it explicitly states something that I struggled with explaining before: how to choose which sub-tree goes to the left and which goes to the right when merging along the right spline.</p>
+<p>Attentive readers will also notice that we’ve hard-coded the <code>rank</code> function in this implementation: we’re using a height-biased leftist heap.</p>
+<h3 id="heap-instance">Heap instance</h3>
+<p>Now that we have a working leftist heap, we can write the corresponding <code>HeapLike</code> instance. This proves particularly unchallenging, since a leftist heap already is a heap:</p>
+<pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">implicit</span> <span class="kw">object</span> AsHeap <span class="kw">extends</span> HeapLike[<span class="dt">LeftistHeap</span>] {
+  <span class="kw">override</span> <span class="kw">def</span> isEmpty[<span class="dt">A</span>](a: <span class="dt">LeftistHeap[A]</span>)         = a.<span class="fu">isEmpty</span>
+  <span class="kw">def</span> merge[<span class="dt">A</span>](a: <span class="dt">LeftistHeap[A],</span> b: <span class="dt">LeftistHeap[A]</span>) = a.<span class="fu">merge</span>(b)
+  <span class="kw">override</span> <span class="kw">def</span> insert[<span class="dt">A</span>](a: <span class="dt">A,</span> as: <span class="dt">LeftistHeap[A]</span>)   = as.<span class="fu">insert</span>(a)
+  <span class="kw">override</span> <span class="kw">def</span> findMin[<span class="dt">A</span>](a: <span class="dt">LeftistHeap[A]</span>)         = a.<span class="fu">findMin</span>
+  <span class="kw">override</span> <span class="kw">def</span> deleteMin[<span class="dt">A</span>](a: <span class="dt">LeftistHeap[A]</span>)       = a.<span class="fu">deleteMin</span>()
+}</code></pre>
+<h2 id="haskell-implementation">Haskell implementation</h2>
+<h3 id="leftistheap-1">LeftistHeap</h3>
+<p>As with Scala, we start by declaring a <code>LeftistHeap</code> algebraic data type, as well as the various basic functions we need for interacting with it:</p>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">LeftistHeap</span> a <span class="fu">=</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Node</span> a <span class="dt">Int</span> (<span class="dt">LeftistHeap</span> a) (<span class="dt">LeftistHeap</span> a)
+                   <span class="fu">|</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Leaf</span>
+
+<span class="co">-- Creates a leftist tree containing the specified element.</span>
+<span class="ot">singleton ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">LeftistHeap</span> a
+singleton a <span class="fu">=</span> <span class="dt">Node</span> a <span class="dv">1</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span>
+
+<span class="co">-- Extracts the rank of a leftist tree</span>
+<span class="ot">rank ::</span> <span class="dt">LeftistHeap</span> a <span class="ot">-&gt;</span> <span class="dt">Int</span>
+rank <span class="dt">Leaf</span>           <span class="fu">=</span> <span class="dv">0</span>
+rank (<span class="dt">Node</span> _ r _ _) <span class="fu">=</span> r
+
+<span class="co">-- Merges two leftist trees together.</span>
+<span class="ot">merge ::</span> (<span class="dt">Ord</span> a) <span class="ot">=&gt;</span> <span class="dt">LeftistHeap</span> a <span class="ot">-&gt;</span> <span class="dt">LeftistHeap</span> a <span class="ot">-&gt;</span> <span class="dt">LeftistHeap</span> a
+merge <span class="dt">Leaf</span> t    <span class="fu">=</span> t
+merge t    <span class="dt">Leaf</span> <span class="fu">=</span> t
+merge t1<span class="fu">@</span>(<span class="dt">Node</span> a1 _ l1 r1) t2<span class="fu">@</span>(<span class="dt">Node</span> a2 _ l2 r2)
+  <span class="fu">|</span> a1 <span class="fu">&lt;</span> a2   <span class="fu">=</span> sortRank a1 l1 (merge r1 t2)
+  <span class="fu">|</span> otherwise <span class="fu">=</span> sortRank a2 (merge t1 l2) r2
+
+<span class="co">-- Creates a leftist tree with the specified value and left and right children.</span>
+<span class="ot">sortRank ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">LeftistHeap</span> a <span class="ot">-&gt;</span> <span class="dt">LeftistHeap</span> a <span class="ot">-&gt;</span> <span class="dt">LeftistHeap</span> a
+sortRank a l r <span class="fu">=</span> <span class="kw">if</span>   rank l <span class="fu">&gt;</span> rank r
+            <span class="kw">then</span> <span class="dt">Node</span> a (rank l <span class="fu">+</span> <span class="dv">1</span>) l r
+            <span class="kw">else</span> <span class="dt">Node</span> a (rank r <span class="fu">+</span> <span class="dv">1</span>) r l</code></pre>
+<p>Note how, aside from pure syntax, the largest difference between this and the Scala implementation is how code is “grouped” together: Haskell groups it by functionality, and Scala by type.</p>
+<p>To be more explicit: in Haskell, one defines the function and all its possible implementation at declaration time. For example, we define <code>rank</code>’s behaviour for both leafs and nodes at the same point in our code. In Scala, we have an implementation for leafs and one for nodes.</p>
+<h3 id="heap-instance-1">Heap instance</h3>
+<p>Having written a leftist heap with the bare minimum functionalities, we can now write a <code>Heap</code> instance for it:</p>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Heap</span> <span class="dt">LeftistHeap</span> <span class="kw">where</span>
+  <span class="kw">type</span> <span class="dt">HeapEntry</span> <span class="dt">LeftistHeap</span> a <span class="fu">=</span> <span class="dt">Ord</span> a
+
+  empty <span class="fu">=</span> <span class="dt">Leaf</span>
+
+  isEmpty <span class="dt">Leaf</span> <span class="fu">=</span> <span class="dt">True</span>
+  isEmpty _    <span class="fu">=</span> <span class="dt">False</span>
+
+  insert p a <span class="fu">=</span> merge p (singleton a)
+
+  findMin <span class="dt">Leaf</span>           <span class="fu">=</span> <span class="dt">Nothing</span>
+  findMin (<span class="dt">Node</span> a _ _ _) <span class="fu">=</span> <span class="dt">Just</span> a
+
+  deleteMin <span class="dt">Leaf</span>           <span class="fu">=</span> error <span class="st">&quot;Leaf.deleteMin&quot;</span>
+  deleteMin (<span class="dt">Node</span> _ _ l r) <span class="fu">=</span> merge l r</code></pre>
+
+        </div>
+    </body>
+</html>
