@@ -28,15 +28,23 @@
 <!--more-->
 
 <h2 id="binary-search-tree">Binary Search Tree</h2>
-<p>A binary search tree is a binary tree such that, for any given node <code>n</code>, all the values to its left are smaller than <code>n</code> and all the values to its right are larger than <code>n</code>.</p>
+<p>A binary search tree is a binary tree such that: <br /><span class="math">∀<em>n</em> : ¬<em>l</em><em>e</em><em>a</em><em>f</em>(<em>n</em>), <em>v</em><em>a</em><em>l</em><em>u</em><em>e</em>(<em>n</em><sub><em>l</em><em>e</em><em>f</em><em>t</em></sub>) ≤ <em>v</em><em>a</em><em>l</em><em>u</em><em>e</em>(<em>n</em>) ≤ <em>v</em><em>a</em><em>l</em><em>u</em><em>e</em>(<em>n</em><sub><em>r</em><em>i</em><em>g</em><em>h</em><em>t</em></sub>)</span><br /></p>
+<p>Or, in plain english: smaller values go to the left, larger ones to the right.</p>
 <div class="figure">
 <img src="../images/binary-search-trees/simple.svg" alt="Fig. 1: Simple binary search tree" /><p class="caption">Fig. 1: Simple binary search tree</p>
 </div>
 <p>You can see in figure 1 that the nodes to the left of <code>8</code> are <code>5</code>, <code>6</code> and <code>3</code>, which are all smaller than <code>8</code>. Similarly, the nodes to its right are <code>10</code>, <code>9</code> and <code>12</code>, which are all larger than <code>8</code>.</p>
 <p>In the rest of this post, I’ll use the term <em>leaf</em> to mean a leaf in the <a href="http://mathworld.wolfram.com/ExtendedBinaryTree.html">extended representation</a> of the tree: a leaf does not contain a value, but represents the end of a branch.</p>
-<h3 id="isempty-algorithm">“isEmpty” algorithm</h3>
+<h2 id="set-operations">Set operations</h2>
+<p>As we’ve seen <a href="../posts/2014-08-21-purely-functional-sets.html">previously</a>, the key set operations are:</p>
+<ul>
+<li><code>isEmpty</code></li>
+<li><code>insert</code></li>
+<li><code>contains</code></li>
+</ul>
+<h3 id="isempty">isEmpty</h3>
 <p>Checking whether a binary search tree is empty is trivial: if the root is a leaf, then it’s empty. Otherwise, it’s not.</p>
-<h3 id="contains-algorithm">“contains” algorithm</h3>
+<h3 id="contains">contains</h3>
 <p>The algorithm for the <code>contains</code> operation is a straightforward recursion starting at the root of the tree:</p>
 <ul>
 <li>if the current node is a leaf, return <code>false</code>.</li>
@@ -64,7 +72,7 @@
 <li><code>4</code> is larger than <code>3</code>, explore the right sub-tree</li>
 <li>we’re at a leaf, the set does not contain <code>4</code>.</li>
 </ul>
-<h3 id="insert-algorithm">“insert” algorithm</h3>
+<h3 id="insert">insert</h3>
 <p>Modification of purely functional data structures can be tricky: it requires cloning the source structure and updating it just enough to reflect the desired modifications, while at the same time re-using as much of it as possible.</p>
 <p>Note that re-using parts of purely functional data structures is not unsafe: since they’re immutable by definition, it’s not possible for modifications in one to be reflected in another.</p>
 <p>Insertion in binary search trees is fairly straightforward: recursively look for the node in which the desired value should be inserted, cloning all explored nodes along the way and re-using the sub-tree that is <em>not</em> impacted by the modification.</p>
@@ -132,7 +140,7 @@
 <p>The first thing to point out in this implementation is that it can be optimised: both <code>add</code> and <code>contains</code> are recursive, but neither of them is tail-recursive. That’s fine for demonstration purposes, and makes the code quite a bit more legible, but it’d probably be a desirable optimsation if <code>Node</code> were to be used in a production a environment.</p>
 <p>Note how clearly case classes allow us to express our cloning algorithm: the <code>copy</code> method makes it obvious that the only difference between the current node and the one that is returned is the sub-tree in which we drill down.</p>
 <p>On the other hand, I’m a bit annoyed that I couldn’t find a sane way to use operators such as <code>&lt;</code> and <code>&gt;</code> rather than the more verbose <code>ord.lt</code> and <code>ord.gt</code>. It feels like an obvious way to make the code clearer, but I just didn’t manage to get it to work.</p>
-<h3 id="implicit-conversion-to-set">Implicit conversion to <code>Set</code></h3>
+<h3 id="set-instance">Set instance</h3>
 <p>In order for our <code>BinarySearchTree</code> to be usable as a <code>Set</code>, we still need to write the corresponding, trivial <code>SetLike</code> implementation:</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">implicit</span> <span class="kw">object</span> AsSet <span class="kw">extends</span> SetLike[<span class="dt">BinarySearchTree</span>] {
   <span class="kw">override</span> <span class="kw">def</span> isEmpty[<span class="dt">A</span>](as: <span class="dt">BinarySearchTree[A]</span>)        = as.<span class="fu">isEmpty</span>
@@ -145,7 +153,7 @@
 <pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">BinarySearchTree</span> a <span class="fu">=</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Node</span> a (<span class="dt">BinarySearchTree</span> a) (<span class="dt">BinarySearchTree</span> a)
                         <span class="fu">|</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Leaf</span></code></pre>
 <p>Note that we’ll need the <code>ExistentialQuantification</code> to be able to declare type constraints at the data constructor level. This allows us to ensure that only values that can be ordered are added in our binary search trees, the same way we did for the Scala implementation.</p>
-<h3 id="set-instance">Set instance</h3>
+<h3 id="set-instance-1">Set instance</h3>
 <p>Now that we have our data structure, we need to turn it into a valid <code>Set</code> implementation:</p>
 <pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Set</span> <span class="dt">BinarySearchTree</span> <span class="kw">where</span>
   <span class="kw">type</span> <span class="dt">SetEntry</span> <span class="dt">BinarySearchTree</span> a <span class="fu">=</span> <span class="dt">Ord</span> a
