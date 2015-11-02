@@ -1,7 +1,7 @@
 name: Blog
 markdown: redcarpet
 highlighter: pygments
-baseurl: /tabulate
+baseurl:
 excerpt_separator: <!--more-->
 
 collections:
