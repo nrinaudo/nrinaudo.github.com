@@ -1,0 +1,16 @@
+name: Blog
+markdown: redcarpet
+highlighter: pygments
+baseurl: /tabulate
+excerpt_separator: <!--more-->
+
+collections:
+  tut:
+    output: true
+
+defaults:
+  -
+    scope:
+      path: "" # empty string for all files
+    values:
+      layout: "default"
