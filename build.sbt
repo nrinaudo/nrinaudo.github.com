@@ -1,6 +1,8 @@
 import com.typesafe.sbt.SbtSite.SiteKeys._
 import com.typesafe.sbt.SbtGhPages.GhPagesKeys._
 
+scalaVersion := "2.11.7"
+
 tutSettings
 
 site.settings
@@ -14,3 +16,26 @@ ghpages.settings
 git.remoteRepo := "git@github.com:nrinaudo/tabulate.git"
 
 ghpagesNoJekyll := false
+
+scalacOptions ++= Seq("-deprecation",
+  "-target:jvm-1.7",
+  "-encoding", "UTF-8",
+  "-feature",
+  "-language:existentials",
+  "-language:higherKinds",
+  "-language:implicitConversions",
+  "-unchecked",
+  "-Xfatal-warnings",
+  "-Xlint",
+  "-Yno-adapted-args",
+  "-Ywarn-dead-code",
+  "-Ywarn-numeric-widen",
+  "-Ywarn-value-discard",
+  "-Xfuture")
+
+libraryDependencies ++= Seq(
+  "org.typelevel"        %% "export-hook"   % "1.1.0",
+  "org.scala-lang"        % "scala-reflect" % scalaVersion.value  % "provided",
+  "com.github.mpilquist" %% "simulacrum"    % "0.5.0" % "provided",
+  compilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+)
