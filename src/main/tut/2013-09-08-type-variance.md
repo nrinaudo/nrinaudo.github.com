@@ -159,7 +159,7 @@ example:
 ```tut:silent
 trait Printer[-A] {
   // Prints its argument.
-  def apply(a: A)
+  def apply(a: A): Unit
 }
 ```
 
@@ -168,7 +168,7 @@ This is a bit counter intuitive, but makes sense in the case of classes used to 
 ```tut:silent
 // Note how this calls a method defined in Dog but not in Mammal.
 class DogPrinter extends Printer[Dog] {
-  override def apply(a: Dog) {
+  override def apply(a: Dog): Unit = {
     println(a)
     a.bark()
   }
@@ -176,7 +176,7 @@ class DogPrinter extends Printer[Dog] {
 
 // Since Printer is contravariant, an instance of MammalPrinter is a valid instance of Printer[Dog].
 class MammalPrinter extends Printer[Mammal] {
-  override def apply(a: Mammal) {
+  override def apply(a: Mammal): Unit = {
     println(a)
   }
 }
