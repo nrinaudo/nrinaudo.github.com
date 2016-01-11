@@ -33,7 +33,7 @@ val sqrt = new PartialFunction[Int, Double] {
 
   // Should this be called on a negative number, a MatchError would be thrown.
   def apply(p: Int) = p match {
-    case a if a >= 0 => math.sqrt(a)
+    case a if a >= 0 => math.sqrt(a.toDouble)
   }
 }
 ```
@@ -45,7 +45,7 @@ this much easier to write: `case` statements.
 // This is strictly equivalent to our previous example, but with much less boilerplate.
 // Note that a partial function's type cannot be inferred and needs always be fully declared.
 val sqrt: PartialFunction[Int, Double] = {
-  case p if p >= 0 => math.sqrt(p)
+  case p if p >= 0 => math.sqrt(p.toDouble)
 }
 ```
 
@@ -85,7 +85,7 @@ For example:
 
 ```scala
 scala> List(4, -4, 9, -9, 16, -16).collect {
-     |   case p if p >= 0 => math.sqrt(p)
+     |   case p if p >= 0 => math.sqrt(p.toDouble)
      | }
 res6: List[Double] = List(2.0, 3.0, 4.0)
 ```
