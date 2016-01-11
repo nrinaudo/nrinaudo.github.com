@@ -36,6 +36,7 @@ scalacOptions ++= Seq("-deprecation",
 libraryDependencies ++= Seq(
   "org.typelevel"        %% "export-hook"   % "1.1.0",
   "org.scala-lang"        % "scala-reflect" % scalaVersion.value  % "provided",
-  "com.github.mpilquist" %% "simulacrum"    % "0.5.0" % "provided",
+  "com.github.mpilquist" %% "simulacrum"    % "0.5.0"             % "provided",
+  "com.chuusai"          %% "shapeless"     % "2.2.5",
   compilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 )
