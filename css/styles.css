@@ -119,3 +119,12 @@ ul.archive li {
     border-bottom: 1px solid #dfdedc;
     margin-bottom: 30px;
 }
+
+ul {
+    list-style-position: inside;
+    padding-left: 0;
+}
+
+ul li {
+    margin-bottom: 10px;
+}
