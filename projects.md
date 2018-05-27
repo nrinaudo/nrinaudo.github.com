@@ -1,21 +1,34 @@
 ---
 ---
 
-# Fetch
+# kantan.csv
 
-[fetch](https://github.com/nrinaudo/fetch) is a client HTTP library that I wrote both as a learning experience and out
-of dissatisfaction with existing tools.
+[kantan.csv](https://nrinaudo.github.io/kantan.csv/) is a CSV library meant to help with extracting useful values from
+CSV data.
 
-It's sort of in a constant state of flux as I learn more about Scala and FP design.
+This is probably the most popular of all my libraries, and is also the one I use and maintain the most.
 
+# kantan.xpath
 
+[kantan.xpath](https://nrinaudo.github.io/kantan.xpath/) is a library designed to let developers get useful types
+out of XPath queries.
 
-# Tabulate
+This was initially created because I needed to do some scraping and grew frustrated with how inadequate Scala tools
+available at the time were.
 
-[tabulate](https://nrinaudo.github.io/tabulate) is a CSV handling library that I end up using *all the time*, CSV being
-such an annoyingly omnipresent data exchange format.
+# kantan.regex
 
-It's meant to be RFC compliant but flexible enough to handle all sane variations on the format, and abstracts away most
-of the formatting and parsing.
+[kantan.regex](https://nrinaudo.github.io/kantan.regex/) is regular expression library whose sole purpose is to turn
+matches into useful values.
 
-While I still have hundreds of ideas to improve tabulate, it's already fairly stable and usable.
+This is actually a side-effect of [kantan.xpath](https://nrinaudo.github.io/kantan.xpath/): too often, scraping involves
+evaluating regular expressions against the content of XML nodes, and [kantan.xpath](https://nrinaudo.github.io/kantan.xpath/)
+only did half the job.
+
+# kantan.codecs
+
+[kantan.codecs](https://nrinaudo.github.io/kantan.codecs/) is the core of all other kantan projects - that's where all
+the logic for encoding and decoding is.
+
+Other kantan libraries essentially depend on that, declare specialised versions of the decoding typeclasses and inherit
+external libraries support.
