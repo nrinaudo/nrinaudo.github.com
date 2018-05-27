@@ -1,8 +1,12 @@
 name: Blog
-markdown: redcarpet
-highlighter: pygments
+markdown: kramdown
+highlighter: rouge
 baseurl:
 excerpt_separator: <!--more-->
+
+kramdown:
+  input: GFM
+  hard_wrap: false
 
 collections:
   tut:
