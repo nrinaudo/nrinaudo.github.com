@@ -66,10 +66,10 @@ The following calls are strictly equivalent:
 
 ```scala
 scala> UpdateDemo.update(0, "poney")
-res5: String = poney
+res4: String = poney
 
 scala> UpdateDemo(0) = "poney"
-res6: String = poney
+res5: String = poney
 ```
 
 This is convenient when creating data structures, especially when coupled with `apply`, as it allows you to write very
@@ -138,16 +138,16 @@ This allows us to write:
 
 ```scala
 scala> +UnaryDemo
-res9: Int = 4
+res7: Int = 4
 
 scala> -UnaryDemo
-res10: Int = -4
+res8: Int = -4
 
 scala> !UnaryDemo
-res11: Boolean = false
+res9: Boolean = false
 
 scala> ~UnaryDemo
-res12: String = ~
+res10: String = ~
 ```
 
 
@@ -172,7 +172,7 @@ scala> FieldDemo.x = 10
 FieldDemo.x: Int = 10
 
 scala> FieldDemo.x
-res13: Int = 10
+res11: Int = 10
 ```
 
 This can be useful in classes that used to expose a mutable field but that, for one reason or another, had to add logic

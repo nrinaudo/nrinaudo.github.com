@@ -121,7 +121,7 @@ We can then chain them together as follows:
 
 ```scala
 scala> List(1, 2, 3, 4, 5, 6).collect(times2 orElse plus1)
-res11: List[Int] = List(2, 3, 6, 5, 10, 7)
+res10: List[Int] = List(2, 3, 6, 5, 10, 7)
 ```
 
 
@@ -136,15 +136,15 @@ scala> val safeSqrt = sqrt.lift
 safeSqrt: Int => Option[Double] = <function1>
 
 scala> safeSqrt(4)
-res12: Option[Double] = Some(2.0)
+res11: Option[Double] = Some(2.0)
 
 scala> safeSqrt(-4)
-res13: Option[Double] = None
+res12: Option[Double] = None
 ```
 
 We can then turn it back into a partial function that fails on negative numbers:
 
 ```scala
 scala> Function.unlift(safeSqrt).isDefinedAt(-4)
-res14: Boolean = false
+res13: Boolean = false
 ```
