@@ -1,0 +1,22 @@
+---
+layout: compress
+---
+{% include header.html %}
+<div class="wrapper index">
+  {{ content }}
+
+  <h1>Table of Contents</h1>
+
+{% assign cs = site.collections | sort: 'sequence' %}
+  <ul>
+{% for c in cs %}
+{% if c.title %}
+<li><a href="{{ site.baseurl }}/{{ c.label }}">{{ c.title }}</a></li>
+{% endif %}
+{% endfor %}
+  <ul>
+
+</div>
+{% include footer.html %}
+</body>
+</html>
