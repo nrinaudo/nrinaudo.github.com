@@ -1,20 +1,18 @@
-name: Blog
-markdown: kramdown
+name:        Nicolas Rinaudo
+markdown:    kramdown
 highlighter: rouge
-baseurl:
-excerpt_separator: <!--more-->
-
-kramdown:
-  input: GFM
-  hard_wrap: false
 
 collections:
-  tut:
-    output: true
+  optics:
+    output:   true
+    title:    Optics from the ground up
+    sequence: 1
 
-defaults:
-  -
-    scope:
-      path: "" # empty string for all files
-    values:
-      layout: "default"
+kramdown:
+  input:     GFM
+  hard_wrap: false
+
+compress_html:
+  clippings: all
+  comments:  ["<!-- ", " -->"]
+  endings:   all
