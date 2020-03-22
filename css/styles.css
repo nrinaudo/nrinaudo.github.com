@@ -215,3 +215,7 @@ td ul li:last-child:after {
     background: #f9f9f9;
     padding   : 10px;
 }
+
+.figure img {
+    max-width: 100%;
+}
