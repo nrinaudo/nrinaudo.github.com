@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+      <meta charset="utf-8">
+    <title>{{ site.name }}{% if page.title %} - {{ page.title }}{% endif %}</title>
+
+    <link rel="stylesheet" href="{{ site.baseurl }}/css/styles.css">
+    <link rel="stylesheet" href="{{ site.baseurl }}/css/syntax.css">
+    <link rel="stylesheet" href="{{ site.baseurl }}/css/font-awesome.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+  </head>
+  <body>
+      <div id="navbar">
+          <span class="external"><a href="https://stackoverflow.com/users/1370349/nicolas-rinaudo"><i class="fa fa-stack-overflow fa-lg"></i></a></span>
+          <span class="external"><a href="https://twitter.com/NicolasRinaudo"><i class="fa fa-twitter fa-lg"></i></a></span>
+          <span class="external"><a href="https://github.com/nrinaudo"><i class="fa fa-github fa-lg"></i></a></span>
+          <span class="internal"><a href="{{ site.baseurl }}/">{{ site.name }}</a></span>
+          <span class="internal"><a href="{{ site.baseurl }}/projects.html">Projects</a></span>
+          <span class="internal"><a href="{{ site.baseurl }}/talks.html">Talks</a></span>
+      </div>
+
+	  <div id="content">
+          {% if page.title %}<h1>{{ page.title }}</h1>{% endif %}
+          {{ content }}
+
+	  </div>
+  </body>
+</html>
