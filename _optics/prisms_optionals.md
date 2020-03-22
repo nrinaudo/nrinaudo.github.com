@@ -285,7 +285,7 @@ At this point, we have 3 tools - lenses, prisms and optionals - which should com
 
 What about all other combinations? I'll write the code for them here, but you should feel entirely free to skip it. The interesting part is not the code itself, but the result type for each composition.
 
-### Prism ∘ Prism
+### Prism ∘ Prism = Prism
 
 ```scala
 def composePP[S, A, B](
@@ -299,7 +299,7 @@ def composePP[S, A, B](
 
 A prism composed with a prism yields a prism.
 
-### Prism ∘ Lens
+### Prism ∘ Lens = Optional
 
 ```scala
 def composePL[S, A, B](
@@ -313,7 +313,7 @@ def composePL[S, A, B](
 
 A prism composed with a lens yields an optional.
 
-### Lens ∘ Prism
+### Lens ∘ Prism = Optional
 
 ```scala
 def composeLP[S, A, B](
@@ -327,7 +327,7 @@ def composeLP[S, A, B](
 
 A lens composed with a prism yields an optional.
 
-### Optional ∘ Optional
+### Optional ∘ Optional = Optional
 
 ```scala
 def composeOO[S, A, B](
@@ -341,7 +341,7 @@ def composeOO[S, A, B](
 
 An optional composed with an optional yields an optional.
 
-### Optional ∘ Prism
+### Optional ∘ Prism = Optional
 
 ```scala
 def composeOP[S, A, B](
@@ -356,7 +356,7 @@ def composeOP[S, A, B](
 An optional composed with a prism yields an optional.
 
 
-### Prism ∘ Optional
+### Prism ∘ Optional = Optional
 
 ```scala
 def composePO[S, A, B](
@@ -370,7 +370,7 @@ def composePO[S, A, B](
 
 A prism composed with an optional yields an optional.
 
-### Optional ∘ Lens
+### Optional ∘ Lens = Optional
 
 ```scala
 def composeOL[S, A, B](
@@ -384,7 +384,7 @@ def composeOL[S, A, B](
 
 An optional composed with a lens yields an optional.
 
-### Lens ∘ Optional
+### Lens ∘ Optional = Optional
 
 ```scala
 def composeLO[S, A, B](
