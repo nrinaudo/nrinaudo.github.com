@@ -113,7 +113,7 @@ val classifierName: String =
 
 This looks a lot like what we set out to do. There's a small problem though - I've done far too much Java to feel comfortable with a `Setter` exposing a `get` method.
 
-We'll need a better name for that - a proper FP name; ideally, one that's both pedantic and makes no sense unless you already know it's called that way.
+We'll need a better name for that - a proper FP name; ideally, one that's both pedantic and makes no sense unless you already know why it's called that way.
 
 We're trying to concentrate on a specific part of a data structure - to focus on it, as it were. If you think about it in an admittedly rather twisted way, that could conceivably be called a _lens_.
 
