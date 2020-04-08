@@ -1,14 +1,29 @@
 ---
 title: "Concrete use case: ConfigPath"
 layout: article
-sequence: 5
+sequence: 4
 ---
 
 We've been focusing on optics as a way to navigate ADTs so far, but that was a bit of a simplification. In this last part, I'll show a possible use case (heavily inspired by circe's `JsonPath`) that doesn't actually use ADTs.
 
-## Configuration ADT
+## Configuration structure
 
-A common way of representing configuration data is as a tree like structure:
+We'll be designing a library that allows us to deal with nested, json-like configuration files like:
+
+```json
+{
+  "auth": {
+    "user"    : "psmith",
+    "password": "Tr0ub4dor&3"
+  },
+  "classifier": {
+    "name"      : "news20",
+    "classCount": 20
+  }
+}
+```
+
+A common way of representing such configuration data is as a tree like structure:
 
 ```scala
 sealed trait Config
@@ -17,43 +32,30 @@ case class Section(
   children: Map[String, Config]
 ) extends Config
 
-case class Field(
+case class Value(
   value: String
 ) extends Config
 ```
 
-A `Config` is either a `Field` (a raw value, as a `String`) or a `Section`, which maps names to `Config` values. It's a recursive structure, since sections can contain other sections.
+A `Config` is either a `Value` (a raw value, as a `String`) or a `Section`, which maps names to `Config` values. It's a recursive structure, since sections can contain other sections.
 
-Here's an example of the kind of configuration we could store using that format:
-
-```json
-{
-  "auth": {
-    "token": "0xCAFEBABE"
-  },
-  "classifier": {
-    "name"      : "news20",
-    "classCount": "20"
-  }
-}
-```
-
-This maps directly to the following `Config` value:
+Our example configuration file would map directly to the following in-memory data structure:
 
 ```scala
 val conf = Section(Map(
   "auth" -> Section(Map(
-    "token" -> Field("0xCAFEBABE")
+    "user"     -> Value("psmith"),
+    "password" -> Value("Tr0ub4dor&3")
   )),
   "classifier" -> Section(Map(
-    "name"       -> Field("news20"),
-    "classCount" -> Field("20")
+    "name"       -> Value("news20"),
+    "classCount" -> Value("20")
   ))
 ))
 ```
 
 This is a convenient way of storing configuration, but accessing nested values can be awkward - you'd have to deal with the fact that:
-* a key that you expect to be a `Section` might be a `Field`, or vice versa.
+* a key that you expect to be a `Section` might be a `Value`, or vice versa.
 * a key that you expect to find doesn't exist.
 
 This sounds a lot like the kind of problems the optics we've developed so far could alleviate. Note that `Map` isn't really an ADT though - as the presence and absence of keys is not known a compile-time; it's an entirely dynamic structure.
@@ -62,7 +64,7 @@ Let's see how far we get with the tools we've created.
 
 ## Configuration optics
 
-First, the obvious prisms: splitting (diffracting, sorry, I've got to stay in theme) a `Config` in either a `Section` or a `Field`:
+First, the obvious prisms: splitting (diffracting, sorry, I've got to stay in theme) a `Config` in either a `Section` or a `Value`:
 
 ```scala
 val section = Prism.fromPartial[Config, Section](
@@ -70,9 +72,9 @@ val section = Prism.fromPartial[Config, Section](
   getter = { case a: Section => a }
 )
 
-val field = Prism.fromPartial[Config, Field](
+val value = Prism.fromPartial[Config, Value](
   setter = a => a,
-  getter = { case a: Field => a }
+  getter = { case a: Value => a }
 )
 ```
 
@@ -80,7 +82,7 @@ Then, we need some sort of way to explore sections. Given a key name, we want to
 * retrieve the corresponding value, knowing it might not exist.
 * set its associated value.
 
-We wrote `Optional` to deal with this exact same scenario, so let's see if we can write an `Optional` to explore sections:
+We wrote `Optional` to deal with this exact scenario, so let's see if we can write an `Optional` to explore sections:
 
 ```scala
 def sectionChild(name: String) = Optional[Section, Config](
@@ -91,6 +93,21 @@ def sectionChild(name: String) = Optional[Section, Config](
 
 Note that it's a bit different than what we're used to. Since key names are not hard-coded in `Section`, we need to access them as parameters: we don't have a generic `Optional[Section, Config]`, but a way of creating one for a given key name.
 
+Armed with these optics, we can:
+* go "down" one level from a given `Section` and get a `Config`.
+* given a `Config`, turn it into either a `Section` or a `Value`.
+
+This is almost all we need, but: how do we represent the first section in the configuration tree, the one to build longer paths from?
+
+We need to be a little creative and write a sort of _identity_ `Optional`: given a `Config`, it will always return it:
+
+```scala
+val identityOpt = Optional[Config, Config](
+  setter = (a, _) => a,
+  getter = s      => Some(s)
+)
+```
+
 ## ConfigPath
 
 Now that we have optics that allow us to explore the content of a `Config`, we can bundle them up in something that represents a path in our configuration tree:
@@ -98,7 +115,7 @@ Now that we have optics that allow us to explore the content of a `Config`, we c
 ```scala
 case class ConfigPath(current: Optional[Config, Config]) {
 
-  val asField   = composeOP(current, field)
+  val asValue   = composeOP(current, value)
   val asSection = composeOP(current, section)
 
   def child(name: String) = ConfigPath(
@@ -110,40 +127,23 @@ case class ConfigPath(current: Optional[Config, Config]) {
 }
 ```
 
-`ConfigPath` contains an `Optional[Config, Config]` that contains the path we've explored so far.
+`ConfigPath` contains an `Optional[Config, Config]` that represents the path we've explored so far.
 
 `child` allows us to build a more complex path: it takes its `name` parameter, assumes the current path points to a `Section`, and attempts to go one level down.
 
-`asField` and `asSection` allow us to transform whatever path we've built into a field or a section. `asField` is typically the last thing we'll call, as it'll yield an `Optiona[Config, Field]` which will allow us to work directly with the field at the end of our path.
+`asValue` and `asSection` allow us to transform whatever path we've built into a value or a section. `asValue` is typically the last thing we'll call, as it'll yield an `Optiona[Config, Value]` which will allow us to work directly with the value at the end of our path.
 
-The only problem we have with this data structure is: how do you create the first path - the one that points to the root of the configuration tree?
-
-We need to be a little creative and write a sort of _identity_ `Optional`: given a `Config`, it will always return it:
+For example:
 
 ```scala
-val identityOpt = Optional[Config, Config](
-  setter = (a, _) => a,
-  getter = s      => Some(s)
-)
-```
-
-This allows us to create the "root" `ConfigPath`, the path that points to the root of the configuration tree:
-
-```scala
-ConfigPath(identityOpt)
-```
-
-And this is how we'd use it:
-
-```scala
-val classifierName: Optional[Config, Field] =
+val classifierName: Optional[Config, Value] =
   ConfigPath(identityOpt)
     .child("classifier")
     .child("name")
-    .asField
+    .asValue
 ```
 
-We go from the root to `classifier` to `name`, and ask for that to be a field.
+We go from the root to `classifier` to `name`, and ask for that to be a value.
 
 The purpose is clear enough, but the syntax not as pleasant as it could be. We can improve on that thanks to a bit of dark magic with Scala's `Dynamic`.
 
@@ -162,7 +162,7 @@ object UpCase extends Dynamic {
 }
 ```
 
-Any time a missing member is accessed, the compiler will transform that into a call to `selectDynamic` with the field's name as a parameter.
+Any time a missing member is accessed, the compiler will transform that into a call to `selectDynamic` with the value's name as a parameter.
 
 This allows us to write the following:
 
@@ -182,7 +182,7 @@ case class ConfigPath(
     current: Optional[Config, Config]
   ) extends Dynamic {
 
-  val asField   = composeOP(current, field)
+  val asValue   = composeOP(current, value)
   val asSection = composeOP(current, section)
 
   def selectDynamic(child: String) = ConfigPath(
@@ -201,7 +201,7 @@ val classifierName =
   ConfigPath(identityOpt)
     .classifier
     .name
-    .asField
+    .asValue
 ```
 
 This is *almost* good, but that `ConfigPath(identityOpt)` bit is clearly unpleasant. Let's stick that in a value:
@@ -217,16 +217,18 @@ val classifierName=
   root
     .classifier
     .name
-    .asField
+    .asValue
 ```
 
 Thanks to the work we've just done, we can now easily access or modify a nested configuration value:
 
 ```scala
-classifierName.set(Field("NEWS20"))(conf)
-// res2: Config = Section(Map(auth -> Section(Map(token -> Field(0xCAFEBABE))), classifier -> Section(Map(name -> Field(NEWS20), classCount -> Field(20)))))
+classifierName.set(Value("NEWS20"))(conf)
+// res2: Config = Section(Map(auth -> Section(Map(user -> Value(psmith), password -> Value(Tr0ub4dor&3))), classifier -> Section(Map(name -> Value(NEWS20), classCount -> Value(20)))))
 ```
 
 ## Key takeaways
 
 We've learned a few neat things (`Dynamic`, for example), but the main point of this section was to show that you don't *need* ADTs for optics to be useful. As soon as you have immutable nested data that you need to explore, you might be able to simplify your code quite a bit with optics.
+
+Creating optics does seem to involve a fair amount of boilerplate, however - lens implementations, for example, all look the same except for actual value names. It feels like there should be some mechanisms for automating that.

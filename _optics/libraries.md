@@ -1,7 +1,7 @@
 ---
 title: Libraries
 layout: article
-sequence: 4
+sequence: 5
 ---
 
 The Scala ecosystem has a surprisingly large number of optics implementations - especially given how little they seem to be used in practice.
@@ -118,8 +118,6 @@ Some optics will allow you to map 1-to-many relationships. A list, for instance,
 We've seen three major libraries that offered optics implementations. You're very likely to have heard of all three - scalaz because of all the drama and the other two because they're actually useful. Surely, the fact that our ecosystem has room enough for three implementations is a sign that optics are worth looking into?
 
 If you have to chose an optics library for a new project, my personal recommendation is to go with Monocle. Or whatever you already know and are comfortable with, I don't have any stake in Monocle and will not feel slighted if you were to disregard my advice.
-
-In the last part of this article, we'll see that while I've been pushing optics as a great way of working with ADTs, it's not *all* they're good for.
 
 [shapeless]:https://github.com/milessabin/shapeless
 [scalaz]:https://github.com/scalaz/scalaz

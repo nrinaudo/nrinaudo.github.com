@@ -473,4 +473,4 @@ In order to work with both sum types and product types, we've had to extend our 
 
 We've also discovered that all these things composed and that, mostly, you'd eventually end up working with _optionals_.
 
-Creating optics does seem to involve a fair amount of boilerplate, however - lens implementations, for example, all look the same except for actual field names. It feels like there should be some mechanisms for automating that.
+In the next part of this article, we’ll see that while I’ve been pushing optics as a great way of working with ADTs, it’s not all they’re good for.

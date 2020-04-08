@@ -72,12 +72,30 @@ Given an `MlService`, this sets its classifier name to `"NEWS20"`.
 
 This is slightly disappointing, though: our task is to upper-case the classifier name - transform whatever the current value is, not set it to something hard-coded.
 
-We can sort that out by introducing a `modify` combinator:
+If we could _get_ the current value, we'd be able to apply a function to it and then update our service with that new value. Let's add that `get` method:
 
 ```scala
 trait Setter[S, A] {
   def set(a: A)(s: S): S
-  def modify(f: A => A)(s: S): S
+  def get(s: S): A
+}
+```
+
+Given an `MlService`, `get` returns its classifier name. It' fairly straightforward to use:
+
+```scala
+val classifierName: String =
+  nameSetter.get(service)
+// res2: String = "news20"
+```
+
+We can now combine `get` and `set` to get write a `modify` combinator:
+
+```scala
+trait Setter[S, A] {
+  def set(a: A)(s: S): S
+  def get(s: S): A
+  def modify(f: A => A)(s: S): S = set(f(get(s)))(s)
 }
 ```
 
@@ -88,27 +106,7 @@ In our case, we'd use it as follows:
 ```scala
 val updated: MlService =
   nameSetter.modify(_.toUpperCase)(service)
-// res2: MlService = MlService(Login(jsmith,Tr0ub4dor&3),Classifier(NEWS20,20))
-```
-
-That's a lot closer to what we're trying to achieve. But we can probably improve on it further: if we had a way of getting the `A` out of the `S`, we'd get `modify` for free:
-
-```scala
-trait Setter[S, A] {
-  def set(a: A)(s: S): S
-  def get(s: S): A
-  def modify(f: A => A)(s: S): S = set(f(get(s)))(s)
-}
-```
-
-Given an `MlService`, `get` returns its classifier name. `modify` becomes a simple combination of `get` and `set`.
-
-`get` is fairly straightforward to use:
-
-```scala
-val classifierName: String =
-  nameSetter.get(service)
-// res3: String = "news20"
+// res3: MlService = MlService(Login(jsmith,Tr0ub4dor&3),Classifier(NEWS20,20))
 ```
 
 This looks a lot like what we set out to do. There's a small problem though - I've done far too much Java to feel comfortable with a `Setter` exposing a `get` method.
@@ -125,6 +123,7 @@ Here's our final type:
 trait Lens[S, A] {
   def set(a: A)(s: S): S
   def get(s: S): A
+
   def modify(f: A => A)(s: S): S = set(f(get(s)))(s)
 }
 ```
