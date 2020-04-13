@@ -6,7 +6,7 @@ sequence: 5
 
 The Scala ecosystem has a surprisingly large number of optics implementations - especially given how little they seem to be used in practice.
 
-I'll be focusing on 3 I find noteworthy here, but that's certainly not an exhaustive list. If your favourite library (or worse, the library you maintain!) is not here, that's not a judgement on its quality. I might just not be aware of it, or it might not help me make the point I'm trying to make.
+I'll be focusing on 3 I find noteworthy here, but that's certainly not an exhaustive list. If your favourite library (or worse, the one you maintain!) is not here, that's not a judgement on its quality. I'm probably just not aware of it and would gladly hear about it.
 
 ## Scalaz
 
@@ -57,13 +57,13 @@ val serviceClassifierName = lens[MlService].classifier.name
 val serviceUser = lens[MlService].auth.user
 ```
 
-And this is, quite frankly beautiful.
+And this is, quite frankly, beautiful.
 
 Of course, it's shapeless - if, for whatever reason, it doesn't find an implicit instance it's looking for, you're on your own. It might take you minutes to work it out - or days. And shapeless will not help you; as far as it's concerned, it's your problem, not this.
 
 And it's also being a little bit weird. Shapeless provides lenses and prisms, not optionals. But what it calls prisms are, in fact, optionals. So it does have optionals, but it calls them prisms, and it doesn't have prisms. Or something. It's confusing.
 
-This is not as big a deal as one might think - as we've seen earlier, you'll eventually find yourself working with optionals anyway, so you don't really lose features. You just get weird names - but at least it's not _lensu_.
+This is not as big a deal as one might think - as we've seen earlier, you'll eventually find yourself working with optionals anyway, so you don't really lose functionality. You just get weird names - but at least it's not _lensu_.
 
 The use site API is very similar to ours, except the parameters are in the other order:
 
@@ -115,7 +115,7 @@ Some optics will allow you to map 1-to-many relationships. A list, for instance,
 
 ## Key takeaways
 
-We've seen three major libraries that offered optics implementations. You're very likely to have heard of all three - scalaz because of all the drama and the other two because they're actually useful. Surely, the fact that our ecosystem has room enough for three implementations is a sign that optics are worth looking into?
+We've seen three major libraries that offered optics implementations. You're very likely to have heard of all three - scalaz because of all the drama and the other two because they're actually useful.
 
 If you have to chose an optics library for a new project, my personal recommendation is to go with Monocle. Or whatever you already know and are comfortable with, I don't have any stake in Monocle and will not feel slighted if you were to disregard my advice.
 

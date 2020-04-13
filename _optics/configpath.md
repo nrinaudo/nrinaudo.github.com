@@ -28,16 +28,16 @@ A common way of representing such configuration data is as a tree like structure
 ```scala
 sealed trait Config
 
-case class Section(
-  children: Map[String, Config]
-) extends Config
-
 case class Value(
   value: String
 ) extends Config
+
+case class Section(
+  children: Map[String, Config]
+) extends Config
 ```
 
-A `Config` is either a `Value` (a raw value, as a `String`) or a `Section`, which maps names to `Config` values. It's a recursive structure, since sections can contain other sections.
+A `Config` is either a `Value` (a raw value, as a `String`) or a `Section`, which maps key names to `Config` values. It's a recursive structure, since sections can contain other sections.
 
 Our example configuration file would map directly to the following in-memory data structure:
 
@@ -58,7 +58,7 @@ This is a convenient way of storing configuration, but accessing nested values c
 * a key that you expect to be a `Section` might be a `Value`, or vice versa.
 * a key that you expect to find doesn't exist.
 
-This sounds a lot like the kind of problems the optics we've developed so far could alleviate. Note that `Map` isn't really an ADT though - as the presence and absence of keys is not known a compile-time; it's an entirely dynamic structure.
+This sounds a lot like the kind of problems the optics we've developed so far could alleviate. Note that `Map` isn't really an ADT though - `Config` is not an ADT but "simply" an immutable, nested data structure.
 
 Let's see how far we get with the tools we've created.
 
@@ -78,7 +78,8 @@ val value = Prism.fromPartial[Config, Value](
 )
 ```
 
-Then, we need some sort of way to explore sections. Given a key name, we want to be able to:
+We then need some sort of way to explore sections. Given a key name, we want to be able to:
+
 * retrieve the corresponding value, knowing it might not exist.
 * set its associated value.
 
@@ -97,9 +98,11 @@ Armed with these optics, we can:
 * go "down" one level from a given `Section` and get a `Config`.
 * given a `Config`, turn it into either a `Section` or a `Value`.
 
-This is almost all we need, but: how do we represent the first section in the configuration tree, the one to build longer paths from?
+This should let us represent paths in configuration tree: from the root of the tree, keep going down the sections you need and retrieve the final segment as a `Value`.
 
-We need to be a little creative and write a sort of _identity_ `Optional`: given a `Config`, it will always return it:
+We're still lacking one part of the puzzle though: how would we represent the root of the configuration tree?
+
+We need to be a little creative and write a sort of non-optional `Optional`: an `Optional` that points to itself and always succeeds:
 
 ```scala
 val identityOpt = Optional[Config, Config](
@@ -149,7 +152,7 @@ The purpose is clear enough, but the syntax not as pleasant as it could be. We c
 
 ## Dynamic
 
-`Dynamic` is a bit of an odd corner of Scala that gives us type safe syntax that looks a lot like dynamic code. The one we'll be focusing on is `selectDynamic`, which allows us to plug code when unknown members of a class are accessed.
+`Dynamic` is a bit of an odd corner of Scala that gives us type safe syntax that looks a lot like dynamic code. It offers many tools, but the one we'll be focusing on is `selectDynamic`, which allows us to plug code when unknown members of a class are accessed.
 
 Here's an example, where `UpCase` is a `Dynamic`:
 
@@ -162,7 +165,7 @@ object UpCase extends Dynamic {
 }
 ```
 
-Any time a missing member is accessed, the compiler will transform that into a call to `selectDynamic` with the value's name as a parameter.
+Any time a missing member is accessed, the compiler will transform that into a call to `selectDynamic` with that member's name as a parameter.
 
 This allows us to write the following:
 
@@ -204,7 +207,7 @@ val classifierName =
     .asValue
 ```
 
-This is *almost* good, but that `ConfigPath(identityOpt)` bit is clearly unpleasant. Let's stick that in a value:
+This is *almost* good, but that `ConfigPath(identityOpt)` bit is clearly unpleasant. Let's give it a clear name:
 
 ```scala
 val root = ConfigPath(identityOpt)
@@ -223,8 +226,8 @@ val classifierName=
 Thanks to the work we've just done, we can now easily access or modify a nested configuration value:
 
 ```scala
-classifierName.set(Value("NEWS20"))(conf)
-// res2: Config = Section(Map(auth -> Section(Map(user -> Value(psmith), password -> Value(Tr0ub4dor&3))), classifier -> Section(Map(name -> Value(NEWS20), classCount -> Value(20)))))
+classifierName.get(conf)
+// res2: Option[Value] = Some(Value(news20))
 ```
 
 ## Key takeaways

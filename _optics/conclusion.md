@@ -6,7 +6,7 @@ sequence: 6
 
 Having read that whole, fairly large article, you might feel a bit overwhelmed. This is the reader's digest version, the few key points that you should remember.
 
-The most important thing is: if you're working with nested data, optics are likely to be a good way of navigating it in a clear, readable fashion.
+The most important thing is: if you're working with immutable nested data, optics are likely to be a good way of navigating it in a clear, readable fashion.
 
 You've learned about 2 main types of optics:
 * lenses, used to drill down arbitrarily deep in nested product types.

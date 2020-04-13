@@ -13,7 +13,7 @@ val service = MlService(
 )
 ```
 
-Our task is to change the classifier name - perhaps our remote service expects classifier names to be all upper-case, for example.
+Our task is to change the classifier name: there's a convention that classifier names should be all upper case, because we feel it makes for better pretty printing.
 
 In terms of diagram, we're going to need to go through the following path:
 
@@ -37,14 +37,13 @@ service.copy(
 )
 ```
 
-This probably wasn't very pleasant to read, and believe me, it was much worse to write. Slightly upsetting, as well: functional programmers often act smug because our laws and abstractions allow us to write far terser, more readable code than if we'd used an imperative language. That's clearly not the case here.
+There's a lot of boilerplate there, a lot of code that obscures our intent. Slightly upsetting: as functional programmers, we're used to working with abstractions that have proven laws and properties that we can rely on to trim a lot of fat and write terse, expressive code. That's clearly not the case there.
 
 Let's see what we can do about that.
 
-
 ## Generic setter type
 
-Our first attempt will be to write a setter `trait`:
+Our first attempt will be to write an abstract setter type that we can use to reach within a data structure and modify one of its values:
 
 ```scala
 trait Setter[S, A] {
@@ -52,11 +51,13 @@ trait Setter[S, A] {
 }
 ```
 
-The `S` (for _state_) type parameter represents the type of the "containing" value. We want to modify a value nested inside a service, so `S` would be `MlService` in our scenario.
+Nowadays, I'll tend to use full words for type parameters, but in this instance I feel it's important to use the same, one letter names found in all the optics literature.
+
+The `S` (for _state_) type parameter represents the type of the data structure we want to modify. That'd be `MlService` in our scenario, since we're trying to reach inside of it and set the name of its classifier.
 
 `A` is the type of the nested value we want to modify - `String`, in our case, since that's the type of a classifier name.
 
-The important part of our setter is the `set` method which, given an `S` and an `A`, will reach inside of the former to set the corresponding field to the latter.
+The important part of our setter is the `set` method which, given an `S` and an `A`, will reach inside of the former to set the latter.
 
 This is how we'd use it:
 
@@ -70,9 +71,9 @@ val updated: MlService =
 
 Given an `MlService`, this sets its classifier name to `"NEWS20"`.
 
-This is slightly disappointing, though: our task is to upper-case the classifier name - transform whatever the current value is, not set it to something hard-coded.
+This is slightly disappointing, though: our task is not to set the classifier name to a known value, but to retrieve the current value, transform it and update `MlService` with it.
 
-If we could _get_ the current value, we'd be able to apply a function to it and then update our service with that new value. Let's add that `get` method:
+We'll need a `get` combinator to be able to do this:
 
 ```scala
 trait Setter[S, A] {
@@ -95,11 +96,12 @@ We can now combine `get` and `set` to get write a `modify` combinator:
 trait Setter[S, A] {
   def set(a: A)(s: S): S
   def get(s: S): A
+
   def modify(f: A => A)(s: S): S = set(f(get(s)))(s)
 }
 ```
 
-Fairly straightforward: instead of taking the target value for `A`, `modify` takes a function that, given the current value, returns the desired value.
+Fairly straightforward: instead of taking the target value for `A`, `modify` takes a function from the old `A` to the new one.
 
 In our case, we'd use it as follows:
 
@@ -142,9 +144,13 @@ object Lens {
 }
 ```
 
-Our `apply` method takes a function for the setter, another for the setter, and sticks them into a `Lens`. That's a fairly common pattern for `trait` instance creation.
+Our `apply` method takes a function for the setter, another for the getter, and sticks them into a `Lens`. That's a fairly common pattern for abstract type instance creation.
 
-We'll be giving names to these getter and setter types - there's a connection we'll need to make later, and having these names should help us see it:
+I'd like to give names to these setter and getter types. Naming things:
+* makes them easier to think about by reducing the cognitive load.
+* makes it clear they're important; why bother naming something that's not?
+
+There's a connection we'll need to make later, and having these names should help us see it:
 
 ```scala
 type Set[S, A] = (A, S) => S
@@ -174,7 +180,11 @@ Equipped with `Lens` and its creation helper, we can now tackle what we original
 ![Classifier](./img/service-name.svg)
 </span>
 
-Looking at this diagram, we get the definite impression that we should be doing that in two steps: first, go from `MlService` to `Classifier` through `classifier`, then from `Classifier` to `String` through `name`.
+Looking at this diagram, we get the definite impression that we should be doing that in two steps:
+* go from an `MlService` through `classifier` to a value of type `Classifier`.
+* go from a `Classifier` through `name`  to a value of type `String.`
+
+Let's follow that intuition.
 
 ### Service → Classifier
 
@@ -223,9 +233,9 @@ serviceClassifier.modify(classifierName.set("NEWS20"))(service)
 // res4: MlService = MlService(Login(jsmith,Tr0ub4dor&3),Classifier(NEWS20,20))
 ```
 
-And that is frankly very disappointing. We've gone through a lot of trouble to write this, and it's arguably not an improvement on what we started with. I wrote this and I can barely read it.
+And that is frankly very disappointing. We've gone through a lot of trouble to write this, and it's arguably not an improvement on what we started with. I *wrote* this and I can barely read it.
 
-When faced with this kind of situation, I usually try to stick the code in a method, abstract everything I can and see whether a pattern emerges. Let's try that here:
+When faced with this kind of situation, I usually try to stick the code in a function, parameterise everything I can and see whether a pattern emerges. Let's try that here:
 
 ```scala
 def setName(name: String, service: MlService) =
@@ -261,7 +271,7 @@ def setter[S, A, B](
 
 And, if you squint a bit, something interesting should have emerged. Look at that `(b: B, s: S): S` part; doesn't it look familiar? Remember when I said we were giving names to a couple of types to help see a pattern later?
 
-That's a `Set[S, B]`!
+That's a `Set[S, B]`:
 
 
 ```scala
@@ -300,7 +310,7 @@ def composeLL[S, A, B](
 
 ## Service → Classifier → name
 
-Now that we have lenses for all steps in our path and a way to compose them, we should be able to create a lens from `MlService` to `Classifier.name`:
+Now that we have lenses for all steps of our path and a way to compose them, we should be able to create a lens from `MlService` to `Classifier.name`:
 
   <span class="figure">
 ![Classifier](./img/service-name.svg)
@@ -315,15 +325,14 @@ val serviceClassifierName = composeLL(
 )
 ```
 
-And we can now easily `set` and `modify` our service's classifier name:
+And we can now easily modify our service's classifier name:
 
 ```scala
-serviceClassifierName.set("NEWS20")(service)
-// res5: MlService = MlService(Login(jsmith,Tr0ub4dor&3),Classifier(NEWS20,20))
-
 serviceClassifierName.modify(_.toUpperCase)(service)
-// res6: MlService = MlService(Login(jsmith,Tr0ub4dor&3),Classifier(NEWS20,20))
+// res5: MlService = MlService(Login(jsmith,Tr0ub4dor&3),Classifier(NEWS20,20))
 ```
+
+And I feel that it's hard to disagree that we've clearly improved on the initial situation quite a bit. Maybe not a clear win over the imperative syntax - if you're more used to dot-notation than to function application this is still a little awkward to parse - but a major step forward nevertheless.
 
 ## Key takeaway
 
