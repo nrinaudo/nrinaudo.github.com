@@ -19,7 +19,7 @@ case class Classifier(
 
 A `Classifier` is composed of two things: a name, used to identify it, *and* a class count, which you use to make sense of the probability distribution it yields. A `String` *and* an `Int`.
 
-That *and* keyword is extremely important: it's the defining feature of a *product type*. An aggregation of types, using *and* as the aggregating operator.
+That *and* keyword is extremely important: it's the defining feature of a *product type*. An aggregation of values, using *and* as the aggregating operator.
 
 I'll be using the following diagram to represent product types:
 
@@ -28,7 +28,7 @@ I'll be using the following diagram to represent product types:
 </span>
 
 Where:
-* the trapezium with a fat base (`Classifier`) represents the product type itself.
+* the trapezium with a large base (`Classifier`) represents the product type itself.
 * each arrow represents a field in the product type, and is labeled with its name.
 * the blue boxes at the bottom (`String` and `Int`) are the types of these fields.
 
@@ -57,7 +57,7 @@ case class Login(
 
 `Auth` is flagged as `sealed`, which means that the only two possible implementations are `Token` and `Login`: an `Auth` is either a `Token` *or* `Login`.
 
-Note the *or* keyword: that's the defining feature of a *sum type*. It's an aggregation of types, using *or* as the aggregating operator.
+Note the *or* keyword: that's the defining feature of a *sum type*. It's an aggregation of values, using *or* as the aggregating operator.
 
 I'll be using the following diagram to represent sum types:
 
@@ -94,11 +94,13 @@ Note how this is a product type composed of a product type and a sum type. This 
 ![MlService](./img/mlservice.svg)
 </span>
 
+We'll be spending a significant part of this article trying to find shortcuts through that diagram.
+
 ## Key takeaways
 
 While writing the data structure we'll be using throughout the article, we have defined the following:
-* a *product type* can be seen as an *and* between types.
-* a *sum type* can be seen as an *or* between types.
+* a *product type* can be seen as an *and* between values.
+* a *sum type* can be seen as an *or* between values.
 * the word *ADT* is usually used to describe nested sum and product types.
 
 With that knowledge in hand, we can now start talking about optics. The first one we'll concern ourselves with is *lens*.

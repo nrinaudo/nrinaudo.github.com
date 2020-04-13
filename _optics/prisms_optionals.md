@@ -13,7 +13,7 @@ val service = MlService(
 )
 ```
 
-This time, instead of changing the classifier name, we'll be attempting to change the login user:
+This time however, instead of changing the classifier name, we'll be attempting to change the login user:
 
 <span class="figure">
 ![Classifier](./img/service-user.svg)
@@ -50,11 +50,11 @@ Going from `Auth` to `Login`, on the other hand, is more problematic. `Auth` is 
 
 There's two ways we can deal with this situation: the correct one, and the one everybody kinds of want to try at this point. We could pretend that the problem doesn't exist and soldier on with the tools we already have - sort of sweep the issue under a rug and see where that takes us.
 
-That's actually a perfectly fine approach. From experience, we can be pretty certain this won't work out; there will come a point where we'll get stuck. But that's ok! We'll have learned something about the problem, and in so doing, be one step closer to solving it.
+That's actually a perfectly fine approach. From experience, we can be pretty certain this won't work out; there will come a point where we'll get stuck. But that's alright! We'll have learned something about the problem, and in so doing, gotten one step closer to solving it.
 
 ## Auth → user?
 
-Since we don't really know how to go from `Auth` to `Login`, let's see if we can't sidestep the whole thing and go directly to the login user:
+Since we don't really know how to go from `Auth` to `Login`, let's see if we can't sidestep the whole thing and go directly to `Login.user`:
 
 <span class="figure">
 ![Classifier](./img/auth-user.svg)
@@ -86,7 +86,7 @@ We're back to attempting to go from `Auth` to `Login`.
 ![Classifier](./img/auth-login.svg)
 </span>
 
-This time however, we're armed with a bit more knowledge: it's clear that lenses can't solve our issue, because we need something that has a notion of optionality. Our `Auth` might not be a `Login`, and our structure must reflect that.
+This time however, we're armed with a bit more knowledge: it's clear that lenses can't solve our issue, because we need something that has a notion of optionality. Our `Auth` might not be a `Login`, and our structure must reflect that. One way of thinking about it is that lenses are an *has a* relationship, and we're trying to model an *is a* one.
 
 We have another, much more urgent problem to solve first. How are we going to name that structure? It allows us to... sort of... diffract a sum type into its various parts? In keeping with the optics theme, this is, of course, a *prism*.
 
@@ -106,7 +106,7 @@ trait Prism[S, A] {
 }
 ```
 
-The `get` method is where we introduce the notion that we might not actually have a value to return. Instead of always returning an `A` like a `Lens` does, we return an `Option[A]`.
+The `get` method is where we introduce the notion that we might not actually have a value to return - that your `S` might not, in fact, be an `A`. Instead of always returning an `A` like a `Lens` does, we return an `Option[A]`.
 
 This is how you'd use it:
 
@@ -117,9 +117,13 @@ val login: Option[Login] = authLogin.get(service.auth)
 // res1: Option[Login] = Some(Login(psmith,Tr0ub4dor&3))
 ```
 
-The `set` method is a bit more surprising. Remember how it worked for a `Lens`? Given an `S` and an `A`, it'd stick the `A` inside of the `S`. For example, it'd set the name of the classifier associated with a service.
+The `set` method is a bit more surprising, but if you think of lenses as representing an *has a* relationship and prisms an *is a* one, it makes sense.
 
-With a `Prism` though, we only take an `A`. That's because, instead of putting a value inside of another, we're replacing one by another. We have a `Login`, and we want to turn that into an `Auth`:
+If we have a `Lens[S, A]`, then `S` *has an `A`*, and we can take an `A` and set it inside of the `S` - we have an `(A, S) => S`.
+
+If we have a `Prism[S, A]`, then `S` *is an `A`*, and we can take an `A` and turn it into an `S` - we have an `A => S`.
+
+This is how you'd use `Prism.set`:
 
 ```scala
 val updated: Auth = authLogin.set(Login("foo", "bar"))
@@ -180,7 +184,7 @@ val authLogin = Prism.fromPartial[Auth, Login](
 
 Notice how the `getter` is a simple pattern match that only deals with the part we're interested in? That yields a `PartialFunction[S, A]`, which is exactly what `fromPartial` expects.
 
-The `setter` is essentially an upcast, since a `Login` is an `Auth`.
+The `setter` is essentially an upcast, since a `Login` *is an* `Auth`.
 
 
 ## Service → Login
@@ -191,7 +195,7 @@ We now have a lens from `MlService` to `Auth`, and a prism from `Auth` to `Login
 ![Classifier](./img/service-login.svg)
 </span>
 
-But... how do we compose a lens and a prism? Is this something we already have the tools to deal with?
+But... how do we compose a lens and a prism? Do our current tools allow us to represent that composition?
 
 ## Lens ∘ Prism ≟ Prism
 
@@ -466,6 +470,8 @@ And we can now fairly straightforwardly modify the login user associated with a 
 serviceUser.set("psmith")(service)
 // res4: MlService = MlService(Login(psmith,Tr0ub4dor&3),Classifier(news20,20))
 ```
+
+And *this*, in my opinion, is the clear win over imperative syntax that we were looking for. No runtime type introspection or `null` check to make sure that our `Auth` is a `Login` - a simple function application that takes care of all the gory details for us.
 
 ## Key takeaways
 
