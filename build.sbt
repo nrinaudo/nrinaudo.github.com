@@ -1,14 +1,8 @@
-enablePlugins(DocumentationPlugin)
+enablePlugins(GhpagesPlugin)
 
-git.remoteRepo := "git@github.com:nrinaudo/nrinaudo.github.com.git"
-
-libraryDependencies ++= Seq(
-  "com.chuusai"          %% "shapeless"  % Versions.shapeless,
-  "com.github.mpilquist" %% "simulacrum" % Versions.simulacrum
-)
-
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
-
-tutTargetDirectory := (sourceDirectory in Preprocess).value / "_posts"
-
-ghpagesBranch := "master"
+scalaVersion              :=  "2.13.1"
+scalacOptions             ++= Seq("-feature", "-language:implicitConversions", "-language:reflectiveCalls")
+includeFilter in makeSite :=  "*.yml" | "*.md" | "*.html" | "*.css" | "*.png" | "*.jpg" | "*.gif" | "*.js" | "*.eot" | "*.svg" | "*.ttf" | "*.woff" | "*.woff2" | "*.otf" | "*.ico"
+git.remoteRepo            :=  "git@github.com:nrinaudo/nrinaudo.github.com.git"
+ghpagesBranch             := "master"
+ghpagesNoJekyll           :=  false

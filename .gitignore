@@ -16,10 +16,11 @@ project/plugins/project/
 .scala_dependencies
 .worksheet
 
-# Ensime
+# Misc. analysis tools
 .ensime
 .ensime_cache
-
+.bloop
+.metals
 
 # Intellij
 .idea/
@@ -28,3 +29,7 @@ project/plugins/project/
 
 # Mac
 .DS_Store
+
+# Auto-generated files
+.scalafmt.conf
+scalastyle-config.xml
