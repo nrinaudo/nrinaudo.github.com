@@ -66,14 +66,14 @@ def decodeCsv[A](
 
 And the result is really quite nice: provided we have a cell decoding function, we can decode our input into a list of list of whatever type we want.
 
-`Int`s, for example:
+`Int`, for example:
 
 ```scala
 decodeCsv(input, _.toInt)
 // res1: List[List[Int]] = List(List(1, 2, 3), List(4, 5, 6), List(7, 8, 9))
 ```
 
-But also `Float`s:
+But also `Float`:
 
 ```scala
 decodeCsv(input, _.toFloat)
