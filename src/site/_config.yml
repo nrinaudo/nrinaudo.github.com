@@ -8,6 +8,11 @@ collections:
     title:    Optics from the ground up
     sequence: 1
 
+  typeclasses:
+    output:   true
+    title:    Type classes from the ground up
+    sequence: 2
+
 kramdown:
   input:     GFM
   hard_wrap: false
