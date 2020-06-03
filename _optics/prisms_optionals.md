@@ -186,7 +186,6 @@ Notice how the `getter` is a simple pattern match that only deals with the part 
 
 The `setter` is essentially an upcast, since a `Login` *is an* `Auth`.
 
-
 ## Service → Login
 
 We now have a lens from `MlService` to `Auth`, and a prism from `Auth` to `Login`. We need only compose them to go from `MlService` to `Login`:
@@ -206,18 +205,23 @@ def composeLP[S, A, B](
   l: Lens[S, A],
   p: Prism[A, B]
 ) = Prism[S, B](
+
   // B => S
   setter = b => {
+    val a: A = p.set(b)
     val s: S = ???
-    l.set(p.set(b))(s)
+    s
   },
 
-  getter = s => ???
+  // S => B
+  getter = s => p.get(l.get(s))
 )
 ```
 This is immediately problematic. We can't implement the setter: it's a function of `B` to `S`, but there's no way to get an `S` out of the `B`.
 
 We can go from a `B` to an `A` through our prism's `set` method, but there's nothing in our lens that allows us to get one level up.
+
+We can, however, easily implement the getter. Let's keep that in mind for later.
 
 So, a lens and prism can't be a prism. Could it be a lens?
 
@@ -230,18 +234,20 @@ def composeLP[S, A, B](
   l: Lens[S, A],
   p: Prism[A, B]
 ) = Lens[S, B](
-  setter = (b, s) => ???,
+
+  // (B, S) => S
+  setter = (b, s) => l.set(p.set(b))(s),
 
   // S => B
   getter = s => {
-    val ob: Option[B] = p.get(l.get(s))
+    val a: A = l.get(s)
     val b: B = ???
     b
   }
 )
 ```
 
-There's no way to implement the getter part. It's a function from `S` to `B`, and we can get an `Option[B]` through the prism, but there's no (sane) way to get the `B` out.
+This time, we can easily implement the setter. On the other hand, there's no way to implement the getter. It's a function from `S` to `B`, and we can get an `Option[B]` through the prism, but there's no (sane) way to get the `B` out.
 
 Clearly, we need a third tool. Something that mixes lenses and prisms...
 
@@ -251,11 +257,7 @@ Yeah, the fancy optics naming scheme sort of falls apart here.
 
 I've been told that the proper name is not optional but _affine traversal_. I usually feel it's better to pretend I've not heard that because it's _so much worse_.
 
-An optional, defined as the result of composing a lens and a prism, must have the following properties:
-* getting the nested data might fail - there might not be any data to get, just like for a prism.
-* setting the nested data doesn't replace the entire value, just the part of it we're focusing on, just like a lens.
-
-Which, in plain English, means that an Optional must have a lens' `set` and prism's `get`:
+We've seen that while we couldn't quite get a lens or a prism, we *could* build something that had a lens' `set` and a prism's `get`:
 
 ```scala
 trait Optional[S, A] {
@@ -269,6 +271,10 @@ trait Optional[S, A] {
 }
 ```
 
+Which makes sense. An optional must have the following properties:
+* getting the nested data might fail - there might not be any data to get, just like for a prism.
+* setting the nested data doesn't replace the entire value, just the part of it we're focusing on, just like a lens.
+
 As usual, we could use a creation helper:
 
 ```scala
@@ -281,6 +287,18 @@ object Optional {
     override def get(s: S)       = getter(s)
   }
 }
+```
+
+And we can now write the result of comping a lens with a prism:
+
+```scala
+def composeLP[S, A, B](
+  l: Lens[S, A],
+  p: Prism[A, B]
+) = Optional[S, B](
+  setter = (b, s) => l.set(p.set(b))(s),
+  getter = s      => p.get(l.get(s))
+)
 ```
 
 ## Composition galore
@@ -317,20 +335,6 @@ def composePL[S, A, B](
 
 A prism composed with a lens yields an optional.
 
-### Lens ∘ Prism = Optional
-
-```scala
-def composeLP[S, A, B](
-  l: Lens[S, A],
-  p: Prism[A, B]
-) = Optional[S, B](
-  setter = (b, s) => l.set(p.set(b))(s),
-  getter = s      => p.get(l.get(s))
-)
-```
-
-A lens composed with a prism yields an optional.
-
 ### Optional ∘ Optional = Optional
 
 ```scala
@@ -358,7 +362,6 @@ def composeOP[S, A, B](
 ```
 
 An optional composed with a prism yields an optional.
-
 
 ### Prism ∘ Optional = Optional
 
@@ -432,7 +435,6 @@ val serviceLogin = composeLP(
 
 The last step in our path is from `Login` to `String`:
 
-
 <span class="figure">
 ![Classifier](./img/login-user.svg)
 </span>
@@ -449,7 +451,6 @@ val loginUser = Lens[Login, String](
 ## Service → user
 
 We finally have everything we need to go from `MlService` to `Login.user`:
-
 
 <span class="figure">
 ![Classifier](./img/service-user.svg)
