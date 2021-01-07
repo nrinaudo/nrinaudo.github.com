@@ -13,6 +13,11 @@ collections:
     title:    Type classes from the ground up
     sequence: 2
 
+  recschemes:
+    output:   true
+    title:    An introduction to recursion schemes
+    sequence: 3
+
 kramdown:
   input:     GFM
   hard_wrap: false
