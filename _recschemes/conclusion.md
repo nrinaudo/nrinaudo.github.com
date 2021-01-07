@@ -4,7 +4,7 @@ layout: article
 sequence: 11
 ---
 
-To conclude this series of article, I'd like to point out that I delivered on the promise I made in the [introduction](./introduction).
+To conclude this series of articles, I'd like to point out that I delivered on the promise I made in the [introduction](./introduction).
 
 I told you that you'd understand the purpose of recursion schemes. And you do! Each one of them is a different, common recursive pattern, that has been generalised as far as it could be - and then a little bit further. Recursion schemes are Design Patterns for recursion.
 
