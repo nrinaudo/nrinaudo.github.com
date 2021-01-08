@@ -187,7 +187,7 @@ The first thing we'll do is change the input type, since we know it's not a `B` 
 ![cata without Fix](./img/catafix-init-hl-1.svg)
 </span>
 
-`cataFix` works specifically for data types expressed as `Fix[F]`, which simplifies `cataFix` a bit:
+`cataFix` works specifically for data types expressed as `Fix[F]`, which means that `B` becomes `Fix[F]` everywhere:
 
 ```scala
 def cataFix[F[_]: Functor, A](
@@ -200,7 +200,7 @@ def cataFix[F[_]: Functor, A](
 }
 ```
 
-On the other hand, while it does remove elements from the diagram, things do get a bit mystical there:
+On the other hand, while it does remove elements from the diagram, things get a little bit mystical there:
 
 
 <span class="figure">
@@ -237,7 +237,9 @@ val projectFix: Fix[ListF] => ListF[Fix[ListF]] = {
 }
 ```
 
-Note how we replaced `Cons` by `Fix(Some)` and `Nil` by `Fix(None)`. If you take a look at the resulting pattern match, you'll see that in both cases, we're simply taking the value that's inside of the `Fix` and returning that.
+Note how we replaced `Cons` by `Fix(Some)` and `Nil` by `Fix(None)`.
+
+If you take a look at the resulting pattern match, you'll see that in both cases, we're simply taking the value that's inside of the `Fix` and returning it.
 
 We can rewrite the entire pattern match to just unwrap the value:
 
@@ -291,7 +293,7 @@ Similarly, we don't need to redefine F-Algebras: they work on the pattern functo
 ![cata with Fix F-Algebra](./img/catafix-project-hl-3.svg)
 </span>
 
-We can reuse all the F-Algebras that we have defined earlier without any other additional change.
+We can reuse all the F-Algebras that we have defined earlier without any additional change.
 
 ## `product` in terms of `cataFix`
 

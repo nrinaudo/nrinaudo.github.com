@@ -13,7 +13,7 @@ We'll do so by studying another common recursive pattern, _generative recursion_
 ## Creating ranges
 
 
-As an example, let's imagine a function that, given an upper bound, will generate a list ranging from that value to 0.
+As an example, let's imagine a function that, given an upper bound, will generate a list ranging from that value to 1.
 
 Such a function would commonly be implemented like this:
 

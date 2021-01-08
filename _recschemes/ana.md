@@ -99,7 +99,7 @@ val embed: ListF[List] => List = {
 }
 ```
 
-If we have a head and tail, then we'll turn that into a list. Otherwise, we have the empty list.
+If we have a head and tail, we'll turn them into a list. Otherwise, we have the empty list.
 
 We can update `unfold` to take `embed` as a parameter, which allows us to get rid of explicit references to `Cons` and `Nil`:
 
@@ -311,4 +311,4 @@ mkString(range(3))
 
 We've seen that anamorphisms were generalised unfolds for types that could be embedded from a pattern functor, and that inventing them was mostly a matter of forcing a pattern functor in a non-general `unfold`.
 
-Something that's a bit surprising though is how similar to catamorphisms they end up looking, though. There's clearly some interesting thread to pull there.
+Something that's a bit surprising is how similar to catamorphisms they end up looking, though. There's clearly some interesting thread to pull there.
