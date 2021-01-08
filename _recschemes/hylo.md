@@ -77,7 +77,7 @@ Let's look at `showRange` in more details. Here's the corresponding diagram, wit
 
 If you look at the leftmost part of this diagram, you can see that there seems to be some unnecessary segments: we go from a `ListF[List]` to a `List` and back to a `ListF[List]`.
 
-Let's see if this intuition is valid by looking at actual values. We're going to detail the steps of `showRange(3)`. According to our diagram, we'll start with `rangeCoAlgebra`:
+Let's see if this intuition holds by looking at actual values. We're going to detail the steps of `showRange(3)`. According to our diagram, we'll start with `rangeCoAlgebra`:
 
 <span class="figure">
 ![Recurse](./img/show-range-step-by-step-2.svg)
@@ -225,7 +225,7 @@ showRange(3)
 
 ## Naming things
 
-Even though this is just `ana` with an essentially meaningless difference, this has a fancy name: hylomorphism, or `hylo` for short:
+Even though this is just `ana` with an essentially meaningless difference, this has a fancy name: _hylomorphism_, or _hylo_ for short:
 
 ```scala
 def hylo[F[_]: Functor, A, B](
