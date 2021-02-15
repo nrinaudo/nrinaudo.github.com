@@ -133,7 +133,7 @@ Don't worry if you don't understand the `+A` and `Nothing` bits - it's perfectly
 
 And that's our pattern functor! In the case of the height of a tree, for example, we know that we'll be manipulating two `TreeF` types:
 - `TreeF[Tree]`, representing the explicit split of larger problems into smaller ones.
-- `TreeF[Int]`, representing larger problems and the solution to the smaller ones that compose them.
+- `TreeF[A]`, representing larger problems and the solution to the smaller ones that compose them.
 
 
 <span class="figure">
