@@ -57,7 +57,7 @@ factorial(3)
 
 
 
-Similarly, the composition of `range` an `mkString` is the string representation of a range:
+Similarly, the composition of `range` and `mkString` is the string representation of a range:
 
 ```scala
 val showRange: Int => String =
