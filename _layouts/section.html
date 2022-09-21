@@ -13,11 +13,10 @@ layout: compress
 <div class="wrapper">
 
   <h1>{{ col.title }}</h1>
-  {{ content }}
 
-  <h1>Content</h1>
+  {% if col.talk %}This is the companion article for <a href="{{ site.baseurl }}/talks/{{ col.talk }}.html">this talk</a>. {% endif %}
 
-{% include toc.html collection=col.docs %}
+  {% include toc.html collection=col.docs %}
 
 </div>
 

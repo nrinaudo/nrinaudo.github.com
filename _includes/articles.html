@@ -1,0 +1,12 @@
+{% assign cs = site.collections | sort: 'date' | reverse %}
+  <ul>
+{% for c in cs %}
+{% if c.title %}
+<li>
+  <a href="{{ site.baseurl }}/{{ c.label }}">{{ c.title }}</a>
+  {% if c.talk %}<i title="Companion Article" class="fa fa-microphone-lines fa-xs"></i>{% endif %}
+  (<i>{{ c.date | date: "%B %Y" }}</i>)
+</li>
+{% endif %}
+{% endfor %}
+  <ul>
