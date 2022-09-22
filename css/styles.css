@@ -3,7 +3,7 @@
 @import './fontawesome/font-awesome.css';
 
 body {
-	line-height:    120%;
+	line-height:    1.4em;
     font:           400 16px/1.5 'Inter';
     background:     #ecf0f4;
     margin:         0;
@@ -21,11 +21,11 @@ body {
 }
 
 #navbar {
-    background-color: #586e75;
+/*    background-color: #586e75; */
     height:           25px;
     margin-bottom:    10px;
     padding:          15px 7% 15px 7%;
-    font-size: 25px;
+    font-size:        25px;
 }
 
 #navbar span {
@@ -46,13 +46,13 @@ body {
 
 
 #navbar a:hover {
-    color:              #111111;
+    color: #aaa;
 }
 
 #navbar a {
     text-decoration:    none;
     border:             none;
-    color:              #ecf0f4;
+    color:              #111111;
 }
 
 a {
