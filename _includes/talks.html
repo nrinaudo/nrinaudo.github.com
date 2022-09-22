@@ -1,0 +1,12 @@
+{% assign talks = site.talks | sort: 'date' | reverse %}
+
+<ul>
+{% for talk in talks %}
+<li>
+  <a href="{{ site.baseurl }}{{ talk.url }}">{{ talk.title }}</a>
+  {% if talk.embed %}<i title="With Video" class="fa fa-film fa-xs"></i>{% endif %}
+  {% if talk.article %}<i title="With Companion Article" class="fa fa-pen-nib fa-xs"></i> {% endif %}
+  (<i>{{ talk.date | date: "%B %Y" }}</i>)
+</li>
+{% endfor %}
+</ul>
