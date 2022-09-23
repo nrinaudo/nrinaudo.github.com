@@ -1,7 +1,7 @@
 ---
 title: Function reuse is just wishful thinking
 layout: talk
-slides: https://nrinaudo.github.io/far-more-adt
+slides: https://nrinaudo.github.io/function-reuse/
 date: 20220519
 ---
 
