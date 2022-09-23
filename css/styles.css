@@ -28,12 +28,6 @@ body {
 }
 
 
-@media only screen and (max-width: 600px) {
-    #navbar {
-        font-size:     10px;
-    }
-}
-
 #navbar span {
     display:         inline-block;
     line-height:     normal;
@@ -48,6 +42,20 @@ body {
 #navbar span.internal {
     padding-right: 30px;
     float: left !important;
+}
+
+@media only screen and (max-width: 600px) {
+    #navbar {
+        font-size:     17px;
+    }
+
+    #navbar span.external {
+        padding-left:    7px;
+    }
+
+    #navbar span.internal {
+        padding-right: 7px;
+    }
 }
 
 
