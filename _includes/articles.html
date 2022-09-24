@@ -1,12 +1,15 @@
-{% assign cs = site.collections | sort: 'date' | reverse %}
-  <ul>
-{% for c in cs %}
-{% if c.title %}
-<li>
-  <a href="{{ site.baseurl }}/{{ c.label }}">{{ c.title }}</a>
-  {% if c.talk %}<i title="Companion Article" class="fa fa-microphone-lines fa-xs"></i>{% endif %}
-  (<i>{{ c.date | date: "%B %Y" }}</i>)
-</li>
-{% endif %}
+{% assign articles = site.articles | sort: 'date' | reverse %}
+<ul>
+  {% for article in articles %}
+
+  {% if article.series == "NONE" or article.layout == "series_index" %}
+  <li>
+    <a href="{{ site.baseurl }}{{ article.url }}">{{ article.title }}</a>
+    {% if article.talk %}<i title="Companion Article" class="fa fa-microphone-lines fa-xs"></i>{% endif %}
+    {% if article.series != "NONE" %}<i title="Series" class="fa fa-book fa-xs"></i>{% endif %}
+  (<i>{{ article.date | date: "%B %Y" }}</i>)
+  </li>
+  {% endif %}
+
 {% endfor %}
-  <ul>
+</ul>
