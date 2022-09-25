@@ -2,7 +2,7 @@
 title: Generalised generative recursion
 layout: article
 series: recschemes
-sequence: 8
+date:   20210528
 ---
 
 Now that we understand what generative recursion is, we're going to generalise an existing generative recursion function so that it can be used to express all others.

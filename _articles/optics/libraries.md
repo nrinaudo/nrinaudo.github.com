@@ -2,7 +2,7 @@
 title: Libraries
 layout: article
 series: optics
-sequence: 5
+date:   20200225
 ---
 
 The Scala ecosystem has a surprisingly large number of optics implementations - especially given how little they seem to be used in practice.

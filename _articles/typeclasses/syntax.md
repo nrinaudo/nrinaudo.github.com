@@ -2,7 +2,7 @@
 title: More syntactic sugar
 layout: article
 series: typeclasses
-sequence: 5
+date:   20200606
 ---
 
 As we've seen, type classes are a form of syntactic sugar. But they're important enough that Scala has a certain amount of syntax and idioms dedicated to them.

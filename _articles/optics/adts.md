@@ -2,7 +2,7 @@
 title: Algebraic Data Types
 layout: article
 series: optics
-sequence: 1
+date:   20200221
 ---
 
 Before we can talk about optics proper, we need to lay a bit of groundwork. We'll need to understand what Algebraic Data Types (ADTs) are. Luckily, we can explain that as we build our motivating example.

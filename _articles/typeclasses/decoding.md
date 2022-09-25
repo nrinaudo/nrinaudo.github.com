@@ -2,7 +2,7 @@
 title: CSV decoding
 layout: article
 series: typeclasses
-sequence: 2
+date:   20200602
 ---
 
 Now that we know how to _parse_ CSV (go from a `String` to a `Csv`), we need to work on _decoding_ it: turning a `Csv` into a domain type we can more easily work with.

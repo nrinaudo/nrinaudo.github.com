@@ -2,7 +2,7 @@
 title: Conclusion
 layout: article
 series: typeclasses
-sequence: 6
+date:   20200607
 ---
 
 After all this work, I feel we've reached the goal stated in the introduction: I meant for you to understand what type classes are, how they work, and what purpose they serve.

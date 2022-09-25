@@ -1,8 +1,8 @@
 ---
-title: Introduction
+title:  Introduction
 layout: article
 series: typeclasses
-sequence: 0
+date:   20200529
 ---
 
 Type classes are something that long frustrated my attempts at understanding them, until I finally did and realised the problem was that they were much simpler than I'd ever imagined.

@@ -2,7 +2,7 @@
 title: Implicit composition
 layout: article
 series: typeclasses
-sequence: 4
+date:   20200605
 ---
 
 We've learned that type classes could be considered simple syntactic sugar over explicit dictionary passing. And while this is true, it's important to realise quite how *nice* that syntactic sugar is.

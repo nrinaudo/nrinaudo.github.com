@@ -2,7 +2,7 @@
 title: "Concrete use case: ConfigPath"
 layout: article
 series: optics
-sequence: 4
+date:   20200224
 ---
 
 We've been focusing on optics as a way to navigate ADTs so far, but that was a bit of a simplification. In this last part, I'll show a possible use case (heavily inspired by circe's `JsonPath`) that doesn't actually use ADTs.

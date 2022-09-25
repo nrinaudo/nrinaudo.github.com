@@ -2,7 +2,7 @@
 title: Generative recursion
 layout: article
 series: recschemes
-sequence: 7
+date:   20210527
 ---
 
 So far, we have taken a common recursive pattern, structural recursion, and generalised it into a recursion scheme known as a catamorphism. We achieved this through a little bit of creative refactoring and relying heavily on the notion of pattern functor.

@@ -2,7 +2,7 @@
 title: Generalised unfolds
 layout: article
 series: recschemes
-sequence: 9
+date:   20210529
 ---
 
 We have implemented a generalised generative recursion function for lists, `unfold`. Our task it to now turn it into a proper recursion scheme: generative recursion that works for *any* recursive data type.

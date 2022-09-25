@@ -2,7 +2,7 @@
 title: Generalised cata and ana
 layout: article
 series: recschemes
-sequence: 10
+date:   20210530
 ---
 
 We've seen that generalised folds (`cata`) and generalised unfolds (`ana`) seemed eerily similar.

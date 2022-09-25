@@ -2,7 +2,7 @@
 title: Introduction
 layout: article
 series: recschemes
-sequence: 0
+date:   20210520
 ---
 
 The purpose of this article is not for you to learn about recursion schemes - although that'd be a nice side effect. This is really more of a revenge story.

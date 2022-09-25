@@ -2,7 +2,7 @@
 title: CSV parsing
 layout: article
 series: typeclasses
-sequence: 1
+date:   20200601
 ---
 
 We'll first focus on parsing CSV data - that is, turning raw CSV data into an in-memory representation we can manipulate. Not quite a directly useful domain type, but at least something we can work with. This is traditionally known as an abstract syntax tree (AST).

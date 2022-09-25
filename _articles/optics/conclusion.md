@@ -2,7 +2,7 @@
 title: Conclusion
 layout: article
 series: optics
-sequence: 6
+date:   20200226
 ---
 
 Having read that whole, fairly large article, you might feel a bit overwhelmed. This is the reader's digest version, the few key points that you should remember.

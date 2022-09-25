@@ -2,7 +2,7 @@
 title: Generalised folds
 layout: article
 series: recschemes
-sequence: 4
+date:   20210524
 ---
 
 We've generalised structural recursion, but for `List` only. Let's now tackle the task of generalising `fold` - generalising generalised structural recursion, as it were.

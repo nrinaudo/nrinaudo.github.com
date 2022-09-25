@@ -2,7 +2,7 @@
 title: But haskell though...
 layout: article
 series: typeclasses
-sequence: 7
+date:   20200608
 ---
 
 ## Global instance uniqueness

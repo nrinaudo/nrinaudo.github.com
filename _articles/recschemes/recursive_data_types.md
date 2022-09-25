@@ -2,7 +2,7 @@
 title: Recursive data types
 layout: article
 series: recschemes
-sequence: 1
+date:   20210521
 ---
 
 Before we can talk about recursion schemes, we need to start at the beginning. The very first step is to understand what recursive data types are.

@@ -2,7 +2,7 @@
 title: Lenses
 layout: article
 series: optics
-sequence: 2
+date:   20200222
 ---
 
 Imagine that we have the following service:

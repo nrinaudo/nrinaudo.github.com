@@ -2,7 +2,7 @@
 title: Prisms & Optionals
 layout: article
 series: optics
-sequence: 3
+date:   20200223
 ---
 
 When motivating lenses, we used the following service:

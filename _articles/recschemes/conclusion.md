@@ -2,7 +2,7 @@
 title: Conclusion
 layout: article
 series: recschemes
-sequence: 11
+date:   20210531
 ---
 
 To conclude this series of articles, I'd like to point out that I delivered on the promise I made in the [introduction](./introduction).

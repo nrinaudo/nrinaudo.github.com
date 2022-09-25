@@ -2,7 +2,7 @@
 title: Type classes in OOP?
 layout: article
 series: typeclasses
-sequence: 3
+date:   20200603
 ---
 
 We've seen what a type class was - a clever combination of parametric polymorphism and implicit resolution. Before we go further down that path though, I'd like to explore how we could achieve the same feature in a mainstream OOP language.

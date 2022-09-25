@@ -2,7 +2,7 @@
 title: Reducing the boilerplate
 layout: article
 series: recschemes
-sequence: 6
+date:   20210526
 ---
 
 We've seen that making a data type "catamorphism-ready" was a lot of busywork:

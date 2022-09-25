@@ -2,7 +2,7 @@
 title: Generalised structural recursion
 layout: article
 series: recschemes
-sequence: 3
+date:   20210523
 ---
 
 We've seen that structural recursion involved a few common components. Our goal, for the moment, is to abstract these components away and provide a general structural recursion function.

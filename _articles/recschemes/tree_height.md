@@ -2,7 +2,7 @@
 title: Can this be applied to other types?
 layout: article
 series: recschemes
-sequence: 5
+date:   20210525
 ---
 
 We've seen that structural recursion could be generalised to catamorphisms, and that these are, in theory, capable of working with any type that can be projected into a pattern functor.

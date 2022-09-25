@@ -2,7 +2,7 @@
 title: Strutural recursion
 layout: article
 series: recschemes
-sequence: 2
+date:   20210522
 ---
 
 Now that we have our recursive data type - the monomorphic list - we can start working with it. Intuitively, you can see that if we're working with recursive types, we're probably going to look at recursive algorithms.
