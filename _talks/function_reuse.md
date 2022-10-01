@@ -2,6 +2,7 @@
 title: Function reuse is just wishful thinking
 layout: talk
 slides: https://nrinaudo.github.io/function-reuse/
+article: function_reuse
 date: 20220519
 ---
 
