@@ -1,4 +1,4 @@
-{% assign sorted_pages = site.articles | sort: "sequence" | where: "series", page.series %}
+{% assign sorted_pages = site.articles | sort: "sequence" | where: "series", page.series | where: "layout", "article" %}
 {% assign prev = nil %}
 {% assign next = nil %}
 {% assign found_page = false %}
