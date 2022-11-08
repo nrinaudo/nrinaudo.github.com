@@ -1,0 +1,7 @@
+digraph {
+    Functor     -> Apply
+    Apply       -> Applicative
+    Applicative -> Monad
+    Apply       -> FlatMap
+    FlatMap     -> Monad
+}
