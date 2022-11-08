@@ -100,11 +100,16 @@ hr {
     background-color: #111111;
 }
 
-h1, h2, h3 {
+h1, h2 {
     color:          #111111;
     margin-bottom:  12px;
     margin-top:     48px;
     padding-bottom: 0px;
+}
+
+h3 {
+    color:     #111111;
+    font-size: 17px;
 }
 
 h1 {

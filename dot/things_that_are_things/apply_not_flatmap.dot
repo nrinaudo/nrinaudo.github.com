@@ -1,0 +1,10 @@
+digraph {
+    Functor     -> Apply[class="disabled"]
+    Apply       -> Applicative[class="disabled"]
+    Applicative -> Monad[class="disabled"]
+    Apply       -> FlatMap
+    FlatMap     -> Monad[class="disabled"]
+
+    Apply[class="target"]
+    Functor, Monad, Applicative[class="disabled"]
+}
