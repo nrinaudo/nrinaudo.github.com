@@ -6,6 +6,8 @@ embed: https://www.youtube.com/embed/lvlnH-uEjZA
 date: 20190119
 ---
 
+_This talk inspired a [collection website](https://nrinaudo.github.io/scala-best-practices/)._
+
 Scala is a language with many qualities, but it has more than its share of quirks and small things that don't exactly behave as you'd expect.
 
 This talk is about the more commons gotchas in the language, and the standard recipes we have for dealing with them. A lot of them are assumed to be common knowledge and never really brought up, which means that a lot of Scala developers had to find out about them the hard way.
