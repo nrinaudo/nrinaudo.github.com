@@ -3,6 +3,7 @@ title: Function reuse is just wishful thinking
 layout: talk
 slides: https://nrinaudo.github.io/function-reuse/
 article: function_reuse
+embed: https://www.youtube.com/embed/2ReMkP8QrSo
 date: 20220519
 ---
 
