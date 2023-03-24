@@ -1,6 +1,7 @@
 ---
 title:  Things that are things, but not other things
 layout: article
+talk:   things_that_are_things
 date:   20221106
 ---
 
