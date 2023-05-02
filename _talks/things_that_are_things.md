@@ -3,6 +3,7 @@ title: Thins that are things, but not other things
 layout: talk
 slides: https://nrinaudo.github.io/things-that-are-things/#1
 article: things_that_are_things
+embed: https://www.youtube.com/embed/DPs-MH7CxOU
 date: 20230223
 ---
 
