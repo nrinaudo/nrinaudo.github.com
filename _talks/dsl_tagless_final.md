@@ -2,6 +2,7 @@
 title: Extensible DSLs with Tagless Final
 layout: talk
 slides: https://nrinaudo.github.io/dsl-tagless/
+embed: https://www.youtube.com/embed/LWNXsKuDJxw
 date: 20220217
 ---
 
