@@ -1,5 +1,5 @@
 ---
-title: Thins that are things, but not other things
+title: Things that are things, but not other things
 layout: talk
 slides: https://nrinaudo.github.io/things-that-are-things/#1
 article: things_that_are_things
