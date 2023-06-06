@@ -1,0 +1,40 @@
+graph {
+    bgcolor: transparent;
+    color: transparent;
+    splines: false;
+    rankdir: "TB";
+    splines: "true";
+}
+
+node {
+    fontcolor: "#586E75";
+    fontname: "Inter,Arial";
+    color: "#586E75";
+    fillcolor: "#ffffff";
+    style: "rounded,filled";
+    shape: "rectangle";
+}
+
+node.disabled {
+    color: "#D0DCE3";
+    fontcolor: "#D0DCE3";
+}
+
+edge {
+    color: "#586E75";
+    fontcolor: "#586E75";
+    fontname: "Inter,Arial";
+    fontsize: 11;
+}
+
+edge.disabled {
+    fillcolor: "#D0DCE3";
+    color: "#D0DCE3";
+    fontcolor: "#D0DCE3";
+}
+
+node.target {
+    color:     "#586E75";
+    fontcolor: "#ffffff";
+    fillcolor: "#586E75";
+}

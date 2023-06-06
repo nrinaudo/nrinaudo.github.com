@@ -1,0 +1,5 @@
+digraph {
+    rankdir=LR
+    Nicolas -> Caroline [label="cousin"]
+    Nicolas -> Caroline [label="godfather"]
+}

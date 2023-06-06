@@ -1,0 +1,6 @@
+digraph {
+    rankdir=LR
+    A -> A [label=<1<SUB>A</SUB>>]
+    B -> B [label=<1<SUB>B</SUB>>]
+    A -> B [label="f"]
+}

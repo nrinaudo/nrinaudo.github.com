@@ -1,0 +1,6 @@
+digraph {
+    rankdir=LR
+    A -> B [label="f"]
+    B -> C [label="g"]
+    A -> C [label="g∘f"]
+}

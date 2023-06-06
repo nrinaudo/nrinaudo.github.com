@@ -1,0 +1,15 @@
+digraph {
+    rankdir=TB
+    C
+
+    {
+        rank=same
+        A
+        B
+    }
+
+    C -> A[label="s"]
+    C -> B[style="invis" label="t"]
+    A -> B[style="invis" label="f"]
+    B -> A[style="invis" label="g"]
+}

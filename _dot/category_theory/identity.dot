@@ -1,0 +1,4 @@
+digraph {
+    rankdir=LR
+    A -> A [label=<1<SUB>A</SUB>>]
+}

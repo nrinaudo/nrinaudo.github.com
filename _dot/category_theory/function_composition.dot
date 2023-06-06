@@ -1,0 +1,29 @@
+digraph {
+    rankdir=LR
+    node[shape=plaintext]
+
+    subgraph cluster_0  {
+        style=rounded
+        a2[label="a₂"]
+        a1[label="a₁"]
+    }
+
+    subgraph cluster_1  {
+        style=rounded
+        b2[label="b₂"]
+        b1[label="b₁"]
+    }
+
+    subgraph cluster_2  {
+        style=rounded
+        c2[label="c₂"]
+        c1[label="c₁"]
+    }
+
+    a1 -> b1[label="f"]
+    b1 -> c1[label="g"]
+    a2 -> b2[label="f"]
+    b2 -> c2[label="g"]
+    a1 -> c1[label="f⨾g"]
+    a2 -> c2[label="f⨾g"]
+}

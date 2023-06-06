@@ -1,0 +1,8 @@
+digraph {
+    rankdir=LR
+    Nicolas -> Beatrice [label="son"]
+    Beatrice -> Isabelle [label="sister"]
+    Isabelle -> Caroline [label="mother"]
+    Nicolas -> Caroline [label="cousin"]
+    Nicolas -> Caroline [label="godfather"]
+}
