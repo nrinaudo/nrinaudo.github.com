@@ -314,7 +314,7 @@ def print(exp: Exp): String = exp match
   case Eq(lhs, rhs)  => s"(${print(lhs)} = ${print(rhs)})"
 ```
 
-Evaluation, on the other hand, is problematic. First, how do we type it? an expression might yield an integer (`Add` and `List`) or a boolean (`Eq`). And second, how do we implement `Add`, since we have no guarantee that both operands yield integers?
+Evaluation, on the other hand, is problematic. First, how do we type it? an expression might yield an integer (`Add` and `Lit`) or a boolean (`Eq`). And second, how do we implement `Add`, since we have no guarantee that both operands yield integers?
 
 ```scala
 def eval(exp: Exp): ??? = exp match
