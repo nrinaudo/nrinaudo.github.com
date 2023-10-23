@@ -2,6 +2,7 @@
 title: Introduction to data modeling
 layout: talk
 slides: https://nrinaudo.github.io/adt-not-adt/#1
+embed: https://www.youtube.com/embed/GAERiuRRZhU
 date: 20230913
 ---
 
