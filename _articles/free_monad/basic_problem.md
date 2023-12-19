@@ -32,7 +32,7 @@ This is fairly straightforward: `Console` is a sum type, so we simply deconstruc
 There's an obvious flaw, however: one branch yields `Unit`, the other `String`, which makes the overall type of the pattern match `Any`, never a good type to manipulate.
 
 ## GADT encoding
-The solution is well known, at least in languages that support GADTs: we need to index `Console` with its normal form - give it a type parameter representing what each variant evaluates to:
+The solution is well known, at least in languages that support GADTs: we need to index `Console` with the type that its computation returns:
 - `Print` evaluates to `Unit`, and is thus a `Console[Unit]`.
 - `Read` evaluates to a `String` (the value that was read), and is thus a `Console[String]`.
 
