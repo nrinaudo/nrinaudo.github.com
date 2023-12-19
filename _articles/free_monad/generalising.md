@@ -102,11 +102,11 @@ def read: Chain[Console, String] =
   liftChain(Read(str => str))
 ```
 
-## The free monad over a functor
+## Inventing `Free`
 
 At this point, it's clear that `Chain` is not the right name for this structure. If you think about it a certain, slightly pretentious way, what we have invented is a structure that, given any type constructor that has a `Functor` instance, gives us a monad for free. Or, put another way, we have invented the free monad over a functor.
 
-Let's rename it accordingly:
+Let's give it its traditional name, `Free`:
 
 ```scala
 enum Free[F[_], A]:
@@ -136,7 +136,15 @@ And there we have the explanation of the statement made in the introduction: _`F
 
 Oh, and if you're wondering what would happen were we to defunctionalise monad in its more comfortable configuration? hold that thought.
 
-A final note on naming: there is some debate on whether `Free` is free as in _free beer_ (at no cost) or as in _free speech_ (without constraints), and I'm delighted to be able to say with some confidence that it's actually both! First, it's free as in _free beer_: the free monad over a functor is a construct that, given a functor, produces a monad for free. But it's also free as in _free speech_ because it forms a free algebra, whatever that means. This is initially something I didn't want to talk or write about because I know for a fact people will disagree and sort of shake their head in disapproval in my general direction, but I ended up having to give a talk on this in French, a language where no ambiguity about which meaning of _free_ I'm using exists. Imagine, talking about la monade libre when I really meant la monade gratuite!
+### What _being free_ means
+
+There is some debate on whether `Free` is free as in _free beer_ (at no cost) or as in _free speech_ (without constraints).
+
+As we've seen, `Free` is definitely free as in beer: the free monad over a functor is something we get for free provided we have a functor. There are many such constructions: the free functor over a type constructor (_coyoneda_), the free monoid over a type (`List`), ...
+
+It's also free as in speech, for reasons that are a little beyond me - it's to do with forming a free algebra, which is not a notion I can explain but also am given to understand is not particularly interesting _in the context of programming_ (as opposed to, say, in category theory, which programming is most definitely not).
+
+This isn't something I initially wanted to talk or write about because I know for a fact people will disagree and sort of shake their head at me in disapproval, but I ended up having to give a talk on this in French, a language where no ambiguity about which meaning of _free_ I'm using exists. Imagine, talking about _la monade libre_ when I really meant _la monade gratuite_!
 
 ## Cleaning up
 
