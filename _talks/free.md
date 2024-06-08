@@ -3,6 +3,7 @@ title: The debatably Free monad
 layout: talk
 article: free_monad
 slides: https://nrinaudo.github.io/free_monad/#1
+embed: https://www.youtube.com/embed/Yci07bMTcsM
 date: 20231024
 ---
 
