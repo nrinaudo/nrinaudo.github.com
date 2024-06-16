@@ -182,6 +182,45 @@ p code, li code {
     color:         #586e75;
 }
 
+table {
+    border-collapse: collapse;
+    background:      #fff;
+    width:           100%;
+}
+
+th {
+    background: #586E75;
+    color:      #ecf0f4;
+}
+
+th .highlight {
+    color: #586E75;
+}
+
+th, td {
+    border:     1px solid #ecf0f4;
+    padding:    5px 10px 5px 10px;
+    text-align: center
+}
+
+th:empty, td:empty {
+    background: #ecf0f4;
+    padding:    0;
+    width:      4px;
+}
+
+th .remark-inline-code {
+    border:        none;
+    background:    none;
+    color:         #fff;
+}
+
+td {
+    text-align: left;
+    vertical-align: top;
+}
+
+
 .highlight .hll { background-color: #ffffcc }
 .highlight .c { color: #586E75; font-style: italic; font-weight: lighter} /* Comment */
 .highlight .err { color: #586E75; background-color: #f8f8f8; font-weight: bold} /* Error */
