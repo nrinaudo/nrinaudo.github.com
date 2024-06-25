@@ -51,7 +51,14 @@ One way of achieving that goal is to decide on an arbitrary mapping from integer
 
 The technical name for that is _truthiness_: any value is either _truthy_ or _falsy_ - not actually true or false, no, that'd be pushing the lie a little too far, but something that sort of looks like a truth value if you squint and disengage the part of your brain that enjoys things being sane.
 
-I do not like this approach (shocking, I know), as it can easily yield to confusing runtime behaviours. For example, does `0` map to `true` or `false`? Well, it depends on the language, and if you take your intuition from one to another, you might be writing the exact opposite of what you mean - and won't find out until the code is executed, possibly in production, potentially by cranky and entitled users (also known simply as _users_).
+I do not like this approach (shocking, I know), as it can easily yield confusing runtime behaviours. For example, what does the following code evaluate to?
+
+```scala
+if 10 then 1
+      else 2
+```
+
+Well, it depends on the language in which this is written. A lot of languages would say `2`, some `1` (and the sane ones would say _lol no_). Truthiness, not being actual truth, is a little too malleable, too open to interpretation, to be (in my opinion) a good design choice.
 
 Still, this is easy enough to implement, so let's see quickly how that would work. We'll decide to map `0` to `false` and everything else to `true` because we're not completely mad, and get:
 
