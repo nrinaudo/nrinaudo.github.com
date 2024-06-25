@@ -86,7 +86,7 @@ Take the following program:
 
 ```scala
 def f(x) = x + x
-def g(y) = f(y + 2)
+def g(y) = f(y + 3)
 g(2)
 ```
 
