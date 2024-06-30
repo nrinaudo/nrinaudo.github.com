@@ -5,7 +5,7 @@ series: pl
 date:   20240626
 ---
 
-While our little language is developing apace, we are still lacking basic features. One is the ability to give names to values and reuse them, which is commonly known as _variables_. We'll stay clear of that term for the moment however, as it hints strongly at things that can change, which is not at all what we're doing at the moment. Instead, since we're binding a value to a name, we'll call these _bindings_.
+While our little language is developing apace, we are still lacking basic features. One is the ability to give names to values and reuse them, which is commonly known as _variables_. We'll stay clear of that term for the moment however, as it hints strongly at things that can change and we do not want to go there quite yet. Instead, since we're binding a value to a name, we'll call these _bindings_.
 
 For the same reason, I will not be using the common `var` or `val` keywords to declare bindings (`var` feels mutable, `val` immutable, and we're very pointedly not making a decision either way). Instead, we'll use `let`, a very good term that I wish more languages used.
 
@@ -20,7 +20,7 @@ x
 
 You should instinctively feel that this evaluates to `1`, which is perfectly correct. Do note, however, that there are two distinct parts to this:
 - `let x = 1`, which creates a binding (we'll call this _binding introduction_).
-- `x`, which is how we "consume" a binding by looking its value up and substituting the former by the latter (we'll call this _binding elimination_).
+- `x`, which is how we "consume" a binding by looking the associated value up and substituting the former with the latter (we'll call this _binding elimination_).
 
 This is important, as it tells us we'll need to add two variants to our AST.
 
@@ -33,11 +33,20 @@ let x = 1
 
 This should feel uncomfortable: `x` is being used before being defined, surely that can't be right!
 
-Well, technically, it could, depending on how we decide bindings work. But the important point is: there must be some sort of rule to tell us when it's legal to use a specific binding. We'll call this a binding's scope: a binding can be used if it's _in scope_. Note that we're not (yet) defining how scope works, merely that it must exist: at the very least, a binding must exist to be used.
+Well, technically, it could, depending on how we decide bindings work. But the important point is: there must be some sort of rule to tell us when it's legal to use a binding.
+
+We'll call the parts of a program in which a binding can be used its _scope_, and say that a binding is _in scope_ to mean it can be used. Note that we're not (yet) defining how scope works, merely that it must exist: at the very least, a binding must exist to be used.
 
 This is why bindings are actually known as _local_ bindings: they are not valid everywhere, but only locally, in their scope.
 
-In order to make things clearer, we'll make this scope an explicit part of our syntax by introducing the `in` part of a `let` statement:
+In order to make things clearer, we'll make scope an explicit part of our syntax by introducing the `in` part of a `let` statement:
+
+```scala
+let [BINDING] in [SCOPE]
+```
+
+For example:
+
 ```scala
 let x = 1 in x
 ```
@@ -71,13 +80,13 @@ let x = 1 in
  (let x = 2 in x) + x
 ```
 
-You hopefully think that this should evaluate to `3` - it's essentially the same program as before, except we've swapped the addition's left-hand side and right-hand side. Addition is commutative, so this really shouldn't change anything and we should get the same result as before.
+You hopefully think that this should evaluate to `3` - it's essentially the same program as before, except we've swapped the addition's operands. Addition is commutative, so this really shouldn't change anything and we should get the same result as before.
 
 But what this means, then, is that we have not in fact bound `x` to a new value: had we done that, this program would evaluate to `4`, since we're evaluating from left to right and binding `x` to `2` happens before `x` is ever used. No, what we have done is made it legal to declare a new `x`, which masks the old one _locally_, but we'll get the latter back as soon as the former goes out of scope.
 
-What we've just done is decided on a very precise kind of scope management: _static scope_, also known as lexical scope. The scope of a local binding can be understood _statically_, by looking at the code without running it.
+What we've just done is decided on a very precise kind of scope management: _static scope_, also known as _lexical_ scope. The scope of a local binding can be understood _statically_, by looking at the code with no need to run it.
 
-Of course, if we need the _static_ qualifier, it means that there must be such a thing as _dynamic_ scope. There really shouldn't but, unfortunately, there is. With dynamic scoping, a binding's value depends on the latest `let` statement that was executed. With dynamic scoping, our previous example would evaluate to `4`.
+Of course, if we need the _static_ qualifier, it means that there must be such a thing as _dynamic_ scope. There really shouldn't but, unfortunately, there is. With dynamic scoping, a binding's value depends on the latest `let` statement that was executed, regardless of its position in the program. With dynamic scoping, our previous example would evaluate to `4`.
 
 This is generally considered to be a bad idea - if anything, it makes addition non-commutative! Some languages do this, but most languages choose static scoping and so will we.
 
@@ -90,11 +99,11 @@ We now merely have to implement this!
 
 ## Updating the AST
 
-The first thing is to update the AST with our new syntax elements. We've seen that we'll need two new variants, one for _introduction_ and one for _elimination_.
+The first task is to update the AST with our new syntax elements. We've seen that we'll need two new variants, one for _introduction_ and one for _elimination_.
 
 Let's start with the simplest one, elimination. That's merely stating _here's the name of a binding, substitute it with its value_, so we only need to store the binding's name:
 ```scala
-case Var(name: String)
+  case Var(name: String)
 ```
 
 Elimination is a little trickier. Recall how a `let` statement looks:
@@ -104,22 +113,22 @@ let [NAME] = [VALUE] in [BODY]
 
 Where:
 - `[NAME]` is the name we'll bind a value to.
-- `[VALUE]` is the value we'll bind `[NAME]` to.
+- `[VALUE]` is the value that will be bound to `[NAME]`.
 - `[BODY]` is the part of the program in which the binding is in scope.
 
-`[NAME]` is clearly a `String` and `[BODY]` and `Expr`, but what about `[VALUE]`? Well, we'll definitely want to support something like this:
+`[NAME]` is clearly a `String` and `[BODY]` an `Expr`, but what about `[VALUE]`? Well, we'll definitely want to support something like this:
 
 ```scala
-let x = y + 2 in x * 2
+let x = 1 + 2 in x * 2
 ```
 
-We must allow the `[VALUE]` part to be a complete expression - it must be an `Expr`, too:
+We must allow `[VALUE]` to be a complex expression - it must be an `Expr`, too:
 
 ```scala
-case Let(name: String, value: Expr, body: Expr)
+  case Let(name: String, value: Expr, body: Expr)
 ```
 
-This gives us the complete AST:
+This gives us our complete AST:
 
 ```scala
 enum Expr:
@@ -135,7 +144,7 @@ enum Expr:
 
 We're clearly going to need to do a little work here. As we've seen when running substitution, the `let` part of our bindings is put in some sort of knowledge base, to be reused in the `in` part.
 
-This knowledge base is typically called an _environment_, and is very literally just a mapping of strings to the corresponding values, so could be a simple `Map[String, Value]`.
+This knowledge base is typically called an _environment_. It really is just a mapping of names to the corresponding values, and could be a simple `Map[String, Value]`.
 
 We'll do something a little more interesting and usable, however: it's clear we'll need to be able to query (binding elimination) and update (binding introduction) that environment, so we'll create a bespoke type with dedicated methods:
 
@@ -173,9 +182,9 @@ def interpret(expr: Expr, env: Env): Value = expr matcha
   case Cond(pred, t, e) => cond(pred, t, e, env)
 ```
 
-And having laid all this groundwork, we can now tackle the interesting problem of interpreting `Var` and `Let`.
+And having laid all this groundwork, we can now tackle the more interesting problem of interpreting `Var` and `Let`.
 
-Let's start with `Var`. That's almost trivial: we need to lookup a give binding in our environment, which is exactly what `lookup` does:
+Let's start with `Var`. That's almost trivial: we need to lookup a given binding in our environment, which is exactly what `lookup` does:
 
 ```scala
 def interpret(expr: Expr, env: Env): Value = expr matcha
@@ -187,7 +196,7 @@ def interpret(expr: Expr, env: Env): Value = expr matcha
 ```
 
 `Let` is slightly trickier, but perfectly manageable. Given a `name`, a `value` and a `body`, we need to:
-- interpret the `value` in the current environment.
+- interpret `value` in the current environment.
 - bind it to `name`, thus producing a new environment.
 - interpret `body` in that new environment.
 
