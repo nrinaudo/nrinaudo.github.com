@@ -19,6 +19,50 @@ if predicate
 
 Where, depending on `predicate`, we'll evaluate one branch or the other, but never both.
 
+
+## Substitution rules
+
+Let's take a concrete example:
+```scala
+if true
+  then 1 + 2
+  else 3 + 4
+```
+
+We could naively consider this to be a function with 3 arguments, `true`, `1 + 2` and `3 + 4`. We're doing eager evaluation, which tells us that we must start by reducing all parameters before doing anything else:
+
+```scala
+if true
+  then 3
+  else 7
+```
+
+We can now run the logic of the `if` "function", which tells us that since the first parameter is `true`, this evaluates to the `then` branch, `3`.
+
+Have you spotted the mistake we've made, though? The semantics of `if` is that we must evaluate one branch or the other, _but never both_. And we definitely evaluated both.
+
+We'll need different substitution rules for this to work - we cannot treat `if` as a simple function (which, I know, our language doesn't even have functions yet anyway). Instead, the rule must be:
+- evaluate the predicate.
+- if the resulting value indicates success / truth, then substitute the entire `if` statement with the `then` branch.
+- otherwise, substitute the entire `if` statement with the `else` branch.
+
+If we go back to our previous example:
+```scala
+if true
+  then 1 + 2
+  else 3 + 4
+```
+
+Then our updated substitution rule tells us that since the predicate evaluates to true, this should be replaced with:
+```scala
+1 + 2
+```
+
+And we can then keep reducing until we get our result, `3`.
+
+
+## Updating the AST
+
 In order for our language to support this, we need to add a new variant to our AST, which we'll call `Cond` for _conditional_:
 
 ```scala
@@ -30,7 +74,7 @@ enum Expr:
 
 Now that we can represent conditionals, we'll need to interpret them, which can be a little subtle.
 
-Here's a possible first implementation:
+Here's a possible first implementation.
 
 ```scala
 def interpret(expr: Expr): Int = expr match
@@ -41,7 +85,7 @@ def interpret(expr: Expr): Int = expr match
     else                    interpret(e)
 ```
 
-We'll first interpret the predicate and, depending on its value, interpret either the _then_ or _else_ branch. This seems rather obvious, but doesn't actually compile. Can you see why?
+We'll first interpret the predicate and, depending on its value, interpret either the _then_ or _else_ branch, exactly as our substitution rules indicate. This seems rather obvious, but doesn't actually compile. Can you see why?
 
 The problem is that `interpret` returns an `Int`, which is not a legal type to use in the predicate part of a Scala `if` statement. We need to somehow turn this into a `Boolean`.
 
