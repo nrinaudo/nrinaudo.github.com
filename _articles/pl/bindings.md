@@ -213,6 +213,37 @@ def interpret(expr: Expr, env: Env): Value = expr match
     interpret(body, env.bind(name, interpret(value, env)))
 ```
 
+## Testing our implementation
+
+Now that we've written something that feels it should work, let's take it out for a spin.
+
+First, to declare an expression:
+```scala
+// let x = 1 in x + 2
+val expr = Let(
+  name  = "x",
+  value = Num(1),
+  body  = Add(Var("x"), Num(2))
+)
+```
+
+Interpreting that is simple enough, although we do need to pass some environment to `interpret`. At least for the moment, we'll merely work with the empty environment, for which we'll create a helper:
+
+```scala
+object Env:
+  val empty: Env = Env(Map.empty)
+```
+
+Armed with all these tools, interpreting our `expr` is entirely straightforward:
+
+```scala
+interpret(expr, Env.empty)
+// val res: Value = Num(3)
+```
+
+Which allows us to confirm that we get the expected result.
+
+
 ## Where to go from there?
 
 We've just finished adding local bindings to our language. Inquisitive readers might have realised that these feel very much like functions, except the parameter's value is fixed - if you have, well done, you've correctly guessed what our next step should be: take what we've learned with local bindings and attempt to generalise it to support functions.
