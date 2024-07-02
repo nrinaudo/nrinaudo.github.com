@@ -213,6 +213,43 @@ def interpret(expr: Expr, env: Env): Value = expr match
     interpret(body, env.bind(name, interpret(value, env)))
 ```
 
+## Testing our implementation
+
+Now that we've written something that feels it should work, let's take it out for a spin.
+
+First, to declare an expression:
+```scala
+// let x = 1 in x + 2
+val expr = Let(
+  name  = "x",
+  value = Num(1),
+  body  = Add(Var("x"), Num(2))
+)
+```
+
+Interpreting that is simple enough:
+
+```scala
+interpret(expr, Env(Map.empty))
+// val res: Value = Num(3)
+```
+
+And this works, we're getting the right result, but also... that `Env(Map.empty)` is unpleasant, isn't it? It's common to provide a simple helper for empty collections:
+
+```scala
+object Env:
+  val empty: Env = Env(Map.empty)
+```
+
+Which allows us to rewrite our previous call in a slightly more comfortable way:
+
+```scala
+interpret(expr, Env.empty)
+// val res: Value = Num(3)
+```
+
+
+
 ## Where to go from there?
 
 We've just finished adding local bindings to our language. Inquisitive readers might have realised that these feel very much like functions, except the parameter's value is fixed - if you have, well done, you've correctly guessed what our next step should be: take what we've learned with local bindings and attempt to generalise it to support functions.
