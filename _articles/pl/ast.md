@@ -9,7 +9,7 @@ Now that we have a method for code interpretation, we can start thinking of writ
 
 Let's start with a very simple programming language, one that only supports addition of numbers. The following would be a valid expression in that language:
 
-```scala
+```ocaml
 1 + 2
 ```
 
@@ -53,7 +53,7 @@ This all appears to work quite well, and is in fact such a common pattern that t
 You can see the tree structure in `Expr`, where `Add` is a node and `Num` a leaf. Now, you might be thinking that it's not much of a tree, since it can only have a depth of 1, and you'd be entirely right. We'll fix that next.
 
 It's called _abstract syntax_ because it's an abstraction over the human facing syntax. The following expressions, clearly different even if evaluating to the same thing, all have the same `Expr` representation:
-```scala
+```ocaml
 1 + 2
 (1 + 2)
 1 +    2
@@ -66,7 +66,7 @@ It's called _abstract syntax_ because it's an abstraction over the human facing 
 
 You might have noticed that our AST is very limited - I've certainly been quite heavy handed at hinting it. How, for example, would we represent the following expression:
 
-```scala
+```ocaml
 1 + 2 + 3
 ```
 

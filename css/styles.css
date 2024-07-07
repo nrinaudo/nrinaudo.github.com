@@ -177,7 +177,7 @@ code {
     font-family: "Fira Code";
 }
 
-p code, li code {
+table code, p code, li code {
     font-size:     0.9em;
     color:         #586e75;
 }

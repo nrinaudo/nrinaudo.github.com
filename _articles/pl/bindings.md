@@ -13,7 +13,7 @@ For the same reason, I will not be using the common `var` or `val` keywords to d
 
 Here, then, is how your typical let statement goes:
 
-```scala
+```ocaml
 let x = 1
 x
 ```
@@ -26,7 +26,7 @@ This is important, as it tells us we'll need to add two variants to our AST.
 
 Here's a slightly less obvious example:
 
-```scala
+```ocaml
 x
 let x = 1
 ```
@@ -41,13 +41,13 @@ This is why bindings are actually known as _local_ bindings: they are not valid 
 
 In order to make things clearer, we'll make scope an explicit part of our syntax by introducing the `in` part of a `let` statement:
 
-```scala
+```ocaml
 let [BINDING] in [SCOPE]
 ```
 
 For example:
 
-```scala
+```ocaml
 let x = 1 in x
 ```
 
@@ -55,18 +55,18 @@ This syntax removes any ambiguity as to where `x` comes from. It also shows us s
 
 Let's run through it step by step:
 
-| Target           | Knowledge | Action                             |
-|------------------|-----------|------------------------------------|
-| `let x = 1 in x` | _N/A_     | Store knowledge about `x`          |
-| `x`              | `x = 1`   | Substitute `x` with its definition |
-| `1`              | `x = 1`   | _N/A_                              |
+| Target           | Knowledge | Action                  |
+|------------------|-----------|-------------------------|
+| `let x = 1 in x` | _N/A_     | Store `x = 1`           |
+| `x`              | `x = 1`   | Substitute `x` with `1` |
+| `1`              |           | _N/A_                   |
 
 Substitution works by storing whatever knowledge the `let` part of the statement gives us, and then evaluating the `in` part. We're starting to have quite a good model for how local bindings work. But there are still a few stones left unturned.
 
 
 What do you think the following evaluates to?
 
-```scala
+```ocaml
 let x = 1 in
   x + (let x = 2 in x)
 ```
@@ -75,7 +75,7 @@ You should in theory feel quite confident it evaluates to `3`: the left-hand sid
 
 Consider the following program.
 
-```scala
+```ocaml
 let x = 1 in
  (let x = 2 in x) + x
 ```
@@ -107,7 +107,7 @@ Let's start with the simplest one, elimination. That's merely stating _here's th
 ```
 
 Elimination is a little trickier. Recall how a `let` statement looks:
-```scala
+```ocaml
 let [NAME] = [VALUE] in [BODY]
 ```
 
@@ -118,7 +118,7 @@ Where:
 
 `[NAME]` is clearly a `String` and `[BODY]` an `Expr`, but what about `[VALUE]`? Well, we'll definitely want to support something like this:
 
-```scala
+```ocaml
 let x = 1 + 2 in x * 2
 ```
 
@@ -200,17 +200,23 @@ def interpret(expr: Expr, env: Env): Value = expr matcha
 - bind it to `name`, thus producing a new environment.
 - interpret `body` in that new environment.
 
-Which yields the following implementation:
+This is a little complex, so we'll extract it to a dedicated method:
+
+```scala
+def let(name: String, value: Expr, body: Expr, env: Env) =
+  interpret(body, env.bind(name, interpret(value, env)))
+```
+Which gives us a final implementation of `interpret`:
+
 
 ```scala
 def interpret(expr: Expr, env: Env): Value = expr match
-  case Num(value)       => Value.Num(value)
-  case Bool(value)      => Value.Bool(value)
-  case Add(lhs, rhs)    => add(lhs, rhs, env)
-  case Cond(pred, t, e) => cond(pred, t, e, env)
-  case Var(name)        => env.lookup(name)
-  case Let(name, value, body) =>
-    interpret(body, env.bind(name, interpret(value, env)))
+  case Num(value)             => Value.Num(value)
+  case Bool(value)            => Value.Bool(value)
+  case Add(lhs, rhs)          => add(lhs, rhs, env)
+  case Cond(pred, t, e)       => cond(pred, t, e, env)
+  case Var(name)              => env.lookup(name)
+  case Let(name, value, body) => let(name, value, body, env)
 ```
 
 ## Testing our implementation

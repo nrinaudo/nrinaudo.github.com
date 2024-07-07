@@ -7,11 +7,11 @@ date:   20240621
 
 What we've written so far is a glorified calculator - fun, certainly, but not yet exactly a programming language, is it?
 
-One of the things that we'll need in order to be able to program complex behaviours is a way to take decisions - to do one thing or another depending on a condition. That is, we need to support `if / then / else` statements.
+One of the things that we'll need in order to be able to program complex behaviours is a way to take decisions - to do one thing or another depending on a condition. That is, we need to support `if / then / else` expressions.
 
 These traditionally look something like:
 
-```scala
+```ocaml
 if predicate
   then thenBranch
   else elseBranch
@@ -23,7 +23,7 @@ Where, depending on `predicate`, we'll evaluate one branch or the other, but nev
 ## Substitution rules
 
 Let's take a concrete example:
-```scala
+```ocaml
 if true
   then 1 + 2
   else 3 + 4
@@ -31,7 +31,7 @@ if true
 
 We could naively consider this to be a function with 3 arguments, `true`, `1 + 2` and `3 + 4`. We're doing eager evaluation, which tells us that we must start by reducing all parameters before doing anything else:
 
-```scala
+```ocaml
 if true
   then 3
   else 7
@@ -47,14 +47,14 @@ We'll need different substitution rules for this to work - we cannot treat `if` 
 - otherwise, substitute the entire `if` statement with the `else` branch.
 
 If we go back to our previous example:
-```scala
+```ocaml
 if true
   then 1 + 2
   else 3 + 4
 ```
 
 Then our updated substitution rule tells us that since the predicate evaluates to true, this should be replaced with:
-```scala
+```ocaml
 1 + 2
 ```
 
@@ -97,7 +97,7 @@ The technical name for that is _truthiness_: any value is either _truthy_ or _fa
 
 I do not like this approach (shocking, I know), as it can easily yield confusing runtime behaviours. For example, what does the following code evaluate to?
 
-```scala
+```ocaml
 if 10 then 1
       else 2
 ```
