@@ -167,13 +167,13 @@ We'll need to update the existing code by passing an `Env` everywhere `interpret
 def add(lhs: Expr, rhs: Expr, env: Env) =
   (interpret(lhs, env), interpret(rhs, env)) match
     case (Value.Num(lhs), Value.Num(rhs)) => Value.Num(lhs + rhs)
-    case _                                => typeError("add")
+    case _                                => sys.error("Type error in Add")
 
 def cond(pred: Expr, t: Expr, e: Expr, env: Env) =
   interpret(pred, env) match
     case Value.Bool(true)  => interpret(t, env)
     case Value.Bool(false) => interpret(e, env)
-    case _                 => typeError("cond")
+    case _                 => sys.error("Type error in Cond")
 
 def interpret(expr: Expr, env: Env): Value = expr matcha
   case Num(value)       => Value.Num(value)

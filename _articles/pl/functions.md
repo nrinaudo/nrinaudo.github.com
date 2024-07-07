@@ -28,7 +28,7 @@ In theory at least, all we need for that is syntax and substitution rules.
 
 We'll use a fairly common syntax for functions:
 
-```scala
+```ocaml
 [PARAMETER] -> [BODY]
 ```
 
@@ -63,7 +63,7 @@ You'll have noticed in that previous code block that I didn't implement the `in`
 
 The syntax we'll use for that is fairly common:
 
-```scala
+```ocaml
 [FUNCTION] [ARGUMENT]
 ```
 
@@ -296,7 +296,7 @@ def apply(lambda: Expr, arg: Expr, env: Env) =
     case Value.Lambda(param, body, closedEnv) =>
       ???
     case _ =>
-      typeError("apply")
+      sys.error("Type error in Apply")
 ```
 
 This is basically necessary boilerplate to get to the function we want to apply, but we can already spot a potential source of confusion: we have two environments! `env` is the environment in which the function is being applied, and `closedEnv` the one in which it was defined. We'll need to be very careful not to get them mixed up.
@@ -312,7 +312,7 @@ def apply(lambda: Expr, arg: Expr, env: Env) =
       val argValue  = interpret(arg, env)
       ???
     case _ =>
-      typeError("apply")
+      sys.error("Type error in Apply")
 ```
 
 We're almost ready to apply our function. All we now need is to know in which environment to do so. Our substitution rules tell us it must be in the environment in which it was defined - `closedEnv` - but that's not quite enough, is it? We must also bind `param` to `argValue` in that environment in order for the function to be able to access its parameter.
@@ -325,7 +325,7 @@ def apply(lambda: Expr, arg: Expr, env: Env) =
       val lambdaEnv = closedEnv.bind(param, argValue)
       ???
     case _ =>
-      typeError("apply")
+      sys.error("Type error in Apply")
 ```
 
 We now have everything we need, all that's left to do is to interpret the `body` of our function in the right environment:
@@ -338,7 +338,7 @@ def apply(lambda: Expr, arg: Expr, env: Env) =
       val lambdaEnv = closedEnv.bind(param, argValue)
       interpret(body, lambdaEnv)
     case _ =>
-      typeError("apply")
+      sys.error("Type error in Apply")
 ```
 
 Putting all this together, we get our final `interpret` implementation:
