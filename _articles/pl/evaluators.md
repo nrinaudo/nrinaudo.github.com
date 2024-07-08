@@ -48,12 +48,12 @@ Presented like this, we can see that a natural way of interpreting `f 2` would b
 
 Here, for example:
 
-| Target  | Knowledge     | Action                      |
-|---------|---------------|-----------------------------|
-| `f 2`   | `f x = x + 1` | Substitute `f` with `x + 1` |
-| `x + 1` | `x = 2`       | Substitute `x` with `2`     |
-| `2 + 1` |               | Simplify `2 + 1`            |
-| `3`     |               | _N/A_                       |
+| Target  | Knowledge     | Action                                                   |
+|---------|---------------|----------------------------------------------------------|
+| `f 2`   | `f x = x + 1` | Substitute `f` with `x + 1`<br/>Remember that `x` is `2` |
+| `x + 1` | `x = 2`       | Substitute `x` with `2`                                  |
+| `2 + 1` |               | Simplify `2 + 1`                                         |
+| `3`     |               | _N/A_                                                    |
 
 Note how, by convention, I remove things from the _Knowledge_ column when they're no longer needed. It does not mean the the knowledge has disappeared, but it does make these tables a lot easier to read.
 
@@ -71,16 +71,16 @@ g 2
 
 We can start our substitution process easily enough:
 
-| Target      | Knowledge                           | Action                          |
-|-------------|-------------------------------------|---------------------------------|
-| `g 2`       | `f x = x + 1`<br/>`g y = f (y + 3)` | Substitute `g` with `f (y + 3)` |
-| `f (y + 3)` | `f x = x + 1`<br/>`y = 2`           | _???_                           |
+| Target      | Knowledge                           | Action                                                       |
+|-------------|-------------------------------------|--------------------------------------------------------------|
+| `g 2`       | `f x = x + 1`<br/>`g y = f (y + 3)` | Substitute `g` with `f (y + 3)`<br/>Remember that `y` is `2` |
+| `f (y + 3)` | `f x = x + 1`<br/>`y = 2`           | _???_                                                        |
 
 But we must stop here, because it's not clear what our next step should be. Do you see it?
 
 We could do one of:
-- substitute `f` with its definition.
-- substitute `y` with its definition.
+- substitute `f` with `x + 1`.
+- substitute `y` with `2`.
 
 This doesn't necessarily feel like an important decision - surely both these strategies yield `6`?
 
@@ -94,30 +94,30 @@ fun g y = f (y + 3)
 g 2
 ```
 
-Let's first run through it using an _innermost first_ substitution strategy - that is, we always simplify the parameters of a function before substituting the function for its body.
+Let's first run through it using an _innermost first_ substitution strategy - that is, we always simplify the parameters of a function before substituting the function with its body.
 
-| Target      | Knowledge                           | Action                          |
-|-------------|-------------------------------------|---------------------------------|
-| `g 2`       | `f x = x + x`<br/>`g y = f (y + 3)` | Substitute `g` with `f (y + 3)` |
-| `f (y + 3)` | `f x = x + x`<br/>`y = 2`           | Substitute `y` with `2`         |
-| `f (2 + 3)` | `f x = x + x`                       | Simplify `2 + 3`                |
-| `f 5`       | `f x = x + x`                       | Substitute `f` with `x + x`     |
-| `x + x`     | `x = 5`                             | Substitute `x` with `5`         |
-| `5 + 5`     |                                     | Simplify `5 + 5`                |
-| `10`        |                                     | _N/A_                           |
+| Target      | Knowledge                           | Action                                                       |
+|-------------|-------------------------------------|--------------------------------------------------------------|
+| `g 2`       | `f x = x + x`<br/>`g y = f (y + 3)` | Substitute `g` with `f (y + 3)`<br/>Remember that `y` is `2` |
+| `f (y + 3)` | `f x = x + x`<br/>`y = 2`           | Substitute `y` with `2`                                      |
+| `f (2 + 3)` | `f x = x + x`                       | Simplify `2 + 3`                                             |
+| `f 5`       | `f x = x + x`                       | Substitute `f` with `x + x`<br/>Remember that `x` is `5`     |
+| `x + x`     | `x = 5`                             | Substitute `x` with `5`                                      |
+| `5 + 5`     |                                     | Simplify `5 + 5`                                             |
+| `10`        |                                     | _N/A_                                                        |
 
 You can see that with this approach, we only compute `2 + 3` once, before replacing `f`. Had we made a different choice though and used an _outermost first_ substitution strategy:
 
-| Target          | Knowledge                           | Action                          |
-|-----------------|-------------------------------------|---------------------------------|
-| `g 2`           | `f x = x + x`<br/>`g y = f (y + 3)` | Substitute `g` with `f (y + 3)` |
-| `f (y + 3)`     | `f x = x + x`<br/>`y = 2`           | Substitute `f` with `x + x`     |
-| `x + x`         | `y = 2`<br/>`x = y + 3`             | Substitute `x` with `y + 3`     |
-| `y + 3 + y + 3` | `y = 2`                             | Substitute `y` with `2`         |
-| `2 + 3 + 2 + 3` |                                     | Simplify `2 + 3`                |
-| `5 + 2 + 3`     |                                     | Simplify `5 + 2`                |
-| `7 + 3`         |                                     | Simplify `7 + 3`                |
-| `10`            |                                     | _N/A_                           |
+| Target          | Knowledge                           | Action                                                       |
+|-----------------|-------------------------------------|--------------------------------------------------------------|
+| `g 2`           | `f x = x + x`<br/>`g y = f (y + 3)` | Substitute `g` with `f (y + 3)`<br/>Remember that `y` is `2` |
+| `f (y + 3)`     | `f x = x + x`<br/>`y = 2`           | Substitute `f` with `x + x`<br/>Remember that `x` is `y + 3` |
+| `x + x`         | `y = 2`<br/>`x = y + 3`             | Substitute `x` with `y + 3`                                  |
+| `y + 3 + y + 3` | `y = 2`                             | Substitute `y` with `2`                                      |
+| `2 + 3 + 2 + 3` |                                     | Simplify `2 + 3`                                             |
+| `5 + 2 + 3`     |                                     | Simplify `5 + 2`                                             |
+| `7 + 3`         |                                     | Simplify `7 + 3`                                             |
+| `10`            |                                     | _N/A_                                                        |
 
 This has one more step than the previous one, because we had to compute `2 + 3` twice. This substitution strategy can, in some cases, end up being more computationally expensive (at least when applied naively).
 

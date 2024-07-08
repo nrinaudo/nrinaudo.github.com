@@ -126,8 +126,8 @@ This, however, is quite a lot more work than truthiness. Let's do it step by ste
 ### Runtime values
 
 First, `interpret` can't return an `Int` any longer, can it? We now have these two scenarios:
-- `Add` must be interpreted as an `Int`.
-- The predicate of `Cond` must be interpreted as a `Boolean`.
+- `Add` must evaluate to an `Int`.
+- The predicate of `Cond` must evaluate to a `Boolean`.
 
 So `interpret` must return either an `Int` or a `Boolean`. As usual, when we want a type that is either one or another, our first instinct should be a sum type:
 
@@ -247,7 +247,15 @@ def interpret(expr: Expr): Value = expr match
   case Cond(pred, t, e) => cond(pred, t, e)
 ```
 
-And now that we have all the necessary elements, we can create a simple conditional and confirm that it's interpreted correctly:
+And now that we have all the necessary elements, we can create a simple conditional and confirm that it's interpreted correctly.
+
+Here's what we want to represent:
+```ocaml
+if true then 1
+        else 2
+```
+
+Which is expressed as the following AST:
 
 ```scala
 val expr = Cond(
@@ -255,7 +263,11 @@ val expr = Cond(
   thenBranch = Num(1),
   elseBranch = Num(2)
 )
+```
 
+This, unsurprisingly, evaluates to what it should: `1`.
+
+```scala
 interpret(expr)
 // val res: Value = Num(1)
 ```

@@ -5,7 +5,7 @@ series: pl
 date:   20240626
 ---
 
-While our little language is developing apace, we are still lacking basic features. One is the ability to give names to values and reuse them, which is commonly known as _variables_. We'll stay clear of that term for the moment however, as it hints strongly at things that can change and we do not want to go there quite yet. Instead, since we're binding a value to a name, we'll call these _bindings_.
+While our little language is developing apace, we are still lacking basic features. One is the ability to give names to values and reuse them, which is commonly known as _variables_. We'll stay clear of that term for the moment however, as it hints strongly at things that can change and we do not want to go there quite yet. Instead, since we're binding a name to a value, we'll call these _bindings_.
 
 For the same reason, I will not be using the common `var` or `val` keywords to declare bindings (`var` feels mutable, `val` immutable, and we're very pointedly not making a decision either way). Instead, we'll use `let`, a very good term that I wish more languages used.
 
@@ -55,11 +55,11 @@ This syntax removes any ambiguity as to where `x` comes from. It also shows us s
 
 Let's run through it step by step:
 
-| Target           | Knowledge | Action                  |
-|------------------|-----------|-------------------------|
-| `let x = 1 in x` | _N/A_     | Store `x = 1`           |
-| `x`              | `x = 1`   | Substitute `x` with `1` |
-| `1`              |           | _N/A_                   |
+| Target           | Knowledge | Action                                                  |
+|------------------|-----------|---------------------------------------------------------|
+| `let x = 1 in x` | _N/A_     | Bind `x` to `1`<br/>Substitute _let_ statement with `x` |
+| `x`              | `x = 1`   | Substitute `x` with `1`                                 |
+| `1`              |           | _N/A_                                                   |
 
 Substitution works by storing whatever knowledge the `let` part of the statement gives us, and then evaluating the `in` part. We're starting to have quite a good model for how local bindings work. But there are still a few stones left unturned.
 
@@ -101,7 +101,7 @@ We now merely have to implement this!
 
 The first task is to update the AST with our new syntax elements. We've seen that we'll need two new variants, one for _introduction_ and one for _elimination_.
 
-Let's start with the simplest one, elimination. That's merely stating _here's the name of a binding, substitute it with its value_, so we only need to store the binding's name:
+Let's start with the simplest one, elimination. That's merely stating _here's a name, substitute it with whatever value it's bound to_, so we only need to store the binding's name:
 ```scala
   case Var(name: String)
 ```
@@ -184,7 +184,7 @@ def interpret(expr: Expr, env: Env): Value = expr matcha
 
 And having laid all this groundwork, we can now tackle the more interesting problem of interpreting `Var` and `Let`.
 
-Let's start with `Var`. That's almost trivial: we need to lookup a given binding in our environment, which is exactly what `lookup` does:
+Let's start with `Var`. That's almost trivial: we need to lookup the value a name is bound to in our environment, which is exactly what `lookup` does:
 
 ```scala
 def interpret(expr: Expr, env: Env): Value = expr matcha
@@ -197,14 +197,17 @@ def interpret(expr: Expr, env: Env): Value = expr matcha
 
 `Let` is slightly trickier, but perfectly manageable. Given a `name`, a `value` and a `body`, we need to:
 - interpret `value` in the current environment.
-- bind it to `name`, thus producing a new environment.
+- bind `name` to it, thus producing a new environment.
 - interpret `body` in that new environment.
 
 This is a little complex, so we'll extract it to a dedicated method:
 
 ```scala
 def let(name: String, value: Expr, body: Expr, env: Env) =
-  interpret(body, env.bind(name, interpret(value, env)))
+  val actualValue = interpret(value, env)
+  val newEnv      = env.bind(name, actualValue)
+
+  interpret(body, newEnv)
 ```
 Which gives us a final implementation of `interpret`:
 
@@ -223,13 +226,26 @@ def interpret(expr: Expr, env: Env): Value = expr match
 
 Now that we've written something that feels it should work, let's take it out for a spin.
 
-First, to declare an expression:
+We'll use the example we took to talk about static scoping:
+
+```ocaml
+let x = 1 in
+ (let x = 2 in x) + x
+```
+
+This yields this (relatively noisy) AST:
 ```scala
-// let x = 1 in x + 2
 val expr = Let(
   name  = "x",
   value = Num(1),
-  body  = Add(Var("x"), Num(2))
+  body  = Add(
+    Let(
+      name  = "x",
+      value = Num(2),
+      body  = Var("x")
+    ),
+    Var("x")
+  )
 )
 ```
 
@@ -247,7 +263,7 @@ interpret(expr, Env.empty)
 // val res: Value = Num(3)
 ```
 
-Which allows us to confirm that we get the expected result.
+If you remember, if we implemented static scoping, this should evaluate to `3`, or `4` if we made a mistake an implement dynamic scoping. And, fortunately, it evaluates to `3`, as it should.
 
 
 ## Where to go from there?
