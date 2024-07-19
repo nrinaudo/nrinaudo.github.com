@@ -455,10 +455,4 @@ In practice however, the downside of not writing an actual syntax and parser for
 
 ## Where to go from there?
 
-At this point, we have a pretty complete programming language. There are a few things that still bother me about it though, and I'm not yet sure which one to tackle first.
-
-My first problem is that we don't have tools for controlling flow such as `for` or `while` loops. These can be expressed in terms of recursive functions... but we don't have these either (try to define a function that refers to itself with what we have). So that's a problem I'd quite like to tackle sooner or later.
-
-My second issue is that we can run programs that don't make any sense, such as `1 + true`. These will be correctly caught at runtime and fail, but it'd be so much nicer if such a program was impossible to represent.
-
-I'm not entirely sure yet which one we'll tackle next. I guess we'll find out!
+At this point, we have a pretty complete programming language: bindings, conditionals, functions... but we're still lacking a basic building block: loops, the ability to repeat an action multiple times. This is what we'll tackle in the next part of this series.
