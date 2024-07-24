@@ -34,6 +34,7 @@ Readers are encouraged to write parsers for our toy language, obviously - and we
 If some of the material feels familiar, you might have read one or more of the books I'm using for inspiration. These include:
 - [Programming Languages: Application and Interpretation](https://www.plai.org/).
 - [Crafting Interpreters](https://craftinginterpreters.com/)
+- [Structure and Interpretation of Computer Programs](https://mitpress.mit.edu/9780262510875/structure-and-interpretation-of-computer-programs/)
 
 I'm hoping to enrich this list as more books / articles / papers come my way.
 
