@@ -1,5 +1,5 @@
 ---
-title: Functions
+title: Reusing code
 layout: article
 series: pl
 date:   20240705

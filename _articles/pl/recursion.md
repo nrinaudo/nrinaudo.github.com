@@ -306,7 +306,7 @@ Which yields the following code:
 def letRec(name: String, value: Expr, body: Expr, env: Env) =
   val newEnv = env.bind(name, null)
 
-  interpret(value, env2) match
+  interpret(value, newEnv) match
     case lambda: Value.Lambda =>
       newEnv.set(name, lambda)
       interpret(body, newEnv)

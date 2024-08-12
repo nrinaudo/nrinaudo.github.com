@@ -1,5 +1,5 @@
 ---
-title: Conditionals
+title: Taking decisions
 layout: article
 series: pl
 date:   20240621

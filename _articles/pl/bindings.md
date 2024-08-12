@@ -1,5 +1,5 @@
 ---
-title: Local bindings
+title: Naming things
 layout: article
 series: pl
 date:   20240626
