@@ -193,7 +193,7 @@ x -> x + 2
 This is fairly straightforward: we need to know the parameter, `x`, as well as the function's body, `x + 1`, which translates directly to:
 
 ```scala
-  case Lambda(param: String, body: Expr)
+  case Function(param: String, body: Expr)
 ```
 
 ### Lambda Elimination
@@ -205,10 +205,10 @@ f 1
 
 Which clearly gives us a structure containing a function (the function to apply) and a value (the function's argument). Of course, what we really want to hold are _expressions_ that evaluate to a function and a value of the right type, which gives us the following code:
 ```scala
-  case Apply(lambda: Expr, arg: Expr)
+  case Apply(function: Expr, arg: Expr)
 ```
 
-Note how I'm being careful to be consistent in our vocabulary: `Lambda` has a parameter, `Apply` an argument.
+Note how I'm being careful to be consistent in our vocabulary: `Function` has a parameter, `Apply` an argument.
 
 ### Full AST
 
@@ -221,8 +221,8 @@ enum Expr:
   case Cond(pred: Expr, thenBranch: Expr, elseBranch: Expr)
   case Let(name: String, value: Expr, body: Expr)
   case Var(name: String)
-  case Lambda(param: String, body: Expr)
-  case Apply(lambda: Expr, arg: Expr)
+  case Function(param: String, body: Expr)
+  case Apply(function: Expr, arg: Expr)
 ```
 
 And just to make sure we have all we need, we can try to write `let f = x -> x + 2 in f 1` using that updated AST:
@@ -230,13 +230,13 @@ And just to make sure we have all we need, we can try to write `let f = x -> x +
 ```scala
 val expr = Let(
   name  = "f",
-  value = Lambda(
+  value = Function(
     param = "x",
     body  = Add(Var("x"), Num(2))
   ),
   body = Apply(
-    lambda = Var("f"),
-    arg    = Num(1)
+    function = Var("f"),
+    arg      = Num(1)
   )
 )
 ```
@@ -248,23 +248,23 @@ We seem to have everything in order: a clear substitution model and a working AS
 ## Interpreting functions
 
 ### Lambda introduction
-Our first task will be to interpret the `Lambda` branch of our AST, and we hit an immediate snag: we need to go from `Lambda` to `Value`; but `Value` only has two variants, `Num` and `Bool`, neither of which seem suitable for representing a function.
+Our first task will be to interpret the `Function` branch of our AST, and we hit an immediate snag: we need to go from `Function` to `Value`; but `Value` only has two variants, `Num` and `Bool`, neither of which seem suitable for representing a function.
 
 We'll need to adapt `Value` to accommodate functions, which means adding a new variant. So far, these have been extremely similar to their `Expr` equivalents, to the point that we considered re-using the `Expr` variants directly, so let's try the same approach:
 
 ```scala
-  case Lambda(param: String, body: Expr)
+  case Function(param: String, body: Expr)
 ```
 
 That seems reasonable: a function is in fact defined by its parameter and the code to execute when it's applied. But is that _all_ a function is defined by?
 
-If you cast your mind back to our study of substitution rules, you'll remember that in order to respect static scoping, a function also needed to capture the environment in which it was defined: our `Value.Lambda` needs a third field of type `Env`.
+If you cast your mind back to our study of substitution rules, you'll remember that in order to respect static scoping, a function also needed to capture the environment in which it was defined: our `Value.Function` needs a third field of type `Env`.
 
 ```scala
 enum Value:
   case Num(value: Int)
   case Bool(value: Boolean)
-  case Lambda(param: String, body: Expr, env: Env)
+  case Function(param: String, body: Expr, env: Env)
 ```
 
 I don't know about you, but it felt very odd writing this, like we're mixing things that don't belong together. An `Env` is a very runtime notion - it's literally the runtime environment in which something is being interpreted, while an `Expr` feels more static. But that is what it means to support functions as values: such a value must combine the code to execute as well as the environment in which it was defined.
@@ -279,21 +279,21 @@ def interpret(expr: Expr, env: Env): Value = expr match
   case Cond(pred, t, e)       => cond(pred, t, e, env)
   case Var(name)              => env.lookup(name)
   case Let(name, value, body) => let(name, value, body, env)
-  case Lambda(param, body)    => Value.Lambda(param, body, env)
+  case Function(param, body)  => Value.Function(param, body, env)
 ```
 
 ### Lambda elimination
 
 Lambda elimination is a little more complex. What we're given to work with are two `Expr`s:
-- `lambda`, the function to apply.
-- `arg`, the argument to apply `lambda` on.
+- `Function`, the function to apply.
+- `arg`, the argument to apply `function` on.
 
-Our first step will be to interpret `lambda` and make sure it correctly evaluates to a function:
+Our first step will be to interpret `function` and make sure it correctly evaluates to a function:
 
 ```scala
-def apply(lambda: Expr, arg: Expr, env: Env) =
-  interpret(lambda, env) match
-    case Value.Lambda(param, body, closedEnv) =>
+def apply(function: Expr, arg: Expr, env: Env) =
+  interpret(function, env) match
+    case Value.Function(param, body, closedEnv) =>
       ???
     case _ =>
       sys.error("Type error in Apply")
@@ -303,12 +303,12 @@ This is basically necessary boilerplate to get to the function we want to apply,
 
 Following our substitution rules, we now need to bind `param` to the value of `arg`. In order to do that, we first need to know the value of `arg`, which is simply done by interpreting it... but in which environment?
 
-This one is not too hard. `arg` has absolutely nothing to do with the environment in which `lambda` was defined, so it wouldn't make sense to interpret it in `closedEnv`.
+This one is not too hard. `arg` has absolutely nothing to do with the environment in which `function` was defined, so it wouldn't make sense to interpret it in `closedEnv`.
 
 ```scala
-def apply(lambda: Expr, arg: Expr, env: Env) =
-  interpret(lambda, env) match
-    case Value.Lambda(param, body, closedEnv) =>
+def apply(function: Expr, arg: Expr, env: Env) =
+  interpret(function, env) match
+    case Value.Function(param, body, closedEnv) =>
       val argValue  = interpret(arg, env)
       ???
     case _ =>
@@ -318,11 +318,11 @@ def apply(lambda: Expr, arg: Expr, env: Env) =
 We're almost ready to apply our function. All we now need is to know in which environment to do so. Our substitution rules tell us it must be in the environment in which it was defined - `closedEnv` - but that's not quite enough, is it? We must also bind `param` to `argValue` in that environment in order for the function to be able to access its parameter.
 
 ```scala
-def apply(lambda: Expr, arg: Expr, env: Env) =
-  interpret(lambda, env) match
-    case Value.Lambda(param, body, closedEnv) =>
-      val argValue  = interpret(arg, env)
-      val lambdaEnv = closedEnv.bind(param, argValue)
+def apply(function: Expr, arg: Expr, env: Env) =
+  interpret(function, env) match
+    case Value.Function(param, body, closedEnv) =>
+      val argValue = interpret(arg, env)
+      val funEnv   = closedEnv.bind(param, argValue)
       ???
     case _ =>
       sys.error("Type error in Apply")
@@ -331,12 +331,12 @@ def apply(lambda: Expr, arg: Expr, env: Env) =
 We now have everything we need, all that's left to do is to interpret the `body` of our function in the right environment:
 
 ```scala
-def apply(lambda: Expr, arg: Expr, env: Env) =
-  interpret(lambda, env) match
-    case Value.Lambda(param, body, closedEnv) =>
-      val argValue   = interpret(arg, env)
-      val lambdaEnv = closedEnv.bind(param, argValue)
-      interpret(body, lambdaEnv)
+def apply(function: Expr, arg: Expr, env: Env) =
+  interpret(function, env) match
+    case Value.Function(param, body, closedEnv) =>
+      val argValue = interpret(arg, env)
+      val funEnv   = closedEnv.bind(param, argValue)
+      interpret(body, funEnv)
     case _ =>
       sys.error("Type error in Apply")
 ```
@@ -351,8 +351,8 @@ def interpret(expr: Expr, env: Env): Value = expr match
   case Cond(pred, t, e)       => cond(pred, t, e, env)
   case Var(name)              => env.lookup(name)
   case Let(name, value, body) => let(name, value, body, env)
-  case Lambda(param, body)    => Value.Lambda(param, body, env)
-  case Apply(lambda, arg)     => apply(lambda, arg, env)
+  case Function(param, body)  => Value.Function(param, body, env)
+  case Apply(function, arg)   => apply(function, arg, env)
 ```
 
 ### Testing our implementation
@@ -376,7 +376,7 @@ val expr = Let(
   value = Num(1),
   body = Let(
     name = "f",
-    value = Lambda(
+    value = Function(
       param = "x",
       body  = Add(Var("x"), Var("y"))
     ),
@@ -421,16 +421,16 @@ Here's how `add` looks like in our AST - it is _quite_ noisy:
 ```scala
 val expr = Let(
   name  = "add",
-  value = Lambda(
+  value = Function(
     param = "lhs",
-    body  = Lambda(
+    body  = Function(
       param = "rhs",
       body  = Add(Var("lhs"), Var("rhs"))
     )
   ),
   body = Apply(
-    lambda = Apply(
-      lambda = Var("add"),
+    function = Apply(
+      function = Var("add"),
       arg  = Num(1)
     ),
     arg = Num(2)

@@ -78,8 +78,8 @@ enum Expr:
   case Cond(pred: Expr, thenBranch: Expr, elseBranch: Expr)
   case Let(name: String, value: Expr, body: Expr)
   case Var(name: String)
-  case Lambda(param: String, body: Expr)
-  case Apply(lambda: Expr, arg: Expr)
+  case Function(param: String, body: Expr)
+  case Function(function: Expr, arg: Expr)
 ```
 
 We also need to update our interpreter to support it. The logic is straightforward and very similar to what we did for `Add`: evaluate both operands, make sure they’re both numbers, and test whether one is greater than the other.
@@ -102,8 +102,8 @@ def interpret(expr: Expr, env: Env): Value = expr match
   case Cond(pred, t, e)          => cond(pred, t, e, env)
   case Var(name)                 => env.lookup(name)
   case Let(name, value, body)    => let(name, value, body, env)
-  case Lambda(param, body)       => Value.Lambda(param, body, env)
-  case Apply(lambda, arg)        => apply(lambda, arg, env)
+  case Function(param, body      => Value.Function(param, body, env)
+  case Apply(function, arg)      => apply(function, arg, env)
 ```
 
 And with all that, we now have the tools needed to express and interpret `sum`. First, declaring it:
@@ -111,9 +111,9 @@ And with all that, we now have the tools needed to express and interpret `sum`. 
 ```scala
 val expr = Let(
   name  = "sum",
-  value = Lambda(
+  value = Function(
     param = "lower",
-    body  = Lambda(
+    body  = Function(
       param = "upper",
       body  = Cond(
         pred       = Gt(Var("lower"), Var("upper")),
@@ -121,8 +121,8 @@ val expr = Let(
         elseBranch = Add(
           lhs = Var("lower"),
           rhs = Apply(
-            lambda = Apply(Var("sum"), Add(Var("lower"), Num(1))),
-            arg    = Var("upper"))
+            function = Apply(Var("sum"), Add(Var("lower"), Num(1))),
+            arg      = Var("upper"))
         )
       )
     )
@@ -204,8 +204,8 @@ enum Expr:
   case Let(name: String, value: Expr, body: Expr)
   case LetRec(name: String, value: Expr, body: Expr)
   case Var(name: String)
-  case Lambda(param: String, body: Expr)
-  case Apply(lambda: Expr, arg: Expr)
+  case Function(param: String, body: Expr)
+  case Apply(function: Expr, arg: Expr)
 ```
 
 We now have everything we need to represent `sum`. Exactly what we had before, except we need to replace `Let` with `LetRec`:
@@ -213,9 +213,9 @@ We now have everything we need to represent `sum`. Exactly what we had before, e
 ```scala
 val expr = LetRec(
   name  = "sum",
-  value = Lambda(
+  value = Function(
     param = "lower",
-    body  = Lambda(
+    body  = Function(
       param = "upper",
       body  = Cond(
         pred       = Gt(Var("lower"), Var("upper")),
@@ -223,8 +223,8 @@ val expr = LetRec(
         elseBranch = Add(
           lhs = Var("lower"),
           rhs = Apply(
-            lambda = Apply(Var("sum"), Add(Var("lower"), Num(1))),
-            arg    = Var("upper"))
+            function = Apply(Var("sum"), Add(Var("lower"), Num(1))),
+            arg      = Var("upper"))
         )
       )
     )
@@ -249,13 +249,13 @@ def letRec(name: String, value: Expr, body: Expr, env: Env) =
   interpret(body, newEnv)
 ```
 
-The first difference we have is that we decided to limit `let rec` to functions, so we can rewrite this to fail for any `value` that doesn't evaluate to a `Lambda`. We've done similar things before (very recently even, with `gt`), there's nothing too surprising there:
+The first difference we have is that we decided to limit `let rec` to functions, so we can rewrite this to fail for any `value` that doesn't evaluate to a `Function`. We've done similar things before (very recently even, with `gt`), there's nothing too surprising there:
 
 ```scala
 def letRec(name: String, body: Expr, body: Expr, env: Env) =
   interpret(value, env) match
-    case lambda: Value.Lambda =>
-      val newEnv = env.bind(name, lambda)
+    case function: Value.Function =>
+      val newEnv = env.bind(name, function)
       interpret(body, newEnv)
 
     case _ => sys.error("Type error in LetRec")
@@ -267,7 +267,7 @@ Well, there _is_ a way, even if it might leave a slightly bitter taste if you're
 
 Having a temporary value in the environment _could_ be a problem: we absolutely do not want anyone to look that binding up before it's bound to its final value! Luckily, this isn't a possibility here.
 
-We'll definitely know the final value while interpreting `LetRec`, if only because we must make sure it's a `Lambda` or fail. Which means we can make sure to set it in the environment before interpreting the `body` of the `let rec` statement.
+We'll definitely know the final value while interpreting `LetRec`, if only because we must make sure it's a `Function` or fail. Which means we can make sure to set it in the environment before interpreting the `body` of the `let rec` statement.
 
 The function application _must_ happen in the `body` of the `let rec` statement - otherwise, the program is invalid, because it'll refer to a function that does not exist.
 
@@ -278,14 +278,14 @@ At least in principle, then, we have a solution. It requires a little bit of leg
 
 
 ```scala
-import scala.collection.mutable.Map
+import collection.mutable
 
-case class Env(map: Map[String, Value]):
+case class Env(map: mutable.Map[String, Value]):
   def lookup(name: String) =
     map.getOrElse(name, sys.error(s"Unbound variable: $name"))
 
   def bind(name: String, value: Value) =
-    Env(map ++ Map(name -> value))
+    Env(map ++ mutable.Map(name -> value))
 
   def set(name: String, value: Value) =
     map += (name -> value)
@@ -307,8 +307,8 @@ def letRec(name: String, value: Expr, body: Expr, env: Env) =
   val newEnv = env.bind(name, null)
 
   interpret(value, newEnv) match
-    case lambda: Value.Lambda =>
-      newEnv.set(name, lambda)
+    case function: Value.Function =>
+      newEnv.set(name, function)
       interpret(body, newEnv)
 
     case _ => sys.error("Type error in LetRec")
@@ -326,8 +326,8 @@ def interpret(expr: Expr, env: Env): Value = expr match
   case Var(name)                 => env.lookup(name)
   case Let(name, value, body)    => let(name, value, body, env)
   case LetRec(name, value, body) => letRec(name, value, body, env)
-  case Lambda(param, body)       => Value.Lambda(param, body, env)
-  case Apply(lambda, arg)        => apply(lambda, arg, env)
+  case Function(param, body)     => Value.Function(param, body, env)
+  case Apply(function, arg)      => apply(function, arg, env)
 ```
 
 With all that, we can finally confirm that our implementation is correct by interpreting `expr`, the program we declared earlier that computes the sum of all numbers between 1 and 10:
