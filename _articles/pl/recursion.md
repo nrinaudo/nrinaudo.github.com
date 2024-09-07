@@ -252,7 +252,7 @@ def letRec(name: String, value: Expr, body: Expr, env: Env) =
 The first difference we have is that we decided to limit `let rec` to functions, so we can rewrite this to fail for any `value` that doesn't evaluate to a `Function`. We've done similar things before (very recently even, with `gt`), there's nothing too surprising there:
 
 ```scala
-def letRec(name: String, body: Expr, body: Expr, env: Env) =
+def letRec(name: String, body: Expr, value: Expr, env: Env) =
   interpret(value, env) match
     case function: Value.Function =>
       val newEnv = env.bind(name, function)
