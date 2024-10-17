@@ -11,4 +11,6 @@ Most of my public stuff is related to Scala or Functional Programming one way or
 * [writing]({{ site.baseurl }}/articles.html)
 * [project and code snippets]({{ site.baseurl }}/code.html)
 
-The most convenient way to reach me these days is probably [Twitter](https://twitter.com/nicolasrinaudo).
+The most convenient way to reach me these days is probably [Mastodon](https://functional.cafe/@NicolasRinaudo).
+
+This is part of the <a href="https://ring.muhokama.fun/">Muhokama</a> webring (<a href="https://ring.muhokama.fun/u/nicolas/pred">prev</a> • <a href="https://ring.muhokama.fun/u/nicolas/succ">next</a>).
