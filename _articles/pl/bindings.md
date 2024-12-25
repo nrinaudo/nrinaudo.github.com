@@ -5,13 +5,13 @@ series: pl
 date:   20240626
 ---
 
-While our little language is developing apace, we are still lacking basic features. One is the ability to give names to values and reuse them, which is commonly known as _variables_. We'll stay clear of that term for the moment however, as it hints strongly at things that can change and we do not want to go there quite yet. Instead, since we're binding a name to a value, we'll call these _bindings_.
+While our little language is developing apace, we are still lacking basic features. One is the ability to give names to values, commonly known as _variables_. We'll stay clear of that term for the moment however, as it hints strongly at things that can change and we do not want to go there quite yet. Instead, since we're binding a value to a name, we'll call these _bindings_.
 
 For the same reason, I will not be using the common `var` or `val` keywords to declare bindings (`var` feels mutable, `val` immutable, and we're very pointedly not making a decision either way). Instead, we'll use `let`, a very good term that I wish more languages used.
 
-## Substitution rules
+## Intuition
 
-Here, then, is how your typical let statement goes:
+Here, then, is how your typical `let` expression goes:
 
 ```ocaml
 let x = 1
@@ -20,9 +20,11 @@ x
 
 You should instinctively feel that this evaluates to `1`, which is perfectly correct. Do note, however, that there are two distinct parts to this:
 - `let x = 1`, which creates a binding (we'll call this _binding introduction_).
-- `x`, which is how we "consume" a binding by looking the associated value up and substituting the former with the latter (we'll call this _binding elimination_).
+- `x`, which is how we "consume" a binding by looking up the bound value and substituting the name with it (we'll call this _binding elimination_).
 
-This is important, as it tells us we'll need to add two variants to our AST.
+This is important, as it tells us we'll need to add two terms to our language.
+
+### Scope
 
 Here's a slightly less obvious example:
 
@@ -33,198 +35,329 @@ let x = 1
 
 This should feel uncomfortable: `x` is being used before being defined, surely that can't be right!
 
-Well, technically, it could, depending on how we decide bindings work. But the important point is: there must be some sort of rule to tell us when it's legal to use a binding.
+Well, technically, it could, depending on how we decide bindings work. But the important point is: there must be some sort of rule to tell us when it's legal to refer to a binding.
 
-We'll call the parts of a program in which a binding can be used its _scope_, and say that a binding is _in scope_ to mean it can be used. Note that we're not (yet) defining how scope works, merely that it must exist: at the very least, a binding must exist to be used.
+We'll call the parts of a program in which a binding can be used its _scope_, and say that a binding is _in scope_ whenever we can refer to it. Note that we're not (yet) defining how scope works. We've merely come to the conclusion that it must exist.
 
-This is why bindings are actually known as _local_ bindings: they are not valid everywhere, but only locally, in their scope.
-
-In order to make things clearer, we'll make scope an explicit part of our syntax by introducing the `in` part of a `let` statement:
+In order to make things clearer, we'll make scope an explicit part of our syntax by introducing the `in` part of a `let` expression:
 
 ```ocaml
-let [BINDING] in [SCOPE]
+let [name] = [value] in
+  [body]
 ```
 
 For example:
 
 ```ocaml
-let x = 1 in x
+let x = 1 in
+  x
 ```
 
-This syntax removes any ambiguity as to where `x` comes from. It also shows us something a little interesting: how substitution works for `let` statements.
-
-Let's run through it step by step:
-
-| Target           | Knowledge | Action                                                  |
-|------------------|-----------|---------------------------------------------------------|
-| `let x = 1 in x` | _N/A_     | Bind `x` to `1`<br/>Substitute _let_ statement with `x` |
-| `x`              | `x = 1`   | Substitute `x` with `1`                                 |
-| `1`              |           | _N/A_                                                   |
-
-Substitution works by storing whatever knowledge the `let` part of the statement gives us, and then evaluating the `in` part. We're starting to have quite a good model for how local bindings work. But there are still a few stones left unturned.
+The body of our `let` expression is the subset of our program in which the binding is in scope.
 
 
-What do you think the following evaluates to?
+
+### Environment
+
+We now need to think a little about how bindings work. In order to build intuition, let's run through the following, very simple program:
 
 ```ocaml
 let x = 1 in
-  x + (let x = 2 in x)
+  x
 ```
 
-You should in theory feel quite confident it evaluates to `3`: the left-hand side operator of `+` is clearly bound to `1`, and the right-hand side declares an entirely different `x`, bound to `2`. Still, this is interesting: there is a notion of a local binding overriding another. This is typically known as _shadowing_, and can feel a lot like we've introduced reassignment to the language - after all, the value `x` is bound to changes, doesn't it?
+This is telling us that we should bind name `x` to value `1`, and evaluate the body of the `let` expression in that context. We'll call that context the _environment_ - a mapping of names to values.
 
-Consider the following program.
+In order to keep track of this, we'll use the following notation: $\\{name_1 = value_1, ..., name_n = value_n\\}$.
+
+The environment, then, is where we look for values when a binding is referenced. When evaluating the body of our `let` expression, we merely need to look up what name `x` is references in the environment and substitute it with that. Which tells us that, as expected, this entire program evaluates to `1`.
+
+This gives us a good intuition for the general case for let bindings, but there are still a few stones left unturned.
+
+### Laziness vs eagerness
+
+Consider the following program:
+
+```ocaml
+let x = 1 + 2 in
+  x
+```
+
+Intuitively, there are two ways we could populate our environment:
+- $\\{x = 1 + 2\\}$
+- $\\{x = 3\\}$
+
+The former is known as _lazy evaluation_ (we'll postpone evaluating things until we absolutely must), while the latter is called _eager evaluation_ (we'll evaluate expressions as soon as possible).
+
+Both are perfectly valid, and there really isn't one that is objectively better than the other. They just have different semantics, with different trade-offs. Let's look at performances, for example, with the following expression:
+
+```ocaml
+let x = 1 + 2 in
+  x + x
+```
+
+Lazily evaluating this will cause us to compute `1 + 2` twice (once per `x` in the `let`'s body), while eager evaluation will only compute it a single time (when storing it in the environment). Eager evaluation would be faster in this scenario.
+
+But that's not always true! Look at the following code fragment:
+
+```ocaml
+let x = 1 + 2 in
+  if true then 4
+  else         x
+```
+
+Lazy evaluation means we'll never actually compute `1 + 2`, since our conditional expression will never go in the on-false branch. Were we doing eager evaluation, it would have been computed once, even though it's never needed.
+
+In the rest of these articles, we'll be doing eager evaluation, purely because that's the most common evaluation model and the one you're most likely to have a good intuition for.
+
+### Nesting `let` expressions
+
+Consider the following expression:
+
+```ocaml
+let x = 1 in
+  let y = 2 in
+    x + y
+```
+
+We already know how to deal with the outermost `let`: evaluate its body in $\\{x = 1\\}$. This gives us:
+
+```ocaml
+let y = 2 in
+  x + y
+```
+
+We also already know how to do that, but there's a subtlety. We can't merely interpret `x + y` in $\\{y = 2\\}$, because then the reference to `x` would fail to resolve.
+
+What we need, then, is $\\{x = 1, y = 2\\}$ - an environment that contains both the new `y` binding, and all the pre-existing ones.
+
+This is another important conclusion: nested `let` expressions inherit bindings from their parent.
+
+
+### Shadowing bindings
+
+Consider the following expression:
+
+```ocaml
+let x = 1 in
+ x + (let x = 2 in x)
+```
+
+You should see that we quickly end up having to interpret `let x = 2 in x` in $\\{x = 1\\}$. This forces us to think about what to do with conflicting binding names, which we haven't encountered yet.
+
+One possible way of dealing with that is to simply say that new bindings overwrite existing ones: the environment becomes $\\{x = 2\\}$, and we can finish evaluating the program to get `3` - exactly the result we were expecting.
+
+How about this one though, in which I've merely swapped the operands of `+`?
 
 ```ocaml
 let x = 1 in
  (let x = 2 in x) + x
 ```
 
-You hopefully think that this should evaluate to `3` - it's essentially the same program as before, except we've swapped the addition's operands. Addition is commutative, so this really shouldn't change anything and we should get the same result as before.
+You hopefully think that it should also evaluate to `3` - it's essentially the same program as before, except we've swapped the addition's operands. Addition is commutative, so this really shouldn't change anything and we should get the same result as before.
 
-But what this means, then, is that we have not in fact bound `x` to a new value: had we done that, this program would evaluate to `4`, since we're evaluating from left to right and binding `x` to `2` happens before `x` is ever used. No, what we have done is made it legal to declare a new `x`, which masks the old one _locally_, but we'll get the latter back as soon as the former goes out of scope.
+But if you follow the rules we've defined, you'll see that it doesn't quite work out:
+- the outermost `let` gives us an environment of $\\{x = 1\\}$.
+- the innermost `let` updates it to $\\{x = 2\\}$.
+- that final `x` reference, then, is substituted with `2`.
+- the entire expression ultimately evaluates to `4`.
 
-What we've just done is decided on a very precise kind of scope management: _static scope_, also known as _lexical_ scope. The scope of a local binding can be understood _statically_, by looking at the code with no need to run it.
+Which tells us that the order of the operands matters in addition. This is obviously not what we want, even if it's not always been that obvious: many programming languages used to handle bindings that way, even if it's mostly come to be accepted as a generally bad idea.
 
-Of course, if we need the _static_ qualifier, it means that there must be such a thing as _dynamic_ scope. There really shouldn't but, unfortunately, there is. With dynamic scoping, a binding's value depends on the latest `let` statement that was executed, regardless of its position in the program. With dynamic scoping, our previous example would evaluate to `4`.
+These semantics are called _dynamic_ scoping: since anybody can overwrite any binding at any time, the only way to be sure what a name is bound to is to observe it at runtime.
 
-This is generally considered to be a bad idea - if anything, it makes addition non-commutative! Some languages do this, but most languages choose static scoping and so will we.
 
-To summarize all this, we've come to the conclusion that local bindings:
-- had two parts: an introduction and an elimination.
-- had scope, which we've made explicit with our `let... in...` syntax.
-- could be _shadowed_, but not overwritten.
+The alternative is called _static scoping_, or _lexical scoping_. I personally prefer the word _static_, as it's more clearly in opposition to _dynamic_.
 
-We now merely have to implement this!
+The idea is that rather than overwrite existing bindings, we create a new environment instead. That new environment inherits all previous bindings (as we've seen when handling nested `let` expressions), overwriting conflicting names as needed; but the important distinction is, bindings are only overwritten _in the new environment_, leaving the old one alone.
 
-## Updating the AST
-
-The first task is to update the AST with our new syntax elements. We've seen that we'll need two new variants, one for _introduction_ and one for _elimination_.
-
-Let's start with the simplest one, elimination. That's merely stating _here's a name, substitute it with whatever value it's bound to_, so we only need to store the binding's name:
-```scala
-  case Var(name: String)
-```
-
-Elimination is a little trickier. Recall how a `let` statement looks:
-```ocaml
-let [NAME] = [VALUE] in [BODY]
-```
-
-Where:
-- `[NAME]` is the name we'll bind a value to.
-- `[VALUE]` is the value that will be bound to `[NAME]`.
-- `[BODY]` is the part of the program in which the binding is in scope.
-
-`[NAME]` is clearly a `String` and `[BODY]` an `Expr`, but what about `[VALUE]`? Well, we'll definitely want to support something like this:
+Let's see how that works in our previous example:
 
 ```ocaml
-let x = 1 + 2 in x * 2
+let x = 1 in
+ (let x = 2 in x) + x
 ```
 
-We must allow `[VALUE]` to be a complex expression - it must be an `Expr`, too:
+The outermost `let` gives us $e_1 = \\{x = 1\\}$, in which to evaluate `(let x = 2 in x) + x`.
 
-```scala
-  case Let(name: String, value: Expr, body: Expr)
+The innermost `let` creates a new environment which duplicates $e_1$ and overwrites `x` to `2`. We'll write this $e_2 = e_1[x \leftarrow 2]$. Interpreting `x` in $e_2$ clearly gives us `2`.
+
+We're then left with evaluating `2 + x` - but since we're finished interpreting the innermost `let`, its environment, $e_2$, has been discarded. We're now working with $e_1$, in which `x` is bound to `1`. This unambiguously leads to a final value of `3` - exactly the result we wanted.
+
+These are the semantics we want: in order to support static scoping, we want nested `let` expressions to create new environments, inheriting their parent environment's bindings, and overwriting things as needed.
+
+## Operational semantics
+
+Now that we have a good idea how bindings work in practice, we need to formalise this understanding.
+
+### Environment
+
+Before we can do that however, we need to update our syntax a little, by adding notation to describe the environment. We've seen that all expressions must be evaluated in an environment, which we'll write as follows:
+
+\begin{prooftree}
+  \AXC{$e \vdash expr \Downarrow\ v$}
+\end{prooftree}
+
+This reads _expression $expr$ is interpreted as value $v$ in environment $e$_.
+
+
+### Binding introduction
+
+Let's call the term used to create a binding $\texttt{Let}$. We've seen that $Let$ is composed of a binding's $name$, its $value$, and the block of code in which that binding is in scope, $body$:
+
+```ocaml
+let [name] = [value] in
+  [body]
 ```
 
-This gives us our complete AST:
+This, then, is what we're trying to specify the behaviour for:
+
+\begin{prooftree}
+  \AXC{$e \vdash \texttt{Let}\ name\ value\ body \Downarrow\ ???$}
+\end{prooftree}
+
+We're doing eager evaluation, so we know we must interpret $value$ immediately. There's no real ambiguity about which environment this should happen in: the only one that makes sense is $e$, the one in which $Let$ is being interpreted.
+
+\begin{prooftree}
+  \AXC{$e \vdash value \Downarrow v_1$}
+  \UIC{$e \vdash \texttt{Let}\ name\ value\ body \Downarrow\ ???$}
+\end{prooftree}
+
+The next step is to interpret $body$, which we know must be done in an environment that:
+- inherits all of $e$'s bindings.
+- binds $v_1$ to $name$.
+
+That is exactly $e[name \leftarrow v_1]$, which gives us the final semantics of $Let$:
+
+\begin{prooftree}
+  \AXC{$e \vdash value \Downarrow v_1$}
+  \AXC{$e[name \leftarrow v_1] \vdash body \Downarrow v_2$}
+  \BIC{$e \vdash \texttt{Let}\ name\ value\ body \Downarrow v_2$}
+\end{prooftree}
+
+### Binding elimination
+
+We have a operational semantics for binding introduction, the act of creating a new binding. We now need to do the same work for the opposite action, eliminating (or de-referencing) a binding.
+
+Let's call the term for this $\texttt{Ref}$. Its semantics are really rather straightforward: $\texttt{Ref}$ evaluates to whatever value the environment says the corresponding name references.
+
+We'll need to introduce a new notation for this: $e(name)$ is the value bound to $name$ in $e$. This allows us to write the $Ref$ semantics:
+
+\begin{prooftree}
+  \AXC{$e \vdash \texttt{Ref}\ name \Downarrow e(name)$}
+\end{prooftree}
+
+
+## Implementing bindings
+
+### Environment
+
+The first thing we'll need to write is our environment. There's a variety of ways we could achieve that - an immutable `Map` was my first instinct - but the most common one is to realise how much like a stack the environment behaves.
+
+For each new binding, we create a new environment which is exactly the previous one, with a new name / value pair added on top. That's really just pushing a value onto a stack.
+
+Looking up the value bound to a name is merely looking at the earliest binding for that name. That's really just the `find` method on a stack.
+
+Those operations are relatively trivial, so we'll not spend too much time explaining them. Here's the full code for the environment:
 
 ```scala
-enum Expr:
-  case Num(value: Int)
-  case Bool(value: Boolean)
-  case Add(lhs: Expr, rhs: Expr)
-  case Cond(pred: Expr, thenBranch: Expr, elseBranch: Expr)
-  case Let(name: String, value: Expr, body: Expr)
-  case Var(name: String)
-```
-
-## Interpreting local bindings
-
-We're clearly going to need to do a little work here. As we've seen when running substitution, the `let` part of our bindings is put in some sort of knowledge base, to be reused in the `in` part.
-
-This knowledge base is typically called an _environment_. It really is just a mapping of names to the corresponding values, and could be a simple `Map[String, Value]`.
-
-We'll do something a little more interesting and usable, however: it's clear we'll need to be able to query (binding elimination) and update (binding introduction) that environment, so we'll create a bespoke type with dedicated methods:
-
-```scala
-case class Env(map: Map[String, Value]):
+case class Env(env: List[Env.Binding]):
+  // e(name)
   def lookup(name: String) =
-    map.getOrElse(name, sys.error(s"Unbound variable: $name"))
+    env.find(_.name == name)
+       .map(_.value)
+       .getOrElse(sys.error(s"Unbound variable: $name"))
 
+  // e[name <- value]
   def bind(name: String, value: Value) =
-    Env(map + (name -> value))
-```
-`Env` wraps our map, and provides:
-- `lookup`, which attempts to retrieve the value bound to the specified name or fail.
-- `bind`, which binds a given name to a given value. Note how this produces a new `Env` without changing the old one (we're doing static scoping, after all).
+    Env(Env.Binding(name, value) :: env)
 
-Since we now know that interpretation is done within the scope of a set of bindings (our environment), we also know that this must be passed around, which requires a little refactoring.
-We'll need to update the existing code by passing an `Env` everywhere `interpret` will be called:
+object Env:
+  case class Binding(name: String, value: Value)
 
-```scala
-def add(lhs: Expr, rhs: Expr, env: Env) =
-  (interpret(lhs, env), interpret(rhs, env)) match
-    case (Value.Num(lhs), Value.Num(rhs)) => Value.Num(lhs + rhs)
-    case _                                => sys.error("Type error in Add")
-
-def cond(pred: Expr, t: Expr, e: Expr, env: Env) =
-  interpret(pred, env) match
-    case Value.Bool(true)  => interpret(t, env)
-    case Value.Bool(false) => interpret(e, env)
-    case _                 => sys.error("Type error in Cond")
-
-def interpret(expr: Expr, env: Env): Value = expr matcha
-  case Num(value)       => Value.Num(value)
-  case Bool(value)      => Value.Bool(value)
-  case Add(lhs, rhs)    => add(lhs, rhs, env)
-  case Cond(pred, t, e) => cond(pred, t, e, env)
+  val empty = Env(List.empty)
 ```
 
-And having laid all this groundwork, we can now tackle the more interesting problem of interpreting `Var` and `Let`.
+### Updating the AST
 
-Let's start with `Var`. That's almost trivial: we need to lookup the value a name is bound to in our environment, which is exactly what `lookup` does:
+Before we can update the interpreter, we need to add 2 new variants to our AST, one for each new term in our language.
+
+Let's start with $Ref$, whose semantics are:
+
+\begin{prooftree}
+  \AXC{$e \vdash \texttt{Ref}\ name \Downarrow e(name)$}
+\end{prooftree}
+
+This tells us quite clearly that $Ref$ is entirely defined by the name of the binding it references:
 
 ```scala
-def interpret(expr: Expr, env: Env): Value = expr matcha
-  case Num(value)       => Value.Num(value)
-  case Bool(value)      => Value.Bool(value)
-  case Add(lhs, rhs)    => add(lhs, rhs, env)
-  case Cond(pred, t, e) => cond(pred, t, e, env)
-  case Var(name)        => env.lookup(name)
+case Ref(name: String)
 ```
 
-`Let` is slightly trickier, but perfectly manageable. Given a `name`, a `value` and a `body`, we need to:
-- interpret `value` in the current environment.
-- bind `name` to it, thus producing a new environment.
-- interpret `body` in that new environment.
+Similarly, looking at the $Let$ semantics will tell us exactly what we need:
 
-This is a little complex, so we'll extract it to a dedicated method:
+\begin{prooftree}
+  \AXC{$e \vdash value \Downarrow v_1$}
+  \AXC{$e[name \leftarrow v_1] \vdash body \Downarrow v_2$}
+  \BIC{$e \vdash \texttt{Let}\ name\ value\ body \Downarrow v_2$}
+\end{prooftree}
+
+$Let$ is defined by the binding's $name$, $value$, and $body$:
 
 ```scala
-def let(name: String, value: Expr, body: Expr, env: Env) =
-  val actualValue = interpret(value, env)
-  val newEnv      = env.bind(name, actualValue)
-
-  interpret(body, newEnv)
+case Let(name: String, value: Expr, body: Expr)
 ```
-Which gives us a final implementation of `interpret`:
 
+### Binding elimination
+
+Having done the hard work of specifying our semantics, implementing bindings is actually quite straightforward.
+
+Let's start with $Ref$, whose semantics are:
+
+\begin{prooftree}
+  \AXC{$e \vdash \texttt{Ref}\ name \Downarrow e(name)$}
+\end{prooftree}
+
+This is simple enough:
+```scala
+def ref(name: String, e: Env) =
+  e.lookup(name) // e |- Ref name ⇓ e(name)
+```
+
+### Binding introduction
+
+And finally, we can tackle $Let$, whose semantics are:
+
+\begin{prooftree}
+  \AXC{$e \vdash value \Downarrow v_1$}
+  \AXC{$e[name \leftarrow v_1] \vdash body \Downarrow v_2$}
+  \BIC{$e \vdash \texttt{Let}\ name\ value\ body \Downarrow v_2$}
+\end{prooftree}
+
+As usual, this maps quite easily and directly to code:
 
 ```scala
-def interpret(expr: Expr, env: Env): Value = expr match
+def let(name: String, value: Expr, body: Expr, e: Env) =
+  val v1 = interpret(value, e)               // e |- value ⇓ v₁
+  val v2 = interpret(body, e.bind(name, v1)) // e[name <- v₁] |- body ⇓ v₂
+  v2                                         // e |- Let name value body ⇓ v₂
+```
+
+At this point, we need to update `interpret` a little: not only does it need to handle our two new variants, but it must be environment-aware - which is really just declaring an `Env` parameter and passing it everywhere it's needed. Here's what this looks like in the end:
+
+```scala
+def interpret(expr: Expr, e: Env): Value = expr match
   case Num(value)             => Value.Num(value)
   case Bool(value)            => Value.Bool(value)
-  case Add(lhs, rhs)          => add(lhs, rhs, env)
-  case Cond(pred, t, e)       => cond(pred, t, e, env)
-  case Var(name)              => env.lookup(name)
-  case Let(name, value, body) => let(name, value, body, env)
+  case Add(lhs, rhs)          => add(lhs, rhs, e)
+  case Cond(pred, onT, onF)   => cond(pred, onT, onF, e)
+  case Let(name, value, body) => let(name, value, body, e)
+  case Ref(name)              => ref(name)
 ```
 
 ## Testing our implementation
 
-Now that we've written something that feels it should work, let's take it out for a spin.
+We're pretty much done with bindings (spoiler warning: for the moment). We have clear semantics, and an implementation that we feel follows them closely. All we've left to do, then, is to test things out.
 
 We'll use the example we took to talk about static scoping:
 
@@ -233,7 +366,8 @@ let x = 1 in
  (let x = 2 in x) + x
 ```
 
-This yields this (relatively noisy) AST:
+And this is where I'm starting to regret not writing a parser for our language - I _love_ a well defined AST, but it's really quite unpleasant to code directly in one:
+
 ```scala
 val expr = Let(
   name  = "x",
@@ -242,30 +376,23 @@ val expr = Let(
     Let(
       name  = "x",
       value = Num(2),
-      body  = Var("x")
+      body  = Ref("x")
     ),
-    Var("x")
+    Ref("x")
   )
 )
 ```
 
-Interpreting that is simple enough, although we do need to pass some environment to `interpret`. At least for the moment, we'll merely work with the empty environment, for which we'll create a helper:
-
-```scala
-object Env:
-  val empty: Env = Env(Map.empty)
-```
-
-Armed with all these tools, interpreting our `expr` is entirely straightforward:
+Interpreting that is simple enough, with one small subtlety: we're considering that our initial environment is empty. This might not always be the case, as their might be predefined global bindings, for example.
 
 ```scala
 interpret(expr, Env.empty)
 // val res: Value = Num(3)
 ```
 
-If you remember, if we implemented static scoping, this should evaluate to `3`, or `4` if we made a mistake an implement dynamic scoping. And, fortunately, it evaluates to `3`, as it should.
+If you remember, had we implemented dynamic scoping, this would evaluate to `4`. But we get `3`, which is a pretty good hint that we've successfully implemented static scoping, exactly as we wanted. Making sure we don't break this as we add more features to the language will prove a challenge, but at least for the moment, we have good reasons to believe we have a solid implementation of what we set out to support.
 
 
 ## Where to go from there?
 
-We've just finished adding local bindings to our language. Inquisitive readers might have realised that these feel very much like functions, except the parameter's value is fixed - if you have, well done, you've correctly guessed what our next step should be: take what we've learned with local bindings and attempt to generalise it to support functions.
+We've just finished adding bindings to our language. Inquisitive readers might have realised that these feel very much like functions, except the parameter's value is fixed - if you have, well done, you've correctly guessed what our next step should be: take what we've learned with bindings and attempt to generalise it to support functions.

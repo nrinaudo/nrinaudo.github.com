@@ -5,7 +5,7 @@ series: pl
 date:   20240705
 ---
 
-We've just implemented let bindings, which allow us to write things like this:
+We've just implemented bindings, which allow us to write things like this:
 
 ```ocaml
 let x = 1 in
@@ -13,28 +13,28 @@ let x = 1 in
 ```
 
 One way of reading that is:
-- the `in` part is telling us _give me an `x` and I'll add `2` to it_.
-- the `let` part is telling us _here's a specific `x`_.
+- the `in` part is telling us _give me an `x`, any `x`, and I'll add `2` to it_.
+- the `let` part is telling us _`x` is only ever going to be `1`, though_.
 
-While local bindings are undoubtedly nice, this also seems needlessly limiting: why make `x` a parameter of the `in` part, but then force it to be fixed? Wouldn't it be much nicer if we could keep the `in` part, but allow people to evaluate it for any `x`?
+While bindings are undoubtedly nice, this also seems needlessly limiting: why make `x` a parameter of the `in` part, but then fix it to a unique value? Wouldn't it be much nicer if we could keep the `in` part, but allow people to evaluate it for any `x`?
 
-This notion of _something that takes a parameter and computes something with it_ is called a _function_. We've just come to the conclusion that we'd like to implement functions in our language.
+This notion of _something that takes a parameter and computes something with it_ is called a _function_. We've just come to the conclusion that we'd like to add support for functions to our language.
 
-In theory at least, all we need for that is syntax and substitution rules.
+## Intuition
 
-## Syntax
+### Function introduction
 
-### Lambda introduction
+Let's start by thinking of how we would declare a new function - function _introduction_, to reuse the vocabulary we introduced when working on bindings.
 
-We'll use a fairly common syntax for functions:
+As we've seen, we really want a function to act as a more generic `let` expression, one in which the binding's value is going to be specified later. A function, then, is like a `let` without a value, which tells us it must be composed of:
+- a name to which a value will later be bound. This is traditionally called the function's _parameter_.
+- a _body_, the block of code in which the parameter will be in scope.
+
+We'll use the following syntax in our examples:
 
 ```ocaml
-[PARAMETER] -> [BODY]
+[parameter] -> [body]
 ```
-
-Where:
-- `[PARAMETER]` is the name of our parameter.
-- `[BODY]` is the code that will be executed with that parameter.
 
 The `in` part of our previous let binding would thus be expressed as:
 
@@ -42,110 +42,69 @@ The `in` part of our previous let binding would thus be expressed as:
 x -> x + 2
 ```
 
-This declares a function that, given some `x`, returns `x + 2`. If you remember the vocabulary we introduced in the previous article of this series, this would then be _function introduction_.
+That is, the function which, given a number, adds `2` to it.
 
-A more common name is _lambda introduction_: _lambda_ is often used as a shorthand for _anonymous function_, and yes, you probably noticed: we have declared a function, but not named it. Is this really something we need to worry about though?
+### Function elimination
 
-We just spent quite a bit of time figuring out the rules for naming things, and came up with let bindings. That's exactly what we need, isn't it? We can simply write:
+Since we have function _introduction_, we'll need function _elimination_ - more commonly known as _application_ - the equivalent of setting the value part of a `let` expression and interpreting its body. You can think of it that way:
+- a `let` expression needs a name, value and body to be fully interpreted.
+- a function contains a name and a body, so we only need to fill in the value part.
 
-```ocaml
-let f = x -> x + 2 in
-  ???
-```
-
-And that has just created a function called `f` in our environment. Of course, this means we've also taken a major decision without necessarily intending to.
-
-Let bindings bind a name to a value. We've just bound the name `f` to a function. This means, then, that we've quite naturally decided that functions were values in our language.
-
-### Lambda elimination
-
-You'll have noticed in that previous code block that I didn't implement the `in` part of our let binding. That's simply because we don't have syntax for it yet: we know how to _introduce_ functions, but not how to _eliminate_ them, which is more commonly known as _applying_ them.
-
-The syntax we'll use for that is fairly common:
+The syntax we'll use for that is relatively standard in the ML family of languages:
 
 ```ocaml
-[FUNCTION] [ARGUMENT]
+[function] [argument]
 ```
 
 Where:
-- `[FUNCTION]` is, well, a function.
-- `[ARGUMENT]` is the value passed to the function.
+- `[function]` is the function to apply.
+- `[argument]` is the value we'll bind the function's parameter to.
 
-You'll note a slight lexical subtlety: I've used both _parameter_ and _argument_ to describe "what's passed to a function". There is a distinction: I'll call a parameter the name of the value passed to a function, and argument the actual value. Which is why we'll talk of parameters for lambda introduction and arguments for lambda elimination.
+You'll note a slight lexical subtlety: I've used both _parameter_ and _argument_ to describe "what's passed to a function". There is a distinction: I'll call a parameter the name of the value passed to a function, and argument the actual value. Which is why we'll talk of parameters for function introduction and arguments for function elimination.
 
-Now that we have syntax for it, we can complete our previous example:
+
+### Naming functions
+
+Now that we have syntax for it, we can start rewriting `let` expressions as functions. To take our simple example from earlier:
+
+```ocaml
+let x = 1 in
+  x + 2
+```
+
+This can be thought of as a function introduction followed by its immediate application to `1`, or:
+
+
+```ocaml
+(x -> x + 2) 1
+```
+
+I'll readily agree that this is not as pleasant to read, but it does exactly the same thing: compute `x + 2` for `x = 1`.
+
+One reason for which this might feel a little uncomfortable is that we're a lot more used to seeing functions as named things - typically `f`, or some variation of it. We would usually expect to declare `x -> x + 2`, name it `f`, and then call `f 1`.
+
+Well, we just spent a rather large article coming up with a way of naming things: bindings. It only seems reasonable to make us of all that work:
 
 ```ocaml
 let f = x -> x + 2 in
   f 1
 ```
 
-And that is exactly the `let` statement we've been using as an example: compute `x + 2` for `x = 1`.
+This binds our function to the name `f`, which is exactly what we wanted, but also has an interesting consequence: `let` expressions bind _values_ to names. We've bound a _function_ to the name `f`. Clearly, then, functions must be values for this to work - our language must be a functional programming language in the simplest sense of the term, a language in which functions are first class citizens.
 
-This seems rather convoluted though, and maybe a little counter productive: we just rewrote a let binding as... another, more complicated let binding. But the fact that we're giving a name to our function, and only use that name once, should be a hint that we can maybe skip that step.
+### Interpreting a function
 
-When applying a function, our syntax requires the `[FUNCTION]` part to be a function. Well, `x -> x + 2` is one, so we can use that directly, rather than name it and refer to that name:
+It's now time to start thinking about how we might interpret functions. We've made a point of treating them as ax more general `let` expression, so we can start from there. Applying a function, then:
+- creates a new environment in which the $parameter$ is bound to the $attribute$.
+- interprets the $body$ in that environment.
 
-```ocaml
-(x -> x + 2) 1
-```
+Taking our `(x -> x + 2) 1` example, we would:
+* create environment $\\{x = 1\\}$.
+* interpret `x + 2` in it.
 
-This pattern of creating and immediately applying a function is quite common (especially, I think, in LISPs) and known as _left-left-lambda_.
+Which yields `3`, as it should.
 
-What we've just invented, then, is quite powerful: not only do we have functions, but we can use them to express let bindings without any loss of expressivity.
-
-## A note on concrete syntax
-
-We've made let bindings obsolete;  we don't need them in the language, since they can be expressed with functions. But do we want to take them out?
-
-Which do you think is clearer:
-
-```ocaml
-let x = 1 in x + 2
-
-(x -> x + 2) 1
-```
-
-I suppose this is really a matter of preference, but I can't help but feel the let binding reads much better than the function declaration and immediate application. It feels like we need to decide on some sort of trade off:
-- support let bindings when we don't need to, meaning that we have more code than we strictly need and a larger potential for bugs / complexity.
-- express let bindings as functions, meaning that our language will be a little less approachable.
-
-Luckily, we get to have our cake and eat it, too: we can simply decide that let bindings are syntactic sugar for function application. The surface syntax of our language can absolutely include let bindings - we merely need to turn them into function application when we turn that syntax into an AST.
-
-This is an important concept, and one of the reasons this series is ignoring parsing entirely: the syntax is a little irrelevant. Implementers of our language can choose whatever they prefer, so long as they can turn it into our AST. At this point, we take over and run interpreters, compilers...
-
-One could, for example, decide that naming functions through let bindings is unpleasant, and implement dedicated syntax for it:
-```scala
-def f(x) = x + 2
-f 1
-```
-
-One might also decide that our syntax for function application is unclear, and implement parentheses instead:
-
-```scala
-def f(x) = x + 2
-f(1)
-```
-
-And this would be strictly equivalent, at the AST level, to our:
-```ocaml
-(x -> x + 2) 1
-```
-
-Syntax is an implementation detail. This is why we're spending so much time _not_ worrying about implementing any.
-
-## Substitution rules
-
-Now that we have a syntax, let's think about how substitution works for functions. You might think that since we support let bindings, we've actually got that mostly sorted. And that'd be _almost_ correct.
-
-We can start from there, at least, and think of function application as a form of let binding: we'd bind the parameter to the argument, and then perform substitution as we always have. For example:
-
-| Target           | Knowledge | Action                  |
-|------------------|-----------|-------------------------|
-| `(x -> x + 2) 1` | _N/A_     | Bind `x` to `1`         |
-| `x + 2`          | `x = 1`   | Substitute `x` with `1` |
-| `1 + 2`          |           | Simplify `1 + 2`        |
-| `3`              |           | _N/A_                   |
+### Static scope
 
 This seems perfectly reasonable, but there is an edge case to consider. What do you think this evaluates to?
 
@@ -156,208 +115,178 @@ let y = 1 in
       f 3
 ```
 
-Since we're doing static scoping, you probably expect this to evaluate to `4`: `f` is defined when the first `y` binding is in scope, so you'd expect `f` to be `x -> x + 1`.
+Since we're doing static scoping, you probably expect this to evaluate to `4`: `f` is defined when the first `y` binding is in scope, so you'd expect `f` to be `x -> x + 1` and `f 3` to be `4`.
 
-If you run our substitution rules however, you'll end up with `5`, because our environment will bind `y` to `2` before `f` is applied.
+If we try interpreting it with our current rules however, we'll get `5` instead. Here are the steps to get there:
+* the outermost `let` creates environment $e_1 = \\{y = 1\\}$.
+* the middle `let` creates environment $e_2 = e_1[f \leftarrow (x \to x + y)]$.
+* the innermost `let` creates environment $e_3 = e_2[y \leftarrow 2]$.
 
-| Target                                                                                                                                          | Knowledge                    | Action                           |
-|-------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------|----------------------------------|
-| `let y = 1 in`<br/>&nbsp;&nbsp;`let f = x -> x + y in`<br/>&nbsp;&nbsp;&nbsp;&nbsp;`let y = 2 in`<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`f 3` | _N/A_                        | Bind `y` to `1`                  |
-| `let f = x -> x + y in`<br/>&nbsp;&nbsp;`let y = 2 in`<br/>&nbsp;&nbsp;&nbsp;&nbsp;`f 3`                                                        | `y = 1`                      | Bind `f` to `x -> x + y`         |
-| `let y = 2 in`<br/>&nbsp;&nbsp;`f 3`                                                                                                            | `y = 1`<br/>`f = x -> x + y` | Bind `y` to `2`                  |
-| `f 3`                                                                                                                                           | `y = 2`<br/>`f = x -> x + y` | Substitute `f` with `x -> x + y` |
-| `(x -> x + y) 3`                                                                                                                                | `y = 2`<br/>                 | Bind `x` to `3`                  |
-| `x + y`                                                                                                                                         | `y = 2`<br/>`x = 3`          | Substitute `x` with `3`          |
-| `3 + y`                                                                                                                                         | `y = 2`                      | Substitute `y` with `2`          |
-| `3 + 2`                                                                                                                                         |                              | Simplify `3 + 2`                 |
-| `5`                                                                                                                                             |                              | _N/A_                            |
+Interpreting `f 3` in $e_3$ shows the problem: we end up interpreting `3 + y` in an environment in which `y` is bound to `2`, which clearly yields `5`. The bindings referenced in the body of `f` end up being "overwritten" by deeper `let` expressions. We've broken dynamic scoping. Again.
 
-Working through that example, we see that the second `y` binding shadows the first and breaks static scoping when `f` is applied. We want `f` to use the value `y` was bound to at _declaration_ time, not _application_ time. Or, put in slightly more general term: applying a function must be done in the environment it was defined in, rather than the one it's applied in.
+Our mistake is that we're using the wrong environment when interpreting `f 3`. We've been using $e_3$, in which `y` is bound to `2`, when we really wanted $e_1$, where `y` is bound to `1`. Or, more generally: we want to interpret functions in the environment in which they're _introduced_, not the one in which they're _applied_.
 
-In our previous example, `y` has a value of `1` when `f` is defined, so we need to store that with `f`. And at application time, we'll ignore whatever `y` is defined in the current environment and use the one we stored. Our program thus evaluates to what static scoping says it should, and sanity is restored.
+This tells us that functions are a little more complicated than a mere parameter and body: they must also keep track of their introduction environment.
 
 The technical vocabulary for that (which I'll readily admit I've never fully understood) is that `f` _closes_ over its environment, and is thus called a _closure_.
 
-## Updating the AST
+## Operational semantics
 
-We've seen that we needed two new variants for our AST, the usual introduction and elimination ones.
+Having built a solid intuition for functions, we need to formalize it before we can start on the fun bits, the actual coding.
 
-### Lambda introduction
+### Function introduction
 
-Lambda introduction is the AST representation of:
+Let's first think about the term we need to add to our language for function introduction. Our syntax is `x -> x + 2`: the function's parameter and its body. It seems reasonable, then, to start working from:
 
-```ocaml
-x -> x + 2
-```
+\begin{prooftree}
+  \AXC{$e \vdash \texttt{Fun}\ param\ body\ \Downarrow\ ???$}
+\end{prooftree}
 
-This is fairly straightforward: we need to know the parameter, `x`, as well as the function's body, `x + 1`, which translates directly to:
 
-```scala
-  case Function(param: String, body: Expr)
-```
+We have seen that functions were values. Function introduction, then, is merely the creation of such a value. We've also seen that a function value must be composed of its parameter and body, and, critically, the function's introduction environment. This gives us the relatively straightforward rule for function introduction, $\texttt{Fun}$:
 
-### Lambda Elimination
+\begin{prooftree}
+  \AXC{$e \vdash \texttt{Fun}\ param\ body\ \Downarrow \texttt{Value.Fun}\ param\ body\ e$}
+\end{prooftree}
 
-Lambda elimination is just as straightforward - problems usually start happening when interpreting things, not when describing them. We're trying to represent:
+And that's really all we need: no antecedent, just a conclusion. We call this kind of inference rule an _axiom_.
+
+Note that this axiom implies a new type of value, $\texttt{Value.Fun}$, which we'll need to write when we start coding.
+
+### Function elimination
+
+Function elimination, which we'll call by the more common name $\texttt{Apply}$, looks like this:
+
 ```ocaml
 f 1
 ```
 
-Which clearly gives us a structure containing a function (the function to apply) and a value (the function's argument). Of course, what we really want to hold are _expressions_ that evaluate to a function and a value of the right type, which gives us the following code:
-```scala
-  case Apply(function: Expr, arg: Expr)
-```
+That is, a function and its argument. This gives us the shape of our conclusion:
 
-Note how I'm being careful to be consistent in our vocabulary: `Function` has a parameter, `Apply` an argument.
+\begin{prooftree}
+  \AXC{$e \vdash \texttt{Apply}\ fun\ arg\ \Downarrow\ ???$}
+\end{prooftree}
 
-### Full AST
+Our first step should be to make sure that $fun$ is, in fact, a function, which we can only do by interpreting it (well yes, we are in fact only checking types at runtime, which I hope irritates you as much as it does me). The only environment in which it makes sense to interpret $fun$ is $e$:
 
-Putting it all together, we get the following definition for `Expr`:
-```scala
-enum Expr:
-  case Num(value: Int)
-  case Bool(value: Boolean)
-  case Add(lhs: Expr, rhs: Expr)
-  case Cond(pred: Expr, thenBranch: Expr, elseBranch: Expr)
-  case Let(name: String, value: Expr, body: Expr)
-  case Var(name: String)
-  case Function(param: String, body: Expr)
-  case Apply(function: Expr, arg: Expr)
-```
+\begin{prooftree}
+  \AXC{$e \vdash fun ⇓ \texttt{Value.Fun}\ param\ body\ e'$}
+  \UIC{$e \vdash \texttt{Apply}\ fun\ arg\ \Downarrow v_2$}
+\end{prooftree}
 
-And just to make sure we have all we need, we can try to write `let f = x -> x + 2 in f 1` using that updated AST:
+We'll then want to bind the function's parameter to its argument so we can interpret its body - but in order to do that, we must know what $arg$ evaluates to (again, in $e$, for the same reason) to get the actual value:
 
-```scala
-val expr = Let(
-  name  = "f",
-  value = Function(
-    param = "x",
-    body  = Add(Var("x"), Num(2))
-  ),
-  body = Apply(
-    function = Var("f"),
-    arg      = Num(1)
-  )
-)
-```
+\begin{prooftree}
+  \AXC{$e \vdash fun ⇓ \texttt{Value.Fun}\ param\ body\ e'$}
+  \AXC{$e \vdash arg \Downarrow v_1$}
+  \BIC{$e \vdash \texttt{Apply}\ fun\ arg\ \Downarrow v_2$}
+\end{prooftree}
 
-Not the most pleasant thing in the world - our textual syntax is certainly easier on the brain - but it does work.
+All we have left to do is interpret $body$  - but there's a crucial subtlety here: what environment should we do this in?
 
-We seem to have everything in order: a clear substitution model and a working AST. All that's left to do, then, is interpreting that updated AST.
+We've seen that a function must be evaluated in the environment in which it was _introduced_ - $e'$ in our rule. But that's not the whole story: we must not forget to bind the function's argument to its parameter, as that is rather the entire point of the whole thing.
 
-## Interpreting functions
+Putting all this together, we can write a complete rule, by far the more complex we've seen so far:
 
-### Lambda introduction
-Our first task will be to interpret the `Function` branch of our AST, and we hit an immediate snag: we need to go from `Function` to `Value`; but `Value` only has two variants, `Num` and `Bool`, neither of which seem suitable for representing a function.
+\begin{prooftree}
+  \AXC{$e \vdash fun ⇓ \texttt{Value.Fun}\ param\ body\ e'$}
+  \AXC{$e \vdash arg \Downarrow v_1$}
+  \AXC{$e'[param \leftarrow v_1] \vdash body \Downarrow v₂$}
+  \TIC{$e \vdash \texttt{Apply}\ fun\ arg\ \Downarrow v_2$}
+\end{prooftree}
 
-We'll need to adapt `Value` to accommodate functions, which means adding a new variant. So far, these have been extremely similar to their `Expr` equivalents, to the point that we considered re-using the `Expr` variants directly, so let's try the same approach:
+
+## Implementing functions
+### Functions as values
+
+Functions being a new kind of value, we need to add a new variant to `Value`.
+
+We can derive it from the operational semantics of function introduction:
+\begin{prooftree}
+  \AXC{$e \vdash \texttt{Fun}\ param\ body\ \Downarrow \texttt{Value.Fun}\ param\ body\ e$}
+\end{prooftree}
+
+A function is composed of its parameter, its body, and the environment in which it was declared:
 
 ```scala
-  case Function(param: String, body: Expr)
+case Fun(param: String, body: Expr, env: Env)
 ```
 
-That seems reasonable: a function is in fact defined by its parameter and the code to execute when it's applied. But is that _all_ a function is defined by?
+### Updating the AST
 
-If you cast your mind back to our study of substitution rules, you'll remember that in order to respect static scoping, a function also needed to capture the environment in which it was defined: our `Value.Function` needs a third field of type `Env`.
+Updating the AST is, as before, done by looking at the operational semantics of our new terms to see what they're made out of.
+
+Let's start with function introduction:
+
+\begin{prooftree}
+  \AXC{$e \vdash \texttt{Fun}\ param\ body\ \Downarrow \texttt{Value.Fun}\ param\ body\ e$}
+\end{prooftree}
+
+This tells us that our new variant for `Fun` must hold the parameter name and function body:
 
 ```scala
-enum Value:
-  case Num(value: Int)
-  case Bool(value: Boolean)
-  case Function(param: String, body: Expr, env: Env)
+case Fun(param: String, body: Expr)
 ```
 
-I don't know about you, but it felt very odd writing this, like we're mixing things that don't belong together. An `Env` is a very runtime notion - it's literally the runtime environment in which something is being interpreted, while an `Expr` feels more static. But that is what it means to support functions as values: such a value must combine the code to execute as well as the environment in which it was defined.
+Our other new term, function application, is defined as follows:
+\begin{prooftree}
+  \AXC{$e \vdash fun ⇓ \texttt{Value.Fun}\ param\ body\ e'$}
+  \AXC{$e \vdash arg \Downarrow v_1$}
+  \AXC{$e'[param \leftarrow v_1] \vdash body \Downarrow v₂$}
+  \TIC{$e \vdash \texttt{Apply}\ fun\ arg\ \Downarrow v_2$}
+\end{prooftree}
 
-With this upgraded `Value`, updating `interpret` to handle lambda introduction is relatively easy:
+Which makes it clear that our new variant, `Apply`, must be composed of a function to apply and the argument to apply it on:
 
 ```scala
-def interpret(expr: Expr, env: Env): Value = expr match
-  case Num(value)             => Value.Num(value)
-  case Bool(value)            => Value.Bool(value)
-  case Add(lhs, rhs)          => add(lhs, rhs, env)
-  case Cond(pred, t, e)       => cond(pred, t, e, env)
-  case Var(name)              => env.lookup(name)
-  case Let(name, value, body) => let(name, value, body, env)
-  case Function(param, body)  => Value.Function(param, body, env)
+case Apply(fun: Expr, arg: Expr)
 ```
 
-### Lambda elimination
+### Function introduction
 
-Lambda elimination is a little more complex. What we're given to work with are two `Expr`s:
-- `Function`, the function to apply.
-- `arg`, the argument to apply `function` on.
+We can now get to the fun bit of translating our operational semantics to code. We'll start from function introduction, which is essentially a copy/paste job from the semantics.
 
-Our first step will be to interpret `function` and make sure it correctly evaluates to a function:
+Taking $Fun$'s semantics:
+\begin{prooftree}
+  \AXC{$e \vdash \texttt{Fun}\ param\ body\ \Downarrow \texttt{Value.Fun}\ param\ body\ e$}
+\end{prooftree}
+
+We very easily get the Scala implementation:
 
 ```scala
-def apply(function: Expr, arg: Expr, env: Env) =
-  interpret(function, env) match
-    case Value.Function(param, body, closedEnv) =>
-      ???
-    case _ =>
-      sys.error("Type error in Apply")
+def fun(param: String, body: Expr, e: Env) =
+  Value.Fun(param, body, e) // e |- Fun param body ⇓ Value.Fun param body e
 ```
 
-This is basically necessary boilerplate to get to the function we want to apply, but we can already spot a potential source of confusion: we have two environments! `env` is the environment in which the function is being applied, and `closedEnv` the one in which it was defined. We'll need to be very careful not to get them mixed up.
+### Function Elimination
 
-Following our substitution rules, we now need to bind `param` to the value of `arg`. In order to do that, we first need to know the value of `arg`, which is simply done by interpreting it... but in which environment?
+We can finally tackle `Apply`, whose operational semantics are:
 
-This one is not too hard. `arg` has absolutely nothing to do with the environment in which `function` was defined, so it wouldn't make sense to interpret it in `closedEnv`.
+\begin{prooftree}
+  \AXC{$e \vdash fun ⇓ \texttt{Value.Fun}\ param\ body\ e'$}
+  \AXC{$e \vdash arg \Downarrow v_1$}
+  \AXC{$e'[param \leftarrow v_1] \vdash body \Downarrow v₂$}
+  \TIC{$e \vdash \texttt{Apply}\ fun\ arg\ \Downarrow v_2$}
+\end{prooftree}
+
+The translation to code is, again, very simple:
 
 ```scala
-def apply(function: Expr, arg: Expr, env: Env) =
-  interpret(function, env) match
-    case Value.Function(param, body, closedEnv) =>
-      val argValue  = interpret(arg, env)
-      ???
-    case _ =>
-      sys.error("Type error in Apply")
+def apply(fun: Expr, arg: Expr, e: Env) =
+  interpret(fun, e) match
+    case Value.Fun(param, body, eʹ) =>            // e |- fun ⇓ Value.Fun param body eʹ
+      val v1 = interpret(arg, e)                  // e |- arg ⇓ v₁
+      val v2 = interpret(body, eʹ.bind(param, v1))// eʹ[param <- v₁] |- body ⇓ v₂
+      v2                                          // e |- Apply fun arg ⇓ v₂
+
+    case _ => typeError("apply")
 ```
 
-We're almost ready to apply our function. All we now need is to know in which environment to do so. Our substitution rules tell us it must be in the environment in which it was defined - `closedEnv` - but that's not quite enough, is it? We must also bind `param` to `argValue` in that environment in order for the function to be able to access its parameter.
+Do note how we're erroring out on any value of `fun` that is not a function. That's really how we code the fact that operational semantics only describe the success cases: anything not "caught" by a rule is by definition an error.
 
-```scala
-def apply(function: Expr, arg: Expr, env: Env) =
-  interpret(function, env) match
-    case Value.Function(param, body, closedEnv) =>
-      val argValue = interpret(arg, env)
-      val funEnv   = closedEnv.bind(param, argValue)
-      ???
-    case _ =>
-      sys.error("Type error in Apply")
-```
+## Testing our implementation
 
-We now have everything we need, all that's left to do is to interpret the `body` of our function in the right environment:
-
-```scala
-def apply(function: Expr, arg: Expr, env: Env) =
-  interpret(function, env) match
-    case Value.Function(param, body, closedEnv) =>
-      val argValue = interpret(arg, env)
-      val funEnv   = closedEnv.bind(param, argValue)
-      interpret(body, funEnv)
-    case _ =>
-      sys.error("Type error in Apply")
-```
-
-Putting all this together, we get our final `interpret` implementation:
-
-```scala
-def interpret(expr: Expr, env: Env): Value = expr match
-  case Num(value)             => Value.Num(value)
-  case Bool(value)            => Value.Bool(value)
-  case Add(lhs, rhs)          => add(lhs, rhs, env)
-  case Cond(pred, t, e)       => cond(pred, t, e, env)
-  case Var(name)              => env.lookup(name)
-  case Let(name, value, body) => let(name, value, body, env)
-  case Function(param, body)  => Value.Function(param, body, env)
-  case Apply(function, arg)   => apply(function, arg, env)
-```
-
-### Testing our implementation
-
-In order to make sure we got everything right, let's use the edge case we identified while studying substitution rules:
+In order to test our implementation, we'll take our previous example - the one that showed how a naive implementation would fail to maintain lexical scoping:
 
 ```ocaml
 let y = 1 in
@@ -366,9 +295,7 @@ let y = 1 in
       f 3
 ```
 
-Remember that if we implemented static scope properly, this should evaluate to `4`. If we got it wrong, `5` (and if we got it _very_ wrong, just about anything).
-
-The AST representation of this program is:
+I'll write the AST for this out of sheer bullheadedness, but you really shouldn't feel like you to have to read this mess:
 
 ```scala
 val expr = Let(
@@ -376,83 +303,53 @@ val expr = Let(
   value = Num(1),
   body = Let(
     name = "f",
-    value = Function(
+    value = Fun(
       param = "x",
-      body  = Add(Var("x"), Var("y"))
+      body  = Add(Ref("x"), Ref("y"))
     ),
     body = Let(
       name = "y",
       value = Num(2),
-      body = Apply(Var("f"), Num(3))
+      body = Apply(Ref("f"), Num(3))
     )
   )
 )
 ```
 
-And finally, interpreting this yields the expected (hoped for!) `4`.
+Well, that wasn't very pleasant. But we can now confirm our implementation yields `4`, which gives us some confidence it's working as expected:
 
 ```scala
 interpret(expr, Env.empty)
 // val res: Value = Num(4)
 ```
 
-
 ## Functions with multiple parameters
 
-You might have noticed. In this entire article, we only ever worked with unary functions - functions that take a single parameter. And you might rightfully think that this was a lot of work for a very partial feature. After all, it's very easy to think of dozens of functions that take more than one parameter - our interpreter is one, for example.
+You might have noticed. In this entire article, we only ever worked with unary functions - functions that take a single parameter. And you might rightfully think that this was a lot of work for a very partial feature. After all, it's very easy to think of dozens of functions that take more than one parameter - addition, for example.
 
-The good news is, while it was indeed a lot of work, the feature is not at all partial. Let's take a concrete example to show how.
+The good news is, while it was indeed a lot of work, the feature is not at all partial.
 
-An `add` function would take two parameters and return their sum. In theory, then, this is something we can't express with our language - not only do we not have syntax for it, but we don't even have the necessary tools in our AST. It certainly feels like we're at a bit of a dead end.
+An `add` function would take two parameters and return their sum. In theory, then, this is something we can't express in our language.
 
-Now, allow your mind to shift a little. What if instead, `add` was a function that took a single parameter - call it `lhs`, returned a function that took a single parameter - call it `rhs`, and returned the sum of `lhs` and `rhs`? Well, that'd be essentially the same thing, wouldn't it?
-
-Here's how that would work with our language:
+Now, allow your mind to shift a little. What if instead, `add` was a function that took a single parameter - call it `lhs`, returned a function that took a single parameter - call it `rhs`, and returned the sum of `lhs` and `rhs`? Given `add` and two integers, we could get their sum by applying `add` to the first, and the resulting function to the second. Here's how to write this in our language:
 
 ```ocaml
 let add = lhs -> rhs -> lhs + rhs in
   add 1 2
 ```
 
-That's a perfectly valid expression of our language, and `add` behaves, for all intents and purposes, like a function with two parameters. This process of turning a function that takes _n_ parameters and turning it into a chain of _n_ functions is called _[currying](https://en.wikipedia.org/wiki/Currying)_.
-
-Here's how `add` looks like in our AST - it is _quite_ noisy:
-
-```scala
-val expr = Let(
-  name  = "add",
-  value = Function(
-    param = "lhs",
-    body  = Function(
-      param = "rhs",
-      body  = Add(Var("lhs"), Var("rhs"))
-    )
-  ),
-  body = Apply(
-    function = Apply(
-      function = Var("add"),
-      arg  = Num(1)
-    ),
-    arg = Num(2)
-  )
-)
-```
-
-And yes, the sum of `1` and `2` is indeed `3`:
-
-```scala
-interpret(expr, Env.empty)
-// val res: Value = Num(3)
-```
-
+That's a perfectly valid expression (feel absolutely free to write the AST value for it and confirm!), and `add` behaves, for all intents and purposes, exactly like a function with two parameters. This process of turning a function that takes _n_ parameters and turning it into a chain of _n_ functions is called _[currying](https://en.wikipedia.org/wiki/Currying)_.
 
 ## Should we drop `Let` ?
 
-Earlier, in the bit about syntactic sugar, we realised that we could do away with let bindings entirely, as they could be expressed by simple function declaration and immediate application. In theory, I would do that now - remove the `Let` variant from our AST.
+Our language now has full support for functions - which we can see as a generalised form of bindings. We _could_ decide to drop support for $Let$, at least in the AST: a hypothetical parser could support `let` _syntax_, but map it to function introduction followed by immediate application.
 
-In practice however, the downside of not writing an actual syntax and parser for our language is that we must write everything directly in the AST. We're likely to want to assign names to things in the future, and let bindings are syntactically a lot more pleasant than the alternative. So we'll keep them for the moment, not because they're necessary, but because they're convenient.
+On the one hand, that would make for a leaner AST, and thus less code to write for interpreting it.
 
+On the other hand, it's sometimes useful to keep specialised terms like this in the AST: since their semantics are simpler, it allows us to write more optimal code for that specific use case.
+
+I'll be keeping `Let` in the rest of this series, but you should feel free to experiment with dropping it.
 
 ## Where to go from there?
 
-At this point, we have a pretty complete programming language: bindings, conditionals, functions... but we're still lacking a basic building block: loops, the ability to repeat an action multiple times. This is what we'll tackle in the next part of this series.
+At this point, we have a fairly complete programming language: bindings, conditionals, functions... but we're still lacking a basic building block: loops, the ability to repeat an action multiple times. This is what we'll tackle in the next part of this series.
