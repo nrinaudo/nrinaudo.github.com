@@ -1,8 +1,8 @@
-{% assign articles = site.articles | sort: 'date' | reverse %}
+{% assign articles = site.articles | where_exp: "post", "post.enabled != false" | sort: 'date' | reverse %}
 <ul>
   {% for article in articles %}
 
-  {% if article.series == "NONE" or article.layout == "series_index" %}
+  {% if (article.series == "NONE" or article.layout == "series_index") %}
   <li>
     <a href="{{ site.baseurl }}{{ article.url }}">{{ article.title }}</a>
     {% if article.talk %}<i title="Companion Article" class="fa fa-microphone-lines fa-xs"></i>{% endif %}

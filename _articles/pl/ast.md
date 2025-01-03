@@ -5,8 +5,6 @@ series: pl
 date:   20240615
 ---
 
-Now that we have a method for code interpretation, we can start thinking of writing a program to do that. The first thing we'll need is a way of representing code in memory, so that we can run substitutions on it.
-
 Let's start with a very simple programming language, one that only supports addition of numbers. The following would be a valid expression in that language:
 
 ```ocaml
@@ -15,9 +13,9 @@ Let's start with a very simple programming language, one that only supports addi
 
 ## A naive encoding
 
-The idea is: we need some sort of function (let's call it `interpret`) that, given the representation of an expression, can run successive substitutions until none can be performed. Which tells us that all the parts of that expression must be of the same type, to serve as input to `interpret`.
+We can easily see that there are two distinct things our type for code must support: an expression in our language can be either a number, or the addition of two numbers.
 
-We need a data type that is either a number or the addition of numbers, which immediately suggests an encoding: a sum type, which we could naively write as follows.
+This kind of "one thing or another" type is almost always best encoded as a sum type, which we could naively write as:
 
 ```scala
 enum Expr:
@@ -27,32 +25,85 @@ enum Expr:
 
 `Num` wraps a number, and `Add` has two numeric operands (called `lhs` and `rhs` for _left-hand side_ and _right-hand side_). This feels reasonable.
 
-There's a problem with that representation which we'll highlight and address soon, but before that, let's think about how to interpret such expressions.
+There's a problem with that representation which we'll highlight and address soon, but before that, let's think about how to interpret such expressions. The way we'll do this is by writing formal specifications for how we'd like things to work, and then turn these into actual code. Such specifications are called _operational semantics_, and they're hugely useful in thinking about our language.
 
-The choice of a sum type guides your implementation: it'll need to be a pattern match. We could, again naively, write it as follows:
+### Numbers
+
+Numbers simply evaluate to themselves. In order to express that, we'll need a symbol for the notion of _interprets to_, and the traditional one is $\Downarrow$.
+
+We can then formally express what a `Num` is interpreted as:
+
+\begin{prooftree}
+  \AXC{$\texttt{Num}\ value \Downarrow value$}
+\end{prooftree}
+
+This is a fairly straightforward rule that we can easily turn into code:
 
 ```scala
 def interpret(expr: Expr): Int = expr match
-  case Num(value)              => value
-  case Add(Num(lhs), Num(rhs)) => lhs + rhs
+  case Num(value) => value // Num value ⇓ value
 ```
 
-Both branches of that pattern match are straightforward and don't really need explanation (unless you've spotted why I keep using the word _naively_ and are raring to fix the mistake, which we'll get to soon).
+### Addition
 
-Now that we have an interpreter, let's take it out for a spin:
+Instinctively, we'd probably want to write the operational semantics of addition as follows:
+
+\begin{prooftree}
+  \AXC{$\texttt{Add}\ lhs\ rhs \Downarrow lhs + rhs$}
+\end{prooftree}
+
+This can't really work, however: $lhs$ and $rhs$ are not actual numbers, but terms of our language. Before we can add them, we need to turn them into numbers, which we do by interpreting them.
+
+We'll write this as follows:
+
+\begin{prooftree}
+  \AXC{$lhs \Downarrow v_1$}
+  \AXC{$rhs \Downarrow v_2$}
+  \BIC{$\texttt{Add}\ lhs\ rhs \Downarrow v_1 + v_2$}
+\end{prooftree}
+
+Where the horizontal line separates the _preconditions_ (often called _antecedents_) from the _conclusion_ (often called _consequent_): if the things described above the line hold, then so does what's under the line. Our rule, then, expresses:
+- if $lhs$ is interpreted as $v_1$
+- and $rhs$ is interpreted as  $v_2$
+- then $\texttt{Add}\ lhs\ rhs$ is interpreted as $v_1 + v_2$.
+
+These semantics can be turned into code rather directly:
 
 ```scala
+def add(lhs: Num, rhs: Num) =
+  val v1 = interpret(lhs) // lhs ⇓ v₁
+  val v2 = interpret(rhs) // rhs ⇓ v₂
+
+  v1 + v2                 // Add lhs rhs ⇓ v₁ + v₂
+```
+
+Which gives us a full interpreter:
+
+```scala
+def interpret(expr: Expr): Int = expr match
+  case Num(value)    => value
+  case Add(lhs, rhs) => add(lhs, rhs)
+```
+
+We can then confirm that it works as expected:
+
+```scala
+// 1 + 2
 val expr = Add(Num(1), Num(2))
 
 interpret(expr)
 // val res: Int = 3
 ```
 
+## Abstract Syntax Trees
+
 This all appears to work quite well, and is in fact such a common pattern that things like `Expr` have a name: _Abstract Syntax Tree_, or _AST_ for short.
 
-You can see the tree structure in `Expr`, where `Add` is a node and `Num` a leaf. Now, you might be thinking that it's not much of a tree, since it can only have a depth of 1, and you'd be entirely right. We'll fix that next.
+That name is composed of two parts: _abstract syntax_, and _syntax tree_.
 
-It's called _abstract syntax_ because it's an abstraction over the human facing syntax. The following expressions, clearly different even if evaluating to the same thing, all have the same `Expr` representation:
+### Abstract Syntax
+
+It's called _abstract syntax_ because it's an abstraction over the human facing syntax. The following, syntactically different expressions, all parse to the same `Expr`:
 ```ocaml
 1 + 2
 (1 + 2)
@@ -60,7 +111,21 @@ It's called _abstract syntax_ because it's an abstraction over the human facing 
 (((1) + 2))
 ```
 
-`Expr` unifies all that to `Add(Num(1), Num(2))`, abstracting over the gory details of whitespace and disambiguation parentheses.
+`Expr` unifies all that to `Add(Num(1), Num(2))`, abstracting over the gory details of whitespace and disambiguation parentheses. `Expr` is an abstract syntax.
+
+### Syntax Tree
+
+`Expr` can be seen as a tree, which is made quite clear when viewing it as a diagram:
+
+<span class="figure">
+![](/img/pl/ast.svg)
+</span>
+
+
+The operator, `Add`, is the root of the tree, and its operands are leaves.
+
+Now, you might be thinking that it's not much of a tree: it's got a depth of 1, and cannot grow. It's more of a bonsai than a tree, really. Which is, in fact, the symptom of an underlying issue in our encoding.
+
 
 ## Supporting nested expressions
 
@@ -82,33 +147,30 @@ enum Expr:
 
 Notice that both of `Add`'s operands are now `Expr` rather than `Num`: we can now use either `Num` or `Add` as operands to `Add`, which is exactly what we wanted.
 
-We'll need to update our interpreter to support this:
+The interesting bit is that this doesn't cause us to change our semantics at all:
+
+\begin{prooftree}
+  \AXC{$lhs \Downarrow v_1$}
+  \AXC{$rhs \Downarrow v_2$}
+  \BIC{$\texttt{Add}\ lhs\ rhs \Downarrow v_1 + v_2$}
+\end{prooftree}
+
+
+Whether `lhs` and `rhs` are `Num` or `Expr` doesn't matter, they're still things that can be interpreted, which is all we care about. We do have to change the types of operands in `add`'s implementation, however:
 
 ```scala
-def interpret(expr: Expr): Int = expr match
-  case Num(value)    => value
-  case Add(lhs, rhs) => ???
+def add(lhs: Expr, rhs: Expr) =
+  val v1 = interpret(lhs) // lhs ⇓ v₁
+  val v2 = interpret(rhs) // rhs ⇓ v₂
+
+  v1 + v2                 // Add lhs rhs ⇓ v₁ + v₂
 ```
 
-The `Add` branch might seem a little confusing: since we're not working with `Num` any longer, how do we get the underlying integer? Well, think about it. Do we not have a function that, given an `Expr`, returns its integer value? That's exactly what `interpret` is, isn't it? So we could recurse over `Add`'s operands and add the results:
+We can easily confirm that this all works:
 
 ```scala
-def interpret(expr: Expr): Int = expr match
-  case Num(value)    => value
-  case Add(lhs, rhs) => interpret(lhs) + interpret(rhs)
-```
-
-And the `Add` branch is now quite interesting: can you see how it makes our decision to eagerly evaluate expressions explicit?
-
-We're performing a depth-first traversal of our tree, by going all the way down to the nodes (`Num`), and then moving back up, one layer at a time, substituting as we go. That's exactly _innermost first substitution_ - that is, eager evaluation.
-
-We can easily confirm that this all works, by evaluating `1 + 2 + 3`:
-
-```scala
-val expr = Add(
-  Num(1),
-  Add(Num(2), Num(3))
-)
+// 1 + (2 + 3)
+val expr = Add(Num(1), Add(Num(2), Num(3)))
 
 interpret(expr)
 // val res: Int = 6
@@ -120,4 +182,4 @@ We can now represent simple arithmetic operations in memory and interpret them. 
 
 In the live coding sessions of this series, I will usually also implement multiplication, subtraction and division, as well as a basic code formatter. They're useful for practice, but maybe not so much for explanations, so I'll skip this here.
 
-You however should feel free to try your hand at it if you have the time. But do not attempt yet to write operations that work with anything but integers - this requires a little subtlety, and we'll tackle that in our next session.
+You however should feel free to try your hand at it if you have the time. But do not attempt yet to write operations that work with anything but numbers - this requires a little subtlety, and we'll tackle that in our next session.

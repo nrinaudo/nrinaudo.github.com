@@ -1,25 +1,25 @@
-@import './inter/inter.css';
 @import './fira_code/fira_code.css';
+@import './inria_serif/inria_serif.css';
 @import './fontawesome/font-awesome.css';
 
 body {
-	line-height:    1.4em;
-    font:           400 16px/1.5 'Inter';
+ 	line-height:    1.5;
+    font:           400 1.2rem "Inria Serif";
     background:     #ecf0f4;
     color:          #111111;
     margin:         0;
 	padding:        0;
 	border:         0;
+    line-height:    1.5;
 	vertical-align: baseline;
 }
 
 .wrapper {
-    max-width:     calc(800px - (30px * 2));
+    max-width:     min(1024px, 100%);
     margin-left:   auto;
     margin-right:  auto;
-    padding-left:  30px;
-    padding-right: 30px;
-    padding-bottom: 100px;
+    margin-bottom: 2rem;
+    padding:       0.2rem 1.2rem;
 }
 
 #navbar {
@@ -113,7 +113,20 @@ h3 {
 }
 
 h1 {
-    border-bottom:  1px solid #111111;
+    font-size    : 220%;
+    border-bottom: 1px solid #111111;
+}
+
+h2 {
+    font-size: 180%;
+}
+
+h3 {
+    font-size: 140%;
+}
+
+h4 {
+    font-size: 120%;
 }
 
 time {
@@ -132,9 +145,13 @@ li p {
     margin: 0;
 }
 
+p {
+    margin-bottom: 1.5rem;
+}
+
 pre {
     border-radius: 5px;
-    font-size:   0.85em;
+    font-size:   1.2rem;
     overflow:    auto;
 }
 

@@ -10,502 +10,518 @@ Our programming language feels pretty complete now - sure, it lacks a lot of bel
 One thing that bothers me, however, is that it's perfectly possible to write programs that don't make sense. For example:
 
 ```scala
+// 1 + true
 val nonsense = Add(
   Num(1),
   Bool(true)
 )
 ```
 
-And we won't know this doesn't make sense until later, when we attempt to run it:
+And we won't know this doesn't make sense until later, when we attempt to interpret it:
 
 ```scala
 interpret(nonsense, Env.empty)
 // java.lang.RuntimeException: Type error in add
 ```
 
-What we'll work on here, then, is a way of separating programs that don't make sense from those that do, and of doing so without having to run them. This is typically called type checking: we'll make sure that all the types line up, such as both operands of `Add` being numbers.
+This is arguably a perfectly valid way of checking whether a program makes sense. If running it breaks, then the program is flawed. It's a little... crude, however, and we should strive for something better.
 
-I want to stress something I just said in passing: _without having to run them_. The type checking we're doing is purely static, as we'll weed out programs that don't type check by merely "looking" at them.
+One category of errors we can reasonably expect to find automatically is called _type errors_: performing operations on values whose type don't support these operations - such as adding a boolean to a number. Looking for type errors is called _type checking_, and is quite a fun endeavour.
 
-You might wonder, _well, what about dynamic checking?_ If so, what do you think we've been doing so far, checking our types while interpreting programs, and failing on mismatch?
+Again, you might argue that we are already type checking our programs, and you'd be right: we were able to automatically assert that `nonsense` was ill-typed ("had type errors") by running it. This is called _dynamic checking_, and is considered perfectly sufficient by many languages. We are going to go one step further, however: we want to check whether a program is well-typed ("has no type error") by merely looking at it, without running it. This is called _static checking_, and is my preferred way of type checking.
 
-## Type checker
+Note that I'm expressing a taste here, and very carefully not stating that static checking is superior to dynamic checking. I just prefer one over the other.
 
-The only tools we have at our disposal to work with our AST are evaluators: functions that, given an AST, explore it and return some form of value.
+## Writing a type checker
 
-We'll need to write a new one, which we'll call `typeCheck`:
+The only tools we have at our disposal to work with our AST are evaluators: functions that, given an `Expr`, explore it and transform it into some other value. We'll need to write a new one, which we'll call `typeCheck`:
 
 ```scala
 def typeCheck(expr: Expr): ??? = ???
 ```
 
-The first thing we'll need to figure out is its return type.
+### Naive implementation
 
-The entire point of `typeCheck` is to find invalid programs without crashing, so we know we'll need to include the possibility of failure. This is traditionally done with `Either`, and we'll keep things simple by treating errors as error messages, which gives us part of our return type: `Either[String, ???]`.
+Since type checking decides whether an expression is well-typed, it would seem reasonable to have it return a `Boolean` - `false` if a type error was found, `true` otherwise. We could try something like this, limiting it for the moment to the terms of our language we need to describe `nonsense`:
 
-Now, what value would we need to return in case of a success? Well, think about how we'd handle the `Add` branch. We'll first need to type check the left- and right-hand side operands, and then make sure that they're both numbers, because we can only add numbers. This tells us our return value must somehow describe the type of a sub-expression, in order for us to confirm it matches our expectations.
+```scala
+def typeCheck(expr: Expr): Boolean =
+  expr match
+    case Num(value)    => true
+    case Bool(value)   => true
+    case Add(lhs, rhs) => typeCheck(lhs) && typeCheck(rhs)
+```
+And this is reasonable, right? `Num` and `Bool` are always well-typed, and `Add` is well-typed if both its operands are. Sensible enough.
 
-We'll need to declare a new type for that, which we'll cleverly call `Type`. It needs to allow us to differentiate between the 3 types we currently support, numbers, booleans and functions, so a sum type seems in order:
+Except, of course, that if we try and type check `nonsense`, we learn that it's well-typed:
+
+```scala
+typeCheck(expr)
+// val res7: Boolean = true
+```
+
+Our error is that while `Add` does need both its operands to be well-typed, that's not quite enough. We also want them both to be numbers.
+
+In order to check that, we'll need to know their types: we'll need `typeCheck` to return, not a `Boolean`, but a value that describes the type of the expression it analysed.
+
+### Types as values
+
+While working on our interpreter, we ended up having to write `Value` to describe the values an expression can be interpreted as. We'll need to do the same here and write `Type`, which describes the types of these values.
+
+We have 3 kinds of values, numbers, booleans and functions. We'll need a type for each:
 
 ```scala
 enum Type:
   case Num
   case Bool
-  case Function
+  case Fun
 ```
 
-You can probably see that this is a little flawed, however. The `Function` variant is clearly incomplete: functions go from some type to some other type, which we haven't at all encoded here.
-
-Here's a better implementation:
+There's a small flaw there, however. Functions go from one type to another, and we would like to be able to express `Type.Num -> Type.Bool`, for example. For that, we need `Fun` to keep track of its domain and codomain:
 
 ```scala
-enum Type:
-  case Num
-  case Bool
-  case Function(from: Type, to: Type)
+case Fun(from: Type, to: Type)
 ```
 
+### Finalising `typeCheck`'s signature
 
-We now know the return type of our type checker: `Either[String, Type]`:
+Of course, we don't want `typeCheck` to simply return a `Type`, because this would imply all expressions have a type. We must allow the possibility for failure - for ill-typed expressions - which we'll do by allowing `typeCheck` to return either a `Type` or a human-readable error message:
 
 ```scala
 def typeCheck(expr: Expr): Either[String, Type] = ???
 ```
 
-What's left to do is write its body, and run through every possible expression of our AST to decide whether they're type-correct. This might take a while... but it's not actually as hard as you might expect.
+All we need to do now is to write the body of `typeCheck`, and run through every possible expression of our AST to decide whether they're well-typed. This might take a while, but is not actually as hard as you might expect.
 
-## Type checking literal values
+## Typing literal values
 
 Literal values are very straightforward:
 - literal numbers have type `Type.Num`.
 - literal booleans have `Type.Bool`.
 
-We're going to need to talk a lot about _something having type something_, so let's come up with a more concise notation for this. We'll write _x has type X_ as follows:
+Remember how we used a formal notation to express our operational semantics? We'll do the same here to express _typing rules_. We don't need much for the moment, merely the ability to say that some expression has some type. This is how we'll write it:
 
-```
-|- x : X
-```
+\begin{prooftree}
+  \AXC{$expr : X$}
+\end{prooftree}
 
-To remove any ambiguity, no, I'm not coming up with brand new notation, but reusing chunks of an existing standard and introducing more of it as the need arises.
+Which we'll read as _expression $expr$ has type $X$_.
 
-For literal values, then, we have the following typing rules:
-- numbers: `|- Num n : Type.Num`
-- booleans: `|- Bool b : Type.Bool`
+Here's the typing rule for $\texttt{Num}$, then:
+\begin{prooftree}
+  \AXC{$\texttt{Num}\ value : \texttt{Type.Num}$}
+\end{prooftree}
 
+And, unsurprisingly, the one for $\texttt{Bool}$:
 
-Which we can translate easily enough into code:
+\begin{prooftree}
+  \AXC{$\texttt{Bool}\ value : \texttt{Type.Bool}$}
+\end{prooftree}
 
-```scala
-def typeCheck(expr: Expr) = expr match
-  case Num(value)  => Right(Type.Num)  // |- Num n : Type.Num
-  case Bool(value) => Right(Type.Bool) // |- Bool b : Type.Bool
-```
-
-## Type checking simple functions
-
-### `Add`
-
-Working our way through the easier things first, let's tackle simple functions such as `Add`. Here's how we might go about it:
-- _if_ `lhs` has type `Type.Num`.
-- _if_ `rhs` has type `Type.Num`.
-- _then_ `Add lhs rhs` has type `Type.Num`.
-
-
-That's quite a lot of text to write, so let's improve our typing rule syntax. You should see that there are two distinct parts to our set of rules:
-- preconditions: the left- and right-hand side operands must be numbers.
-- conclusions: `Add` is a number.
-
-These are typically called the _antecedent_ and the _consequent_, and we'll separate them with a horizontal line:
-
-```
-|- lhs : Type.Num    |- rhs : Type.Num
---------------------------------------
-|- Add lhs rhs : Type.Num
-```
-
-In order to translate these rules into code, we'll first need to be able to write `|- x : Type.Num`: confirm that some expression is of type `Type.Num`.
+These are simple enough that we can just stick them directly in our type checker:
 
 ```scala
-def expectNum(expr: Expr) =
-  typeCheck(expr).flatMap { observed =>
-    Either.cond(
-      test  = observed == Type.Num,
-      left  = s"Expected Num, found $observed",
-      right = observed
-    )
-  }
+def typeCheck(expr: Expr): Either[String, Type] =
+  expr match
+    case Num(value)    => Right(Type.Num)  // Num value : Type.Num
+    case Bool(value)   => Right(Type.Bool) // Bool value : Type.Bool
 ```
 
-It should be obvious we can make this function a lot more useful with very little work by making the expected type a parameter rather than hard-coding it to `Type.Num`:
+## Typing `Add`
+
+Working our way through the easier things first, let's now do $\texttt{Add}$.
+
+It has two components: $lhs$, the left-hand side operand, and $rhs$, the right-hand side one. This tells us we want to complete the following:
+
+\begin{prooftree}
+  \AXC{$\texttt{Add}\ lhs\ rhs :\ ???$}
+\end{prooftree}
+
+We know that for this to be well-typed, $lhs$ and $rhs$ must both be numbers. These are _antecedents_ (preconditions) of our typing rule, and we'll use the same syntax to express them as we did for operational semantics:
+
+\begin{prooftree}
+  \AXC{$lhs : \texttt{Type.Num}$}
+  \AXC{$rhs : \texttt{Type.Num}$}
+  \BIC{$\texttt{Add}\ lhs\ rhs :\ ???$}
+\end{prooftree}
+
+It's also pretty clear that adding two numbers yields a number:
+
+\begin{prooftree}
+  \AXC{$lhs : \texttt{Type.Num}$}
+  \AXC{$rhs : \texttt{Type.Num}$}
+  \BIC{$\texttt{Add}\ lhs\ rhs : \texttt{Type.Num}$}
+\end{prooftree}
+
+Let's take a step back before implementing this typing rule. Both antecedents tell us they expect some expression to have some type. This is clearly something we'll need to do quite a bit: $\texttt{Gt}$ will need to check that its operands are numbers, $\texttt{Cond}$ that its predicate is a boolean... so let's write a helper function for this common use case:
 
 ```scala
 def expect(expr: Expr, expected: Type) =
-  typeCheck(expr).flatMap { observed =>
-    Either.cond(
-      test  = observed == expected,
-      left  = s"Expected $expected, found $observed",
-      right = observed
-    )
-  }
+  typeCheck(expr).flatMap: observed =>
+    if observed == expected then Right(())
+    else Left(s"Expected $expected, found $observed")
 ```
 
-Armed with `expect`, we can now quite easily write our entire `Add` checking function:
+That's really the code version of $expr: expected$, and will be our basic tool for the rest of this article.
+
+Here's how we can now turn $\texttt{Add}$'s typing rule into code:
 
 ```scala
-def checkAdd(lhs: Expr, rhs: Expr) = for
-  _ <- expect(lhs, Type.Num) // |- lhs : Type.Num
-  _ <- expect(rhs, Type.Num) // |- rhs : Type.Num
-yield Type.Num               // |- Add lhs rhs : Type.Num
+def checkAdd(lhs: Expr, rhs: Expr) =
+  for _ <- expect(lhs, Type.Num) // lhs : Type.Num
+      _ <- expect(rhs, Type.Num) // rhs : Type.Num
+  yield Type.Num                 // Add lhs rhs : Type Num
 ```
 
-### `Gt`
+## Typing `Gt`
 
-It shouldn't be too hard to see that the typing rule for `Gt` are:
+It shouldn't be too hard to see that the typing rule for $\texttt{Gt}$ is:
 
-```
-|- lhs : Type.Num    |- rhs : Type.Num
---------------------------------------
-|- Gt lhs rhs : Type.Bool
-```
+\begin{prooftree}
+  \AXC{$lhs : \texttt{Type.Num}$}
+  \AXC{$rhs : \texttt{Type.Num}$}
+  \BIC{$\texttt{Gt}\ lhs\ rhs : \texttt{Type.Bool}$}
+\end{prooftree}
 
-That is, given two numeric operands, `Gt` is a boolean. Which easily translates into code:
+That is, given two numeric operands, $\texttt{Gt}$ is a boolean. The translation to code is almost immediate:
 
 ```scala
-def checkGt(lhs: Expr, rhs: Expr) = for
-  _ <- expect(lhs, Type.Num) // |- lhs : Type.Num
-  _ <- expect(rhs, Type.Num) // |- rhs : Type.Num
-yield Type.Bool              // |- Gt lhs rhs : Type.Bool
+def checkGt(lhs: Expr, rhs: Expr) =
+  for _ <- expect(lhs, Type.Num) // lhs : Type.Num
+      _ <- expect(rhs, Type.Num) // rhs : Type.Num
+  yield Type.Bool                // Gt lhs rhs : Type.Bool
 ```
 
-This allows us to complete some missing chunks of our type checker:
+## Typing conditionals
 
-```scala
-def typeCheck(expr: Expr) = expr match
-  case Num(value)    => Right(Type.Num)
-  case Bool(value)   => Right(Type.Bool)
-  case Add(lhs, rhs) => checkAdd(lhs, rhs)
-  case Gt(lhs, rhs)  => checkGt(lhs, rhs)
-```
+Conditionals have 3 parts:
+- $pred$, the predicate.
+- $onT$, the expression to evaluate if $pred$ is $true$.
+- $onF$, the expression to evaluate otherwise.
 
-## Type checking conditionals
+The _consequent_ (conclusion) of our typing rule for $\texttt{Cond}$ must then look like this:
 
-Conditionals have 3 components: predicate, then-branch and else-branch.
+\begin{prooftree}
+  \AXC{$\texttt{Cond}\ pred\ onT\ onF :\ ???$}
+\end{prooftree}
 
-Checking the predicate is simple enough: we need to make sure it has type `Type.Bool`. We have all the tools we need for that.
+First, we clearly want $pred$ to be a boolean. Surely you remember the fuss I made about not having truthiness in our language.
 
-The then-branch and else-branch are a little trickier though: we don't particularly care what type they have, as they can contain any expression. But if we put no constraint on this, what type would a conditional have?
+\begin{prooftree}
+  \AXC{$pred : \texttt{Type.Bool}$}
+  \UIC{$\texttt{Cond}\ pred\ onT\ onF :\ ???$}
+\end{prooftree}
 
-There are various options here - we could, for example, say that it has either the type of the then-branch or that of the else-branch. But that quickly becomes problematic: it means, in essence, that the type of a conditional depends on the runtime value of the predicate. And if you remember, we said the point of our type checker was to weed out bad programs _without having to run them_. These two seem contradictory.
 
-The easy way out of this is to declare that the then-branch and else-branch must have the same type, which ends up being the type of our conditional. Here, for example:
+$onT$ and $onF$ are a little trickier: we don't particularly care about their types, so long as they're valid. They can contain any expression, and therefore can have any type.
+
+But what type do you think the following expression has (assuming `x` correctly references a boolean value)?
 ```ocaml
-if true then 1 else 2
+if x then 1
+     else false
 ```
 
-Since both branches are numbers, the type of this expression will also be number.
+There are various options here - we could, for example, declare that $\texttt{Cond}$ has either the type of $onT$ or that of $onF$. But that quickly becomes problematic: it would mean, in essence, that the type of $\texttt{Cond}$ depends on the runtime value of $pred$. And if you remember, we said the point of our type checker was to weed out bad programs _without having to run them_. The two seem contradictory.
 
-Putting all this together, it means that type checking a conditional is done as follows:
- - _if_ `pred` has type `Type.Bool`.
- - _if_ `t` has type `X`.
- - _if_ `e` has the same type `X`.
- - _then_ `Cond pred t e` has type `X`.
+The easy way out of this is to declare that $onT$ and $onF$ can have any type, but it must be the same:
 
-Which can be expressed using our typing rule syntax as:
+\begin{prooftree}
+  \AXC{$pred : \texttt{Type.Bool}$}
+  \AXC{$onT : X$}
+  \AXC{$onF : X$}
+  \TIC{$\texttt{Cond}\ pred\ onT\ onF :\ ???$}
+\end{prooftree}
 
-```
-|- pred : Type.Bool    |- t : X    |- e : X
--------------------------------------------
-|- Cond pred t e : X
-```
+Note the type of $onT$ and $onF$: it's not a concrete type, but a type variable. They have _some type_. We just don't care which, so long as it's the same.
 
-This can be turned rather directly into code:
+And since $\texttt{Cond}$ is interpreted as either $onT$ or $onF$, its type must clearly be the same as theirs:
+
+\begin{prooftree}
+  \AXC{$pred : \texttt{Type.Bool}$}
+  \AXC{$onT : X$}
+  \AXC{$onF : X$}
+  \TIC{$\texttt{Cond}\ pred\ onT\ onF : X$}
+\end{prooftree}
+
+
+As usual, once the typing rule is clear, the concrete implementation becomes almost trivial:
 
 ```scala
-def checkCond(pred: Expr, t: Expr, e: Expr) =
-  for
-    _      <- expect(pred, Type.Bool) // |- pred : Type.Bool
-    x      <- typeCheck(t)            // |- t : X
-    _      <- expect(e, x)            // |- e : X
-  yield x                             // |- Cond pred t e : X
+def checkCond(pred: Expr, onT: Expr, onF: Expr) =
+  for _ <- expect(pred, Type.Bool) // pred : Type.Bool
+      x <- typeCheck(onT)          // onT : X
+      _ <- expect(onF, x)          // onF : X
+  yield x                          // Cond pred onT onF : X
 ```
 
-This gives us an improved type checker:
+## Typing bindings
+
+### Environment
+
+Recall that we had to introduce the notion of an environment in which we kept track of what name a value is bound to when working on `let`'s operational semantics. While values have little relevance to what we're doing right now (they happen at runtime, which we're explicitly ignoring), their _type_ is crucially important. We'll need a type environment in which to keep track of what type a name references.
+
+This environment is conceptually very similar to our operation semantics one, so we'll use a similar notation:
+\begin{prooftree}
+  \AXC{$\Gamma \vdash expr : X$}
+\end{prooftree}
+
+This reads _expression $expr$ has type $X$ in environment $\Gamma$ (gamma)_. We're using $\Gamma$ as our default environment name to differentiate it from operational semantics' $e$, but more importantly, because that's what most of the literature uses and we want to follow conventions.
+
+Just like all expressions needed a (potentially empty) environment to be interpreted in, they will need a (potentially empty) type environment in which to be type checked in.
+
+The implementation of this environment is very similar to that of `Env`, except that we're keeping track of `Type` rather than `Value`:
 
 ```scala
-def typeCheck(expr: Expr) = expr match
-  case Num(value)       => Right(Type.Num)
-  case Bool(value)      => Right(Type.Bool)
-  case Add(lhs, rhs)    => checkAdd(lhs, rhs)
-  case Gt(lhs, rhs)     => checkGt(lhs, rhs)
-  case Cond(pred, t, e) => checkCond(pred, t, e)
-```
-
-## Local bindings
-
-### `Let`
-
-We'll tackle `Let` next, as it introduces a new wrinkle in our type checking.
-
-`Let` has three components: a `name`, a `value` to bind to that name, and a `body` in which that binding is active. So, intuitively, what we want to say is something like:
-- _if_ `value` has type `X`.
-- _if_ `body` has type `Y` in an environment in which variable `name` has type `X`.
-- _then_ `Let` has type `Y`.
-
-There's one thing we're clearly missing in our syntax to express this, however: the notion of environment. We'll write this `Γ` (gamma), and add conditions on an environment as follows:
-```
-Γ[foo <- X]
-```
-This describes an environment in which name `foo` has type `X`.
-
-This new bit of syntax allows us to express the typing rule for `let` expressions:
-```
-Γ |- value : X    Γ[name <- X] |- body : Y
-------------------------------------------
-Γ |- Let name value body : Y
-```
-
-Note how the `Γ` always goes in front of the `|-` operator, which we can now learn to pronounce. `Γ |- e : X` is read _enviroment `Γ` proves that expression `e` has type `X`_.
-
-We now have a clear typing rule for `let` expressions, but translating them to code is going to be a little work: we do not at all have this notion of `Γ`! But we have done something similar while interpreting our AST, haven't we? We wrote an environment in which we kept track of which name was bound to which value. We can do the same thing here, but instead of values, we'll use types.
-
-The code is essentially the same as for `Env`, except that we don't need to expose a `set` method (and thus don't need the underlying `Map` to be mutable):
-
-```scala
-case class TypeEnv(map: immutable.Map[String, Type]) {
-  def bind(name: String, tpe: Type) = TypeEnv(map + (name -> tpe))
-
-  def lookup(name: String) = map.get(name) match
-    case Some(tpe) => Right(tpe)
-    case None      => Left(s"Type binding $name not found")
-}
+case class TypeEnv(env: List[TypeEnv.Binding])
 
 object TypeEnv:
-  val empty = TypeEnv(immutable.Map.empty)
+  case class Binding(name: String, tpe: Type)
+
+  val empty = TypeEnv(List.empty)
 ```
 
-Now that we have a type environment, of course, we need to update `typeCheck` to take it as a parameter. This is not particularly instructive code and will not be writing it here - just pretend that all the functions we wrote so far took an `env: TypeEnv` parameter and passed it where needed.
+### Binding introduction
 
-Having this environment allows us to turn our `let` expression typing rules into code:
+Recall that $\texttt{Let}$ has three components:
+- $name$, the name we'll bind a value to.
+- $value$, the value to bind.
+- $body$, the expression in which the binding is in scope.
+
+This, then, is the typing rule we want to complete:
+
+\begin{prooftree}
+  \AXC{$\Gamma \vdash \texttt{Let}\ name\ value\ body :\ ???$}
+\end{prooftree}
+
+The semantics of $\texttt{Let}$ are that $body$ will be interpreted in an environment in which $value$ is bound to $name$. From a type checking perspective, this means that $name$ will have the same type has $value$, so we'll need to check what that is:
+
+\begin{prooftree}
+  \AXC{$\Gamma \vdash value: X$}
+  \UIC{$\Gamma \vdash \texttt{Let}\ name\ value\ body :\ ???$}
+\end{prooftree}
+
+Note how we're again using a type variable. We do not care what concrete type $value$ has, so long as it's a valid one.
+
+The next step is to type check $body$. Recall that our operational semantics had us interpret $body$ in the same environment as $\texttt{Let}$, updated with a binding mapping $name$ to $value$. This tells us that $body$ must be type checked in the same environment as $\texttt{Let}$, updated so that $name$ has type $X$. The notation we used for that in operational semantics was convenient, so we'll use the same: $\Gamma[name \leftarrow X]$.
+
+\begin{prooftree}
+  \AXC{$\Gamma \vdash value: X$}
+  \AXC{$\Gamma[name \leftarrow X] \vdash body : Y$}
+  \BIC{$\Gamma \vdash \texttt{Let}\ name\ value\ body :\ ???$}
+\end{prooftree}
+
+$body$ has, again, _some_ type. We're not placing any constraint on it, but merely need a name to reference it. Note also that just because we have two distinct type variables, $X$ and $Y$, it does not mean they cannot refer to the same concrete type. We're using distinct names to allow them to be different, not force them to be.
+
+And since $\texttt{Let}$ is interpreted as the result of interpreting $body$, then it seems natural that it also has type $Y$:
+
+\begin{prooftree}
+  \AXC{$\Gamma \vdash value: X$}
+  \AXC{$\Gamma[name \leftarrow X] \vdash body : Y$}
+  \BIC{$\Gamma \vdash \texttt{Let}\ name\ value\ body : Y$}
+\end{prooftree}
+
+Before we can turn this into code, we need to work on `TypeEnv` a little: we need to write its version of `bind`. This is essentially the same thing as for `Env`:
+```scala
+def bind(name: String, tpe: Type) =
+  TypeEnv(TypeEnv.Binding(name, tpe) :: env)
+```
+
+And we can now turn $\texttt{Let}$'s typing rule into code:
 
 ```scala
-def checkLet(name: String, value: Expr, body: Expr, env: TypeEnv) =
-  for
-    x <- typeCheck(value, env)              // Γ |- value : X
-    y <- typeCheck(body, env.bind(name, x)) // Γ[name <- X] |- body : Y
+def checkLet(name: String, value: Expr, body: Expr, Γ: TypeEnv) =
+  for x <- typeCheck(value, Γ)              // Γ |- value : X
+      y <- typeCheck(body, Γ.bind(name, x)) // Γ[name <- X] |- body : Y
   yield y                                   // Γ |- Let name value body : Y
 ```
 
-### `Var`
-And, of course, if we have `Let`, we need to do its elimination form, `Var`. The typing rule is as simple as it can be: we're merely saying that the type of a variable is whatever is stored in the environment.
 
-Of course, we don't have syntax for this _whatever is stored in the environment_, so let's introduce some. We'll simply treat `Γ` as a function from name to type, and write:
+### Binding elimination
 
-```
-Γ |- Var name : Γ(name)
-```
+$\texttt{Ref}$'s typing rule is as straightforward as its operational semantics: the type of a reference is whatever the environment says it is. We merely need syntax for this, and again, there's no particular reason not to reuse the one we had for operation semantics: $\Gamma(name)$ is the type of the value bound to $name$ in $\Gamma$.
 
-That has an immediate translation to code:
+$\texttt{Ref}$'s typing rule is simply:
 
+\begin{prooftree}
+  \AXC{$\Gamma \vdash \texttt{Ref}\ name : \Gamma(name)$}
+\end{prooftree}
+
+We'll of course need to update `TypeEnv` to support reference binding lookup:
 ```scala
-def checkVar(name: String, env: TypeEnv) =
-  env.lookup(name)  // Γ |- Var name : Γ(name)
+def lookup(name: String) =
+  env.find(_.name == name)
+     .map(_.tpe)
+     .toRight(s"Type binding $name not found")
 ```
 
-We can now update `typeCheck` with our two new branches:
+It is, again, essentially the same thing as `Env`, except we're now treating failures as a `Left` rather than an exception.
 
+
+$\texttt{Ref}$'s typing rule can now easily be coded:
 ```scala
-def typeCheck(expr: Expr, env: TypeEnv): Either[String, Type] = expr match
-  case Num(value)             => Right(Type.Num)
-  case Bool(value)            => Right(Type.Bool)
-  case Add(lhs, rhs)          => checkAdd(lhs, rhs, env)
-  case Gt(lhs, rhs)           => checkGt(lhs, rhs, env)
-  case Cond(pred, t, e)       => checkCond(pred, t, e, env)
-  case Var(name)              => checkVar(name, env)
-  case Let(name, value, body) => checkLet(name, value, body, env)
+def checkRef(name: String, Γ: TypeEnv) =
+  Γ.lookup(name) // Γ |- Ref name : Γ(name)
 ```
 
-We're almost done, all that's left is functions.
+## Typing functions
+### Function introduction
 
-## Non-recursive functions
+Recall that $\texttt{Fun}$ has two components:
+- $param$, the name to which we'll bind the function's argument.
+- $body$, the expression to interpret when the function is applied.
 
-### `Function`
+This gives us the general shape of the consequent we want to write:
 
-Function declarations have two components: the `name` of their parameter, and their `body`. The typing rules probably feel intuitive:
-- _if_ `body` has type `Y` in an environment where variable `name` has type `X`.
-- _then_ `Function name body` has type `X -> Y` (the function from `X` to `Y`).
+\begin{prooftree}
+  \AXC{$\Gamma \vdash \texttt{Fun}\ param\ body :\ ???$}
+\end{prooftree}
 
-This is easily translated into our syntax:
+The semantics of $\texttt{Fun}$ are that it produces a function which, given some value, binds it to $param$ and interprets $body$ in that new environment. The type of $\texttt{Fun}$ must then depend on that of $body$, which we must type check in an environment where $param$ has... some type.
 
-```
-Γ[name <- X] |- body : Y
---------------------------------
-Γ |- Function name body : X -> Y
-```
+What type, though? When we were checking types at runtime, this wasn't a problem, we could simply look at the value bound to $param$ to decide. But we are checking this statically now, so we do not have a value to look at!
 
-The problem, however, comes when we try to write this in code. Where do we get `X` from? How do we bind `name` to a type we have no knowledge of?
-
-This is where our desire to check programs for validity will start to have an impact on our language: since we don't know that type, we must ask program authors to provide it for us by annotating function parameters with types.
-
-A potential syntax for this could be, for example:
+This is where static typing must start to have an impact on the syntax of our language. We cannot guess the type of $param$ (aside from running some complex type inference algorithms which we might tackle later but are a little beyond us just now), so we must be provided with that information. We must update our language's syntax to allow us to ascribe a type to $param$:
 
 ```ocaml
 (x : Int) -> x + 1
 ```
 
-This forces us to rewrite the `Function` variant of `Expr` to add this parameter (I'll not rewrite all of `Expr`, it's starting to get quite big):
+Of course, since a function now carries the information of its parameter's type with it, we must update $\texttt{Fun}$:
+
+\begin{prooftree}
+  \AXC{$\Gamma \vdash \texttt{Fun}\ (param : X)\ body :\ ???$}
+\end{prooftree}
+
+This fully unblocks us, because we now know which type must be bound to $param$, which tells us which environment $body$ should be type checked in:
+
+\begin{prooftree}
+  \AXC{$\Gamma[param \leftarrow X] \vdash body : Y$}
+  \UIC{$\Gamma \vdash \texttt{Fun}\ (param : X)\ body : ???$}
+\end{prooftree}
+
+$\texttt{Fun}$, then, produces a function which takes an $X$ and returns a $Y$. $\texttt{Fun}$ has type $X \to Y$.
+
+\begin{prooftree}
+  \AXC{$\Gamma[param \leftarrow X] \vdash body : Y$}
+  \UIC{$\Gamma \vdash \texttt{Fun}\ (param : X)\ body : X \to Y$}
+\end{prooftree}
+
+In order to implement this typing rule, we must first update `Expr` so that `Fun` holds its parameter type:
 
 ```scala
-  case Function(param: String, paramType: Type, body: Expr)
+case Fun(param: String, pType: Type, body: Expr)
 ```
 
-With this new information, we need to rewrite our typing rules slightly:
-
-```
-Γ[name <- P] |- body : X
-----------------------------------
-Γ |- Function name P body : P -> X
-```
-
-
-With this new information, type checking `Function` becomes relative straightforward:
+After which we can proceed with translating our typing rule into code, which is not very hard at all:
 
 ```scala
-def checkFunction(name: String, p: Type, body: Expr, env: TypeEnv) =
-  typeCheck(body, env.bind(name, p)).map { x => // Γ[name <- P] |- body : X
-    Type.Function(p, x)                         // Γ |- Function name body : P -> X
-  }
+def checkFun(param: String, x: Type, body: Expr, Γ: TypeEnv) =
+  for y <- typeCheck(body, Γ.bind(param, x)) // Γ[param <- X] |- body : Y
+  yield x -> y                               // Γ |- Fun (param : X) body : X -> Y
 ```
 
-### `Apply`
+### Function elimination
 
-We must now do the corresponding elimination form: `Apply`. `Apply` has two components, the function to apply and its argument, which type check as follows:
-- _if_ `function` has type `X -> Y` for some types `X` and `Y`.
-- _if_ `arg` has type `X`.
-- _then_ `Apply function arg` has type `Y`.
+Recall that $\texttt{Apply}$ is composed of:
+- $fun$, the function to apply.
+- $arg$, the value to apply it on.
 
-This is easily translated in our syntax:
+Here, then, is the skeleton of our typing rule:
 
-```
-Γ |- function : X -> Y    Γ |- arg : X
---------------------------------------
-Γ |- Apply function arg : Y
-```
+\begin{prooftree}
+  \AXC{$\Gamma \vdash \texttt{Apply}\ fun\ arg :\ ???$}
+\end{prooftree}
 
-This appears relatively straightforward to turn into code, except for one detail: we don't really have a way to check whether an expression type checks to a function - at least not if we don't already know it's input and output types. `expect` expects an exact type, which we don't have here.
 
-This is easily remedied:
+We know we want $fun$ to be a function, so our first step will be confirm that. We don't have any constraint on what kind of function $fun$ is, though. It can be from any type to any type, so long as it's a function.
+\begin{prooftree}
+  \AXC{$\Gamma \vdash fun : X \to Y$}
+  \UIC{$\Gamma \vdash \texttt{Apply}\ fun\ arg :\ ???$}
+\end{prooftree}
+
+
+We will, of course, also want to know the type of $arg$, but this must be constrained. $fun$ is a function from $X$, which we've seen is the type bound to the function's parameter when type checking its body. This tells us that $arg$ must be of that type for things to stay sane:
+
+\begin{prooftree}
+  \AXC{$\Gamma \vdash fun : X \to Y$}
+  \AXC{$\Gamma \vdash arg : X$}
+  \BIC{$\Gamma \vdash \texttt{Apply}\ fun\ arg :\ ???$}
+\end{prooftree}
+
+Finally, the semantics of $\texttt{Apply}$ are that it's ultimately interpreted to $body$, which means it must have the same type:
+
+\begin{prooftree}
+  \AXC{$\Gamma \vdash fun : X \to Y$}
+  \AXC{$\Gamma \vdash arg : X$}
+  \BIC{$\Gamma \vdash \texttt{Apply}\ fun\ arg : Y$}
+\end{prooftree}
+
+And this makes sense, doesn't it: Applying a function from $X$ to $Y$ to an $X$ yields a $Y$, this is exactly what a function is!
+
+We can now do the straightforward work of translating our typing rule into code:
 
 ```scala
-def expectFunction(expr: Expr, env: TypeEnv): Either[String, Type.Function] =
-  typeCheck(expr, env).flatMap {
-    case f: Type.Function => Right(f)
-    case other            => Left(s"Expected function, found $other")
-  }
+def checkApply(fun: Expr, arg: Expr, Γ: TypeEnv) =
+  typeCheck(fun, Γ).flatMap:
+    case x -> y =>      // Γ |- fun : X -> Y
+      expect(arg, x, Γ) // Γ |- arg : X
+        .map(_ => y)    // Γ |- Apply fun arg : Y
+
+    case other  => Left(s"Expected function, found $other")
 ```
 
-`expectFunction` fails if the specified expression doesn't evaluate to a function, and returns that function otherwise.
+## Typing recursion
 
-This allows us to turn our typing rules for `Apply` in some relatively clear code:
+$\texttt{LetRec}$ is extremely similar to $\texttt{Let}$, the only difference between the two being the environment in which $value$ is interpreted. We can thus start from $\texttt{Let}$'s typing rule, leaving that environment blank:
+
+\begin{prooftree}
+  \AXC{$??? \vdash value: X$}
+  \AXC{$\Gamma[name \leftarrow X] \vdash body : Y$}
+  \BIC{$\Gamma \vdash \texttt{LetRec}\ name\ value\ body : Y$}
+\end{prooftree}
+
+Recall that $\texttt{LetRec}$ must interpret $value$ in an environment in which it's already bound to $name$. We can naively write the same thing for types, $name$ must have type $X$ when type checking $value$:
+
+\begin{prooftree}
+  \AXC{$\Gamma[name \leftarrow X] \vdash value: X$}
+  \AXC{$\Gamma[name \leftarrow X] \vdash body : Y$}
+  \BIC{$\Gamma \vdash \texttt{LetRec}\ name\ value\ body : Y$}
+\end{prooftree}
+
+Do you see the problem with this? We must know $X$ in order to know $X$. This was a _massive_ issue when interpreting $\texttt{LetRec}$, but here, we can sidestep it altogether and do what we did with $\texttt{Fun}$: decide that if we must know $X$, then someone had better give it to us. That is, update the syntax of our language so that $\texttt{LetRec}$ is aware of the type of $value$:
+
+\begin{prooftree}
+  \AXC{$\Gamma[name \leftarrow X] \vdash value : X$}
+  \AXC{$\Gamma[name \leftarrow X] \vdash body : Y$}
+  \BIC{$\Gamma \vdash \texttt{LetRec}\ name\ (value : X)\ body : Y$}
+\end{prooftree}
+
+This of courses forces us to update `Expr` so that `LetRec` stores that information:
 
 ```scala
-def checkApply(function: Expr, arg: Expr, env: TypeEnv) =
-  expectFunction(function, env).flatMap {
-    case Type.Function(x, y) => // Γ |- function : X -> Y
-      expect(arg, x, env)       // Γ |- arg : X
-        .map(_ => y)            // Γ |- Apply function arg : Y
-  }
+case LetRec(name: String, value: Expr, vType: Type, body: Expr)
 ```
 
-And to write an _almost_ complete type checker:
+As usual, now that we've reasoned through this abstractly, the implementation is almost a disappointment:
 
 ```scala
-def typeCheck(expr: Expr, env: TypeEnv): Either[String, Type] = expr match
-  case Num(value)                       => Right(Type.Num)
-  case Bool(value)                      => Right(Type.Bool)
-  case Add(lhs, rhs)                    => checkAdd(lhs, rhs, env)
-  case Gt(lhs, rhs)                     => checkGt(lhs, rhs, env)
-  case Cond(pred, t, e)                 => checkCond(pred, t, e, env)
-  case Var(name)                        => checkVar(name, env)
-  case Let(name, value, body)           => checkLet(name, value, body, env)
-  case Function(param, paramType, body) => checkFunction(param, paramType, body, env)
-  case Apply(function, arg)             => checkApply(function, arg, env)
-```
+def checkLetRec(name: String, value: Expr, x: Type,
+                body: Expr, Γ: TypeEnv) =
+  val Γʹ = Γ.bind(name, x)
 
-## Recursive functions
-
-Our final task is to type check `let rec` expressions. We have _almost_ all the tools we need to do so, and it's in fact a lot easier than interpreting them, but there is one problem.
-
-A `let rec` expression is composed of the same elements as a `let` one: a `name`, a `value` to bind to that name, and a `body` in which the binding is legal.
-
-What we want to express is the following:
-- _if_ `value` has type `X` in an environment where variable `name` has type `X`.
-- _if_ `body` has type `Y` in the same environment.
-- _then_ `LetRec name value body` has type `Y`.
-
-Or, more concisely:
-
-```
-Γ[name <- X] |- value : X    Γ[name <- X] |- body : Y
------------------------------------------------------
-Γ |- LetRec name (value : X) body : Y
-```
-
-But we're encountering the same problem as for functions: where does that `X` come from? We need to update our environment to say `name` has type `X`, but we don't have an `X` to use.
-Additionally, we know that we want the `value` to be a function type (because `let rec` is only used to declare recursive functions in our language).
-
-We'll need to apply the same solution as for functions: update the `LetRec` variant to include `value`'s type. This gives us the following declaration:
-
-```scala
-  case LetRec(name: String, value: Expr, valueType: Type.Function, body: Expr)
-```
-
-Note how `valueType` is not any type, but a `Type.Function`.
-
-Armed with that new `LetRec`, we can express our typing rules:
-
-```
-Γ[name <- (I -> O)] |- value : I -> O    Γ[name <- (I -> O)] |- body : Y
-------------------------------------------------------------------------
-Γ |- LetRec name (value : I -> O) body : Y
-```
-
-And this is surprisingly easy to turn into code, with the only tricky part being to remember that everything must happen in an environment where `name` is bound to `valueType`:
-
-```scala
-def checkLetRec(name: String, value: Expr, valueType: Type.Function,
-                body: Expr, env: TypeEnv) =
-  val newEnv = env.bind(name, valueType)
-
-  for
-    _ <- expect(value, valueType, newEnv) // Γ[name <- (I -> O)] |- value : I -> O
-    y <- typeCheck(body, newEnv)          // Γ[name <- (I -> O)] |- body : Y
-  yield y                                 // Γ |- LetRec name (value : I -> O) body : Y
-```
-
-And after all that work, we can finally write our complete type checker:
-
-```scala
-def typeCheck(expr: Expr, env: TypeEnv): Either[String, Type] = expr match
-  case Num(value)                       => Right(Type.Num)
-  case Bool(value)                      => Right(Type.Bool)
-  case Add(lhs, rhs)                    => checkAdd(lhs, rhs, env)
-  case Gt(lhs, rhs)                     => checkGt(lhs, rhs, env)
-  case Cond(pred, t, e)                 => checkCond(pred, t, e, env)
-  case Var(name)                        => checkVar(name, env)
-  case Let(name, value, body)           => checkLet(name, value, body, env)
-  case LetRec(name, value, tpe, body)   => checkLetRec(name, value, tpe, body, env)
-  case Function(param, paramType, body) => checkFunction(param, paramType, body, env)
-  case Apply(function, arg)             => checkApply(function, arg, env)
+  for _ <- expect(value, x, Γʹ) // Γ[name <- X] |- value : X
+      y <- typeCheck(body, Γʹ)  // Γ[name <- X] |- body : Y
+  yield y                       // Γ |- LetRec name (value : X) body : Y
 ```
 
 ## Testing our implementation
 
-In order to test that everything we just did at least appears to behave as expected, let's take our old example of the recursive `sum` function and fix it to include the new type parameters for `LetRec` and `Function`.
+In order to test that everything we just did at least appears to behave as expected, let's take our old example of the recursive `sum` function and fix it to include type ascriptions for function introduction and recursion.
 
 The code would look something like:
 
 ```ocaml
-let rec sum = (lower: Num) -> (upper: Num) ->
+let rec (sum: Num -> Num -> Num) = (lower: Num) -> (upper: Num) ->
     if lower > upper then 0
     else lower + (sum (lower + 1) upper)
   in sum 1 10
@@ -517,26 +533,22 @@ Which translates to the following AST (you don't really have to read it all, it'
 ```scala
 val expr = LetRec(
   name  = "sum",
-  valueType = Type.Function(Type.Num, Type.Function(Type.Num, Type.Num)),
-  value = Function(
-    param     = "lower",
-    paramType = Type.Num,
-    body      = Function(
-      param     = "upper",
-      paramType = Type.Num,
-      body      = Cond(
-        pred       = Gt(Var("lower"), Var("upper")),
-        thenBranch = Num(0),
-        elseBranch = Add(
-          lhs = Var("lower"),
+  vType = Type.Num -> Type.Num -> Type.Num,
+  value = Fun(
+    param = "lower",
+    pType = Type.Num,
+    body  = Fun(
+      param = "upper",
+      pType = Type.Num,
+      body  = Cond(
+        pred = Gt(Ref("lower"), Ref("upper")),
+        onT  = Num(0),
+        onF  = Add(
+          lhs = Ref("lower"),
           rhs = Apply(
-            function = Apply(Var("sum"), Add(Var("lower"), Num(1))),
-            arg      = Var("upper"))
-        )
-      )
-    )
-  ),
-  body = Apply(Apply(Var("sum"), Num(1)), Num(10))
+            fun = Apply(Ref("sum"), Add(Ref("lower"), Num(1))),
+            arg = Ref("upper")))))),
+  body = Apply(Apply(Ref("sum"), Num(1)), Num(10))
 )
 ```
 
@@ -549,8 +561,10 @@ typeCheck(expr, TypeEnv.empty)
 
 ## Where to go from here?
 
-We've gained a reasonable understanding of how type checking worked, and can now check whether a program is not type correct.
+We've gained a reasonable understanding of how type checking works, and can now identify well-typed programs.
 
-This feels a little disappointing, however: it's still perfectly possible to represent invalid programs, we merely have given ourselves a tool to check that. It would be much better if we could somehow represent programs in a way that made illegal expressions impossible - in which adding a number and a boolean was not merely an error, but just not a notion that could exist.
+This feels a little disappointing, however: it's still perfectly possible to represent ill-typed programs. We can still write `nonsense`, it's just that we now have a validation function to tell us we shouldn't.
 
-We'll tackle this and typed ASTs next. This is likely to keep us busy for a little while, as this is far harder than anything we've done so far. But it's definitely worth it and quite a bit of fun!
+It would be much better if we could somehow represent programs in a way that made illegal expressions impossible - in which adding a number and a boolean did not merely cause `typeCheck` to grumble, but was a notion that simply could not exist.
+
+We'll tackle this and typed ASTs next. This is likely to keep us busy for a little while, as it's rather harder than anything we've done so far. But it's definitely worth it and quite a bit of fun!

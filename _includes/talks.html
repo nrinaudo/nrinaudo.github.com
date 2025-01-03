@@ -1,4 +1,4 @@
-{% assign talks = site.talks | sort: 'date' | reverse %}
+{% assign talks = site.talks | where_exp: "post", "post.enabled != false" | sort: 'date' | reverse %}
 
 <ul>
 {% for talk in talks %}
