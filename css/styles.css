@@ -1,4 +1,5 @@
 @import './fira_code/fira_code.css';
+@import './libre_franklin/libre_franklin.css';
 @import './inria_serif/inria_serif.css';
 @import './fontawesome/font-awesome.css';
 
@@ -98,6 +99,10 @@ hr {
     height:           1px;
     color:            #111111;
     background-color: #111111;
+}
+
+h1, h2, h3, h4 {
+    font-family: "Libre Franklin"
 }
 
 h1, h2 {
