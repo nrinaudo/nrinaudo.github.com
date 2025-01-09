@@ -196,7 +196,7 @@ def checkGt(lhs: Expr, rhs: Expr) =
 
 Conditionals have 3 parts:
 - $pred$, the predicate.
-- $onT$, the expression to evaluate if $pred$ is $true$.
+- $onT$, the expression to evaluate if $pred$ is $\texttt{true}$.
 - $onF$, the expression to evaluate otherwise.
 
 The _consequent_ (conclusion) of our typing rule for $\texttt{Cond}$ must then look like this:

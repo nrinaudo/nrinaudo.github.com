@@ -33,25 +33,25 @@ Let's start by writing the shape of our conclusion:
 
 $\texttt{Cond}$ needs 3 things:
 - a predicate, $pred$.
-- the code to execute when $pred$ is $true$, $onT$ (for _on-true_).
-- the code to execute when $pred$ is $false$, $onF$ (for _on-false_).
+- the code to execute when $pred$ is $\texttt{true}$, $onT$ (for _on-true_).
+- the code to execute when $pred$ is $\texttt{false}$, $onF$ (for _on-false_).
 
 Our semantics are quite clear: we need to interpret either $onT$ or $onF$ depending on what $pred$ evaluates to. But that's not really something our formal syntax seems to support, is it?
 
-The trick is to realise we can have multiple rules for a given term of the language. Here, for example, we will have one rule for the $true$ scenario, and another for the $false$ scenario.
+The trick is to realise we can have multiple rules for a given term of the language. Here, for example, we will have one rule for the $\texttt{true}$ scenario, and another for the $\texttt{false}$ scenario.
 
-Let's start with the $true$ case. We know exactly what to do: if $pred$ evaluates to $true$, then we must interpret $onT$, and $\texttt{Cond}$ will evaluate to whatever that returns. Or, in a more terse, formal syntax:
+Let's start with the $\texttt{true}$ case. We know exactly what to do: if $pred$ evaluates to $\texttt{true}$, then we must interpret $onT$, and $\texttt{Cond}$ will evaluate to whatever that returns. Or, in a more terse, formal syntax:
 
 \begin{prooftree}
-  \AXC{$pred \Downarrow true$}
+  \AXC{$pred \Downarrow \texttt{true}$}
   \AXC{$onT \Downarrow v$}
   \BIC{$\texttt{Cond}\ pred\ onT\ onF \Downarrow v$}
 \end{prooftree}
 
-The $false$ scenario is essentially the same, except we work with $onF$ instead:
+The $\texttt{false}$ scenario is essentially the same, except we work with $onF$ instead:
 
 \begin{prooftree}
-  \AXC{$pred \Downarrow false$}
+  \AXC{$pred \Downarrow \texttt{false}$}
   \AXC{$onF \Downarrow v$}
   \BIC{$\texttt{Cond}\ pred\ onT\ onF \Downarrow v$}
 \end{prooftree}
@@ -89,7 +89,7 @@ def cond(pred: Expr, onT: Expr, onF: Expr) =
 ```
 
 Except... this cannot work, can it? There are three ways you can see why not:
-- looking at the operational semantics, you can realise that we're manipulating $true$ and $false$, which are not actually terms of our language.
+- looking at the operational semantics, you can realise that we're manipulating $\texttt{true}$ and $\texttt{false}$, which are not actually terms of our language.
 - in `cond`, you can realise that `interpret` evaluates to `Int`, and that Scala, being a sane language, cannot use an `Int` where a `Boolean` is expected.
 - attempt to compile it and see how mad the type checker gets...
 
@@ -198,13 +198,13 @@ Note how we're treating combination of operands that aren't 2 numbers as a type 
 The problem with conditionals is how they work with raw booleans, when they should really expect the predicate to evaluate to a $\texttt{Value.Bool}$.
 
 \begin{prooftree}
-  \AXC{$pred \Downarrow \texttt{Value.Bool}\ true$}
+  \AXC{$pred \Downarrow \texttt{Value.Bool}\ \texttt{true}$}
   \AXC{$onT \Downarrow v$}
   \BIC{$\texttt{Cond}\ pred\ onT\ onF \Downarrow v$}
 \end{prooftree}
 
 \begin{prooftree}
-  \AXC{$pred \Downarrow \texttt{Value.Bool}\ false$}
+  \AXC{$pred \Downarrow \texttt{Value.Bool}\ \texttt{false}$}
   \AXC{$onF \Downarrow v$}
   \BIC{$\texttt{Cond}\ pred\ onT\ onF \Downarrow v$}
 \end{prooftree}
