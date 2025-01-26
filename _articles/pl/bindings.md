@@ -261,7 +261,7 @@ Looking up the value bound to a name is merely looking at the earliest binding f
 Those operations are relatively trivial, so we'll not spend too much time explaining them. Here's the full code for the environment:
 
 ```scala
-case class Env(env: List[Env.Binding]):
+class Env(env: List[Env.Binding]):
   // e(name)
   def lookup(name: String) =
     env.find(_.name == name)

@@ -277,7 +277,7 @@ This gives us the final operational semantic:
 
 ## Implementing recursion
 
-## Updating the AST
+### Updating the AST
 
 We've only really declared a new primitive here: `let rec`, used to introduce recursive functions. These are, once introduced, regular functions, applied exactly like all others, so we don't need a special elimination form for them.
 
@@ -315,7 +315,7 @@ val expr = LetRec(
 
 "All" we have to do now is interpret it. Famous last words.
 
-## Making the environment mutable
+### Making the environment mutable
 
 In order for $\texttt{LetRec}$ to work, we've seen that we needed to be able to update the value of a binding in place - the $e[name \coloneqq value]$ operation.
 
@@ -334,11 +334,42 @@ def update(name: String, value: Value) =
      .foreach(_.value = value)
 ```
 
-## Updating the interpreter
+### Making the environment nullable
 
-Our environment is now fully ready to support $\texttt{LetRec}$.
+If you remember the semantics of $\texttt{LetRec}$, there is one last bit we need to add support for in the environment: $\bullet$.
 
-Recall its semantics:
+We're using it to say _I don't actually have a value yet_, which is all very good until you actually have to implement it. Scala is one of these languages that has a perfect representation for this, however: `null`! Yes, I am in fact talking of using both mutability and nullability in the same bit of code, which flies in the face of accepted wisdom but just happens to be the right tool for the job here.
+
+Fortunately, Scala goes some way towards making `null` more palatable, as it forces you to make it explicit in your types (provided you have the [right options](https://docs.scala-lang.org/scala3/reference/experimental/explicit-nulls.html)).
+
+Here's how we need to update `Binding` for it to have a nullable value:
+
+```scala
+case class Binding(name: String, var value: Value | Null)
+```
+
+This has a few repercussions. First, the $e[name \leftarrow \bullet]$ tells us that `bind` must be updated to accommodate for `null`:
+
+```scala
+def bind(name: String, value: Value | Null) =
+  Env(Env.Binding(name, value) :: env)
+```
+
+And of course, we must make sure to fail when looking up a name bound to a `null` value, as this signifies that the name is not actually bound to anything as surely as if it wasn't in our environment at all.
+
+```scala
+def lookup(name: String) =
+  env
+    .find(_.name == name)
+    .map(_.value.nn)
+    .getOrElse(sys.error(s"Missing binding: $name"))
+```
+
+### Updating the interpreter
+
+Our environment is now fully ready to support $\texttt{LetRec}$. We merely need to translate the operational semantics into the corresponding code.
+
+The semantics we agreed on are:
 
 \begin{prooftree}
   \AXC{$e' = e[name \leftarrow \bullet]; e' \vdash value \Downarrow v_1$}
@@ -346,7 +377,7 @@ Recall its semantics:
   \BIC{$e \vdash \texttt{LetRec}\ name\ value\ body \Downarrow v_2$}
 \end{prooftree}
 
-This is all relatively straightforward to turn into code, except for the $\bullet$ part: we need to decide what value we'll use to mean _any value, I don't care_. And what better value for that than no value at all? Yes, I am in fact talking about using `null`, and am forced to admit there is some perverse pleasure in using both `null` and mutability in the same bit of code, and thumbing my nose gleefully at common Scala wisdom.
+And now that our environment is both nullable and mutable, they are easy enough to translate into code:
 
 ```scala
 def letRec(name: String, value: Expr, body: Expr, e: Env) =
