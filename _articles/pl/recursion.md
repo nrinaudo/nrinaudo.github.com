@@ -127,7 +127,7 @@ case Gt(lhs: Expr, rhs: Expr)
 Interpreting of $\texttt{Gt}$ is very similar to how we do $\texttt{Add}$, and can be derived painlessly from the operational semantics:
 
 ```scala
-def gt(lhs: Expr, rhs: Expr, e: Env) =
+def runGt(lhs: Expr, rhs: Expr, e: Env) =
   (interpret(lhs, e), interpret(rhs, e)) match
     case (Value.Num(v1), Value.Num(v2)) => Value.Bool(v1 > v2)
     case _                              => typeError("gt")
@@ -290,7 +290,7 @@ case LetRec(name: String, value: Expr, body: Expr)
 We now have everything we need to represent `sum`. Exactly what we had before, except we need to replace `Let` with `LetRec`:
 
 ```scala
-val expr = LetRec(
+val sum = LetRec(
   name  = "sum",
   value = Fun(
     param = "lower",
@@ -329,7 +329,7 @@ We then need to provide a way to find and modify an existing binding, which we'l
 
 ```scala
 // e[name := value]
-def update(name: String, value: Value) =
+def set(name: String, value: Value) =
   env.find(_.name == name)
      .foreach(_.value = value)
 ```
@@ -380,20 +380,20 @@ The semantics we agreed on are:
 And now that our environment is both nullable and mutable, they are easy enough to translate into code:
 
 ```scala
-def letRec(name: String, value: Expr, body: Expr, e: Env) =
+def runLetRec(name: String, value: Expr, body: Expr, e: Env) =
   val eʹ = e.bind(name, null)   // eʹ = e[name <- ●]
   val v1 = interpret(value, eʹ) // eʹ |- value ⇓ v₁
 
-  eʹ.update(name, v1)           // eʹ[name := v₁]
+  eʹ.set(name, v1)              // eʹ[name := v₁]
   val v2 = interpret(body, eʹ)  // eʹ |- body ⇓ v₂
 
   v2                            // e |- LetRec name value body ⇓ v₂
 ```
 
-All that remains is for us to confirm our implementation is correct by interpreting `expr`, the program we declared earlier that computes the sum of all numbers between 1 and 10, and observing that it returns the right result:
+All that remains is for us to confirm our implementation is correct by interpreting `sum`, the program we declared earlier that computes the sum of all numbers between 1 and 10, and observing that it returns the right result:
 
 ```scala
-interpret(expr, Env.empty)
+interpret(sum, Env.empty)
 // val res: Value = Num(55)
 ```
 

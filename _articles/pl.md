@@ -30,23 +30,23 @@ The first question we should ask ourselves, then, is _what is a programming lang
 > A set of terms and rules to combine them in order to communicate a precise series of instructions to a computer.
 
 These are usually seen in text format, which we traditionally call code. And we pass this code to specialised software to do... stuff with. For example:
-- take code and shuffle it around to make it more aesthetically pleasing. We call this _formatting_ code (it is a very good idea and should be part of your CI).
+- take code and shuffle it around to make it more aesthetically pleasing. We call this _formatting_ code (it is a very good idea and you should consider making it part of your CI).
 - take code and replace bits of it with semantically equivalent but faster bits. We call this _optimizing_ code.
-- take code and rewrite it to equivalent code in a different language. We call this _compiling_ code, or sometimes _transpiling_ (although I don't really understand the subtle difference between the two).
+- take code and rewrite it to equivalent code in a different language. We call this _compiling_ code, or sometimes _transpiling_ (although I can't say I really understand the subtle difference between the two).
 - simulate code and yield whatever value it would return. We call this _interpreting_ code.
 
-We'll hopefully play with all of these before we're done, but our focus will, at least initially, be on interpreters.
+We'll hopefully play with all of these before we're done, but our focus will be on interpreters, at least initially.
 
 Notice how I've been careful to phrase these to make them sound like functions from code to something? We'll call this type of functions _evaluators_ (they turn code into some other _value_), and as with all functions, we must think carefully about their domain and codomain.
 
-All of them take code for input, so we'll need a type to represent code. We could of course do the simple thing of deciding that code is text, and text is usually represented as strings, so code is simply strings. But if you're at all familiar with my work, you know that I'm a bit of a snob when it comes to types and this is simply not good enough - there are infinitely more strings that represent invalid code than valid ones, and we'll need to tighten this a little.
+All of them take code for input, so we'll need a type to represent code. We could of course do the simple thing of deciding that code is text, and text is usually represented as strings, so code must simply be strings. But if you're at all familiar with my work, you know that I'm a bit of a snob when it comes to types and this is simply not good enough - there are infinitely more strings that represent invalid code than valid ones, and we'll need to tighten this a little.
 
 
 ## A note on parsing
 
 Note that at some point, code _will_ be represented as strings - this is how humans interact with it. But in this series of articles we'll just assume that there exists a function from string to whatever better representation we decide on for code. This kind of function is called a _parser_, and while they're very fun and interesting to write, they're not at all what I want to talk about.
 
-Readers are encouraged to write parsers for our toy language, obviously - and we'll be suggesting syntax as we enrich it. But, importantly, our suggested syntax will only be one of the many possible variations one could implement, and this is mostly down to personal preferences. We'll be side-stepping this issue entirely by not mandating a syntax, thus hopefully not ruffling anybody's feathers by suggesting something blasphemous, such as meaningful whitespace.
+Readers are encouraged to write parsers for our toy language, obviously - and we'll be suggesting syntax as we enrich it. But, importantly, our suggested syntax will only be one of the many possible variations one could implement, and this is mostly down to personal preference. We'll be side-stepping this issue entirely by not mandating a syntax, thus hopefully not ruffling anybody's feathers by suggesting something blasphemous, such as meaningful whitespace or same line opening brackets.
 
 ## References and sources
 
@@ -59,4 +59,4 @@ I'm hoping to enrich this list as more books / articles / papers come my way.
 
 ## Articles
 
-Here are the parts that I've written so far, and will continue updating so long as I don't get bored:
+Here are the parts that I've written so far, and will continue updating so long as I don't lose interest:

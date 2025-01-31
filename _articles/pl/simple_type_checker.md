@@ -14,7 +14,7 @@ We'll work on a new, improved type checker, then, one that produces a typed AST.
 We know we ultimately want to produce a `TypedExpr` while allowing for failures. Not all expressions are well typed, which is rather the point. Something like:
 
 ```scala
-def typecheck(expr: Expr): Either[String, TypedExpr[?]] = ???
+def typeCheck(expr: Expr): Either[String, TypedExpr[?]] = ???
 ```
 
 That `?` in `TypedExpr[?]` is Scala syntax for _there's a type there but we don't know what it is_ - technically, an _existential type_: the only thing we know about it is that it exists. And we cannot do any better than that, because there is nothing in `Expr` which allows us to know, statically, what type it will be. We must explore it at runtime to decide that. Statically, all we can say is, yes, there will be a type there, actually.
@@ -108,7 +108,7 @@ object TypeEnv:
 
 ### Putting it all together
 
-We now know exactly what `typecheck` must look like:
+We now know exactly what `typeCheck` must look like:
 - it must take an `Expr` to type check.
 - it must take a `TypeEnv` in which to look bindings up.
 - it must return a `Typing[?]`, because it cannot know what type an expression has until after having type checked it.
@@ -117,7 +117,7 @@ We now know exactly what `typecheck` must look like:
 Which gives us:
 
 ```scala
-def typecheck(expr: Expr, Γ: TypeEnv): Either[String, Typing[?]] =
+def typeCheck(expr: Expr, Γ: TypeEnv): Either[String, Typing[?]] =
   ???
 ```
 
@@ -146,7 +146,7 @@ The latter is made very simple by our having already written `cast`:
 
 ```scala
 def expect[A <: Type](expr: Expr, tpe: TypeRepr[A], Γ: TypeEnv) =
-  for raw   <- typecheck(expr, Γ)
+  for raw   <- typeCheck(expr, Γ)
       typed <- raw.cast(tpe)
   yield typed
 ```
@@ -177,12 +177,12 @@ def checkGt(lhs: Expr, rhs: Expr, Γ: TypeEnv) =
 
 We saw [earlier](./type_checking.html#typing-conditionals) that $\texttt{Cond}$ introduces a new wrinkle by asking us to keep track of the type of each branch and making sure they were the same.
 
-That's not much of a problem to adapt, however: we get that type information from the `Typing` returned by `typecheck`:
+That's not much of a problem to adapt, however: we get that type information from the `Typing` returned by `typeCheck`:
 
 ```scala
 def checkCond(pred: Expr, onT: Expr, onF: Expr, Γ: TypeEnv) =
   for pred <- expect(pred, TypeRepr.Bool, Γ)
-      onT  <- typecheck(onT, Γ)
+      onT  <- typeCheck(onT, Γ)
       onF  <- expect(onF, onT.repr, Γ)
   yield Typing(Cond(pred.expr, onT.expr, onF.expr), onT.repr)
 ```
@@ -206,8 +206,8 @@ We can now adapt `checkLet`:
 
 ```scala
 def checkLet(name: String, value: Expr, body: Expr, Γ: TypeEnv) =
-  for value <- typecheck(value, Γ)
-      body  <- typecheck(body, Γ.bind(name, value.repr))
+  for value <- typeCheck(value, Γ)
+      body  <- typeCheck(body, Γ.bind(name, value.repr))
   yield Typing(Let(name, value.expr, body.expr), body.repr)
 ```
 
@@ -255,7 +255,7 @@ Having `from`, we can easily write the type checking code:
 def checkFun(param: String, x: Type, body: Expr, Γ: TypeEnv) =
   val xRepr = TypeRepr.from(x)
 
-  for body <- typecheck(body, Γ.bind(param, xRepr))
+  for body <- typeCheck(body, Γ.bind(param, xRepr))
   yield Typing(Fun(param, body.expr), xRepr -> body.repr)
 ```
 
@@ -265,7 +265,7 @@ $\texttt{Apply}$ is, again, a little more involved. [We had](./type_checking.htm
 
 ```scala
 def checkApply(fun: Expr, arg: Expr, Γ: TypeEnv) =
-  typecheck(fun, Γ).flatMap:
+  typeCheck(fun, Γ).flatMap:
     case Typing(fun, x -> y) =>
       expect(arg, x, Γ).map: arg =>
         Typing(Apply(fun, arg.expr), y)
@@ -283,8 +283,8 @@ Other than that, the whole thing is very straightforward:
 def checkLetRec(name: String, value: Expr, vType: Type, body: Expr, Γ: TypeEnv) =
   val Γʹ = Γ.bind(name, TypeRepr.from(vType))
 
-  for value <- typecheck(value, Γʹ)
-      body  <- typecheck(body, Γʹ)
+  for value <- typeCheck(value, Γʹ)
+      body  <- typeCheck(body, Γʹ)
   yield Typing(LetRec(name, value.expr, body.expr), body.repr)
 ```
 
@@ -305,7 +305,7 @@ I'm not going to write the AST for that again - you can find it [here](type_chec
 We want this to type check to a number - I'm, again, not going to print the `TypedExpr` part because that would be absolutely unreadable:
 
 ```scala
-for checked <- typecheck(expr, TypeEnv.empty)
+for checked <- typeCheck(sum, TypeEnv.empty)
     typed   <- checked.cast(TypeRepr.Num)
 yield typed.repr
 // val res: Either[String, TypeRepr[Type.Num]] = Right(Num)

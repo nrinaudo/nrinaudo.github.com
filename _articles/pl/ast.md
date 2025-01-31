@@ -31,7 +31,7 @@ There's a problem with that representation which we'll highlight and address soo
 
 Numbers simply evaluate to themselves. In order to express that, we'll need a symbol for the notion of _interprets to_, and the traditional one is $\Downarrow$.
 
-We can then formally express what a `Num` is interpreted as:
+We can then formally express what `Num` is interpreted as:
 
 \begin{prooftree}
   \AXC{$\texttt{Num}\ value \Downarrow value$}
@@ -52,7 +52,7 @@ Instinctively, we'd probably want to write the operational semantics of addition
   \AXC{$\texttt{Add}\ lhs\ rhs \Downarrow lhs + rhs$}
 \end{prooftree}
 
-This can't really work, however: $lhs$ and $rhs$ are not actual numbers, but terms of our language. Before we can add them, we need to turn them into numbers, which we do by interpreting them.
+This, however, does not really work: $lhs$ and $rhs$ are not actual numbers, but terms of our language. Before we can add them, we need to turn them into numbers, which we do by interpreting them.
 
 We'll write this as follows:
 
@@ -70,7 +70,7 @@ Where the horizontal line separates the _preconditions_ (often called _anteceden
 These semantics can be turned into code rather directly:
 
 ```scala
-def add(lhs: Num, rhs: Num) =
+def runAdd(lhs: Num, rhs: Num) =
   val v1 = interpret(lhs) // lhs ⇓ v₁
   val v2 = interpret(rhs) // rhs ⇓ v₂
 
@@ -82,7 +82,7 @@ Which gives us a full interpreter:
 ```scala
 def interpret(expr: Expr): Int = expr match
   case Num(value)    => value
-  case Add(lhs, rhs) => add(lhs, rhs)
+  case Add(lhs, rhs) => runAdd(lhs, rhs)
 ```
 
 We can then confirm that it works as expected:
@@ -115,7 +115,7 @@ It's called _abstract syntax_ because it's an abstraction over the human facing 
 
 ### Syntax Tree
 
-`Expr` can be seen as a tree, which is made quite clear when viewing it as a diagram:
+An `Expr` can be seen as a tree, which is made quite clear by viewing it as a diagram:
 
 <span class="figure">
 ![](/img/pl/ast.svg)
@@ -159,7 +159,7 @@ The interesting bit is that this doesn't cause us to change our semantics at all
 Whether `lhs` and `rhs` are `Num` or `Expr` doesn't matter, they're still things that can be interpreted, which is all we care about. We do have to change the types of operands in `add`'s implementation, however:
 
 ```scala
-def add(lhs: Expr, rhs: Expr) =
+def runAdd(lhs: Expr, rhs: Expr) =
   val v1 = interpret(lhs) // lhs ⇓ v₁
   val v2 = interpret(rhs) // rhs ⇓ v₂
 

@@ -34,10 +34,10 @@ Note that I'm expressing a taste here, and very carefully not stating that stati
 
 ## Writing a type checker
 
-The only tools we have at our disposal to work with our AST are evaluators: functions that, given an `Expr`, explore it and transform it into some other value. We'll need to write a new one, which we'll call `typecheck`:
+The only tools we have at our disposal to work with our AST are evaluators: functions that, given an `Expr`, explore it and transform it into some other value. We'll need to write a new one, which we'll call `typeCheck`:
 
 ```scala
-def typecheck(expr: Expr): ??? = ???
+def typeCheck(expr: Expr): ??? = ???
 ```
 
 ### Naive implementation
@@ -45,24 +45,24 @@ def typecheck(expr: Expr): ??? = ???
 Since type checking decides whether an expression is well-typed, it would seem reasonable to have it return a `Boolean` - `false` if a type error was found, `true` otherwise. We could try something like this, limiting it for the moment to the terms of our language we need to describe `nonsense`:
 
 ```scala
-def typecheck(expr: Expr): Boolean =
+def typeCheck(expr: Expr): Boolean =
   expr match
     case Num(value)    => true
     case Bool(value)   => true
-    case Add(lhs, rhs) => typecheck(lhs) && typecheck(rhs)
+    case Add(lhs, rhs) => typeCheck(lhs) && typeCheck(rhs)
 ```
 And this is reasonable, right? `Num` and `Bool` are always well-typed, and `Add` is well-typed if both its operands are. Sensible enough.
 
 Except, of course, that if we try and type check `nonsense`, we learn that it's well-typed:
 
 ```scala
-typecheck(expr)
+typeCheck(expr)
 // val res7: Boolean = true
 ```
 
 Our error is that while `Add` does need both its operands to be well-typed, that's not quite enough. We also want them both to be numbers.
 
-In order to check that, we'll need to know their types: we'll need `typecheck` to return, not a `Boolean`, but a value that describes the type of the expression it analysed.
+In order to check that, we'll need to know their types: we'll need `typeCheck` to return, not a `Boolean`, but a value that describes the type of the expression it analysed.
 
 ### Types as values
 
@@ -83,15 +83,15 @@ There's a small flaw there, however. Functions go from one type to another, and 
 case Fun(from: Type, to: Type)
 ```
 
-### Finalising `typecheck`'s signature
+### Finalising `typeCheck`'s signature
 
-Of course, we don't want `typecheck` to simply return a `Type`, because this would imply all expressions have a type. We must allow the possibility for failure - for ill-typed expressions - which we'll do by allowing `typecheck` to return either a `Type` or a human-readable error message:
+Of course, we don't want `typeCheck` to simply return a `Type`, because this would imply all expressions have a type. We must allow the possibility for failure - for ill-typed expressions - which we'll do by allowing `typeCheck` to return either a `Type` or a human-readable error message:
 
 ```scala
-def typecheck(expr: Expr): Either[String, Type] = ???
+def typeCheck(expr: Expr): Either[String, Type] = ???
 ```
 
-All we need to do now is to write the body of `typecheck`, and run through every possible expression of our AST to decide whether they're well-typed. This might take a while, but is not actually as hard as you might expect.
+All we need to do now is to write the body of `typeCheck`, and run through every possible expression of our AST to decide whether they're well-typed. This might take a while, but is not actually as hard as you might expect.
 
 ## Typing literal values
 
@@ -121,7 +121,7 @@ And, unsurprisingly, the one for $\texttt{Bool}$:
 These are simple enough that we can just stick them directly in our type checker:
 
 ```scala
-def typecheck(expr: Expr): Either[String, Type] =
+def typeCheck(expr: Expr): Either[String, Type] =
   expr match
     case Num(value)    => Right(Type.Num)  // Num value : Type.Num
     case Bool(value)   => Right(Type.Bool) // Bool value : Type.Bool
@@ -157,7 +157,7 @@ Let's take a step back before implementing this typing rule. Both antecedents te
 
 ```scala
 def expect(expr: Expr, expected: Type) =
-  typecheck(expr).flatMap: observed =>
+  typeCheck(expr).flatMap: observed =>
     if observed == expected then Right(())
     else Left(s"Expected $expected, found $observed")
 ```
@@ -249,7 +249,7 @@ As usual, once the typing rule is clear, the concrete implementation becomes alm
 ```scala
 def checkCond(pred: Expr, onT: Expr, onF: Expr) =
   for _ <- expect(pred, Type.Bool) // pred : Type.Bool
-      x <- typecheck(onT)          // onT : X
+      x <- typeCheck(onT)          // onT : X
       _ <- expect(onF, x)          // onF : X
   yield x                          // Cond pred onT onF : X
 ```
@@ -330,8 +330,8 @@ And we can now turn $\texttt{Let}$'s typing rule into code:
 
 ```scala
 def checkLet(name: String, value: Expr, body: Expr, Γ: TypeEnv) =
-  for x <- typecheck(value, Γ)              // Γ |- value : X
-      y <- typecheck(body, Γ.bind(name, x)) // Γ[name <- X] |- body : Y
+  for x <- typeCheck(value, Γ)              // Γ |- value : X
+      y <- typeCheck(body, Γ.bind(name, x)) // Γ[name <- X] |- body : Y
   yield y                                   // Γ |- Let name value body : Y
 ```
 
@@ -416,7 +416,7 @@ After which we can proceed with translating our typing rule into code, which is 
 
 ```scala
 def checkFun(param: String, x: Type, body: Expr, Γ: TypeEnv) =
-  for y <- typecheck(body, Γ.bind(param, x)) // Γ[param <- X] |- body : Y
+  for y <- typeCheck(body, Γ.bind(param, x)) // Γ[param <- X] |- body : Y
   yield x -> y                               // Γ |- Fun (param : X) body : X -> Y
 ```
 
@@ -462,7 +462,7 @@ We can now do the straightforward work of translating our typing rule into code:
 
 ```scala
 def checkApply(fun: Expr, arg: Expr, Γ: TypeEnv) =
-  typecheck(fun, Γ).flatMap:
+  typeCheck(fun, Γ).flatMap:
     case x -> y =>      // Γ |- fun : X -> Y
       expect(arg, x, Γ) // Γ |- arg : X
         .map(_ => y)    // Γ |- Apply fun arg : Y
@@ -510,7 +510,7 @@ def checkLetRec(name: String, value: Expr, x: Type,
   val Γʹ = Γ.bind(name, x)
 
   for _ <- expect(value, x, Γʹ) // Γ[name <- X] |- value : X
-      y <- typecheck(body, Γʹ)  // Γ[name <- X] |- body : Y
+      y <- typeCheck(body, Γʹ)  // Γ[name <- X] |- body : Y
   yield y                       // Γ |- LetRec name (value : X) body : Y
 ```
 
@@ -554,7 +554,7 @@ val expr = LetRec(
 We want this to type check to a number, since the sum of all numbers in a range is a number. And indeed:
 
 ```scala
-typecheck(expr, TypeEnv.empty)
+typeCheck(expr, TypeEnv.empty)
 // val res: Either[String, Type] = Right(Num)
 ```
 
@@ -564,6 +564,6 @@ We've gained a reasonable understanding of how type checking works, and can now 
 
 This feels a little disappointing, however: it's still perfectly possible to represent ill-typed programs. We can still write `nonsense`, it's just that we now have a validation function to tell us we shouldn't.
 
-It would be much better if we could somehow represent programs in a way that made illegal expressions impossible - in which adding a number and a boolean did not merely cause `typecheck` to grumble, but was a notion that simply could not exist.
+It would be much better if we could somehow represent programs in a way that made illegal expressions impossible - in which adding a number and a boolean did not merely cause `typeCheck` to grumble, but was a notion that simply could not exist.
 
 We'll tackle this and typed ASTs next. This is likely to keep us busy for a little while, as it's rather harder than anything we've done so far. But it's definitely worth it and quite a bit of fun!

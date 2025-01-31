@@ -320,7 +320,7 @@ Let's start with $Ref$, whose semantics are:
 
 This is simple enough:
 ```scala
-def ref(name: String, e: Env) =
+def runRef(name: String, e: Env) =
   e.lookup(name) // e |- Ref name ⇓ e(name)
 ```
 
@@ -337,7 +337,7 @@ And finally, we can tackle $Let$, whose semantics are:
 As usual, this maps quite easily and directly to code:
 
 ```scala
-def let(name: String, value: Expr, body: Expr, e: Env) =
+def runLet(name: String, value: Expr, body: Expr, e: Env) =
   val v1 = interpret(value, e)               // e |- value ⇓ v₁
   val v2 = interpret(body, e.bind(name, v1)) // e[name <- v₁] |- body ⇓ v₂
   v2                                         // e |- Let name value body ⇓ v₂
@@ -349,10 +349,10 @@ At this point, we need to update `interpret` a little: not only does it need to 
 def interpret(expr: Expr, e: Env): Value = expr match
   case Num(value)             => Value.Num(value)
   case Bool(value)            => Value.Bool(value)
-  case Add(lhs, rhs)          => add(lhs, rhs, e)
-  case Cond(pred, onT, onF)   => cond(pred, onT, onF, e)
-  case Let(name, value, body) => let(name, value, body, e)
-  case Ref(name)              => ref(name)
+  case Add(lhs, rhs)          => runAdd(lhs, rhs, e)
+  case Cond(pred, onT, onF)   => runCond(pred, onT, onF, e)
+  case Let(name, value, body) => runLet(name, value, body, e)
+  case Ref(name)              => runRef(name)
 ```
 
 ## Testing our implementation

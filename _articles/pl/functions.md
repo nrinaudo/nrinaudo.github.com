@@ -254,7 +254,7 @@ Taking $Fun$'s semantics:
 We very easily get the Scala implementation:
 
 ```scala
-def fun(param: String, body: Expr, e: Env) =
+def runFun(param: String, body: Expr, e: Env) =
   Value.Fun(param, body, e) // e |- Fun param body ⇓ Value.Fun param body e
 ```
 
@@ -272,7 +272,7 @@ We can finally tackle `Apply`, whose operational semantics are:
 The translation to code is, again, very simple:
 
 ```scala
-def apply(fun: Expr, arg: Expr, e: Env) =
+def runApply(fun: Expr, arg: Expr, e: Env) =
   interpret(fun, e) match
     case Value.Fun(param, body, eʹ) =>            // e |- fun ⇓ Value.Fun param body eʹ
       val v1 = interpret(arg, e)                  // e |- arg ⇓ v₁

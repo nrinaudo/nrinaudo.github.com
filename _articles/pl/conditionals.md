@@ -70,7 +70,7 @@ enum Expr:
 And its interpretation is a direction translation of the operational semantics:
 
 ```scala
-def cond(pred: Expr, onT: Expr, onF: Expr) =
+def runCond(pred: Expr, onT: Expr, onF: Expr) =
   if interpret(pred) then  // pred ⇓ true
     val v = interpret(onT) // onT ⇓ v
     v                      // Cond pred onT onF ⇓ v
@@ -83,7 +83,7 @@ def cond(pred: Expr, onT: Expr, onF: Expr) =
 This is of course a little cumbersome. I wrote it that way initially to make it clear how closely it matches the operational semantics, but we can apply our refactoring skills to that first draft and get the much more digestible:
 
 ```scala
-def cond(pred: Expr, onT: Expr, onF: Expr) =
+def runCond(pred: Expr, onT: Expr, onF: Expr) =
   if interpret(pred) then interpret(onT)
   else                    interpret(onF)
 ```
@@ -113,7 +113,7 @@ Well, it depends on the language in which this is written. A lot of languages wo
 Still, this is easy enough to implement, so let's see quickly how that would work. We'll decide to map `0` to `false` and everything else to `true` because we're not completely mad, and get:
 
 ```scala
-def cond(pred: Expr, onT: Expr, onF: Expr) =
+def runCond(pred: Expr, onT: Expr, onF: Expr) =
   if interpret(pred) != 0 then interpret(onT)
   else                         interpret(onF)
 ```
@@ -143,8 +143,8 @@ Now that we can represent a runtime value, we need to update `interpret`'s signa
 ```scala
 def interpret(expr: Expr): Value = expr match
   case Num(value)           => value
-  case Add(lhs, rhs)        => add(lhs, rhs)
-  case Cond(pred, onT, onF) => cond(pred, onT, onF)
+  case Add(lhs, rhs)        => runAdd(lhs, rhs)
+  case Cond(pred, onT, onF) => runCond(pred, onT, onF)
 ```
 
 This, of course, does not come anywhere close to compiling. We'll need to go back to the operational semantics of all existing terms to understand why, and fix them.
@@ -162,8 +162,8 @@ Which rather immediately translates into code:
 ```scala
 def interpret(expr: Expr): Value = expr match
   case Num(value)           => Value.Num(value) // Num value ⇓ Value.Num value
-  case Add(lhs, rhs)        => add(lhs, rhs)
-  case Cond(pred, onT, onF) => cond(pred, onT, onF)
+  case Add(lhs, rhs)        => runAdd(lhs, rhs)
+  case Cond(pred, onT, onF) => runCond(pred, onT, onF)
 ```
 
 ### Fixing addition
@@ -185,7 +185,7 @@ That's one of the things I enjoy about this notation: you only specify what's va
 Here's what we get when translating the operational semantics to code:
 
 ```scala
-def add(lhs: Expr, rhs: Expr) =
+def runAdd(lhs: Expr, rhs: Expr) =
   (interpret(lhs), interpret(rhs)) match
     case (Value.Num(v1), Value.Num(v2)) => Value.Num(v1 + v2)
     case _                              => typeError("add")
@@ -214,7 +214,7 @@ And that's really all we need to fix. We don't particularly care what kind of va
 This gives us the following code:
 
 ```scala
-def cond(pred: Expr, onT: Expr, onF: Expr) =
+def runCond(pred: Expr, onT: Expr, onF: Expr) =
   interpret(pred) match
     case Value.Bool(true)  => interpret(onT) // pred ⇓ Value.Bool true    onT ⇓ v
     case Value.Bool(false) => interpret(onF) // pred ⇓ Value.Bool false   onF ⇓ v
@@ -245,8 +245,8 @@ We'll of course need to update the interpreter to deal with that new variant, bu
 def interpret(expr: Expr): Value = expr match
   case Num(value)           => Value.Num(value)
   case Bool(value)          => Value.Bool(value) // Bool value ⇓ Value.Bool value
-  case Add(lhs, rhs)        => add(lhs, rhs)
-  case Cond(pred, onT, onF) => cond(pred, onT, onF)
+  case Add(lhs, rhs)        => runAdd(lhs, rhs)
+  case Cond(pred, onT, onF) => runCond(pred, onT, onF)
 ```
 
 ### Checking our work
