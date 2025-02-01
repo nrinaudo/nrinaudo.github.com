@@ -20,7 +20,7 @@ Informally, they behave as follows:
 - if the expression between `if` and `then` (the _predicate_) evaluates to `true`, we'll interpret the expression after `then` (the _on-true_ branch).
 - otherwise, we'll interpret the value after `else` (the _on-false_ branch).
 
-It's important to note that we never interpret both the on-true and on-false branches.
+It is important to note that we never interpret both the on-true and on-false branches.
 
 
 ## Operational semantics
@@ -60,6 +60,7 @@ The $\texttt{false}$ scenario is essentially the same, except we work with $onF$
 
 In order for our language to support this, we need to add a new variant to our AST, which we'll call `Cond` for _conditional_. We know exactly what its members must be, we merely need look at what our operational semantics need:
 
+<a name="ast"/>
 ```scala
 enum Expr:
   case Num(value: Int)
@@ -99,7 +100,7 @@ Or, put more simply: our language does not have a notion of booleans - which mak
 
 One way of supporting booleans is to decide on an arbitrary mapping from integers. A lot of language do this, and go to rather extraordinary lengths to make sure you can pass _any_ value where a boolean is expected.
 
-The technical name for that is _truthiness_: any value is either _truthy_ or _falsy_ - not actually true or false, but something that sort of looks like a truth value if you squint and disengage the part of your brain that enjoys things being sane.
+The technical term for that is _truthiness_ (no, seriously): any value is either _truthy_ or _falsy_ - not actually true or false, but something that sort of looks like a truth value if you squint and disengage the part of your brain that enjoys things being sane.
 
 I do not like this approach (shocking, I know), as it can easily yield confusing runtime behaviours. For example, what does the following code evaluate to?
 
@@ -118,7 +119,7 @@ def runCond(pred: Expr, onT: Expr, onF: Expr) =
   else                         interpret(onF)
 ```
 
-There. We can do this. It's somewhat distasteful and we _shouldn't_ do it, but we _could_.
+There. We can do this. It's somewhat distasteful and we _shouldn't_, but we _could_.
 
 ## Actual truth
 
@@ -130,7 +131,7 @@ This, however, is quite a lot more work than truthiness. Let's do it step by ste
 
 First, `interpret` can't return an `Int` any longer, can it? It must return something that is either an `Int` or a `Boolean`.
 
-As usual, when we want a type that is either one or another, our first instinct should be a sum type:
+As usual, when we want a type that is either one thing or another, our first instinct should be a sum type:
 
 ```scala
 enum Value:
@@ -160,10 +161,7 @@ The only thing to fix in our handling of numbers is that they evaluate to raw in
 Which rather immediately translates into code:
 
 ```scala
-def interpret(expr: Expr): Value = expr match
-  case Num(value)           => Value.Num(value) // Num value ⇓ Value.Num value
-  case Add(lhs, rhs)        => runAdd(lhs, rhs)
-  case Cond(pred, onT, onF) => runCond(pred, onT, onF)
+case Num(value) => Value.Num(value) // Num value ⇓ Value.Num value
 ```
 
 ### Fixing addition
@@ -178,7 +176,7 @@ Addition is a little more subtle. We need to fix it so that:
   \BIC{$\texttt{Add}\ lhs\ rhs \Downarrow \texttt{Value.Num}\ (v_1 + v_2)$}
 \end{prooftree}
 
-You might be wondering - wait, what happens in the case where the operands are not numbers? We've not specified that!
+You might be wondering what happens in the case where the operands are not numbers? We've not specified that!
 
 That's one of the things I enjoy about this notation: you only specify what's valid. So when turning this into code, we must support everything that's backed by a rule. Anything else though? That's an error, and we should fail accordingly.
 
@@ -195,7 +193,7 @@ Note how we're treating combination of operands that aren't 2 numbers as a type 
 
 ### Fixing conditionals
 
-The problem with conditionals is how they work with raw booleans, when they should really expect the predicate to evaluate to a $\texttt{Value.Bool}$.
+The problem with conditionals is that they work with raw booleans, when they should really expect the predicate to evaluate to a $\texttt{Value.Bool}$.
 
 \begin{prooftree}
   \AXC{$pred \Downarrow \texttt{Value.Bool}\ \texttt{true}$}
@@ -213,6 +211,7 @@ And that's really all we need to fix. We don't particularly care what kind of va
 
 This gives us the following code:
 
+<a name="runCond"/>
 ```scala
 def runCond(pred: Expr, onT: Expr, onF: Expr) =
   interpret(pred) match
@@ -223,7 +222,7 @@ def runCond(pred: Expr, onT: Expr, onF: Expr) =
 
 ## Testing our implementation
 
-Now that everything is done, we should be able to test our code, but... we're lacking something, though. We can't actually write a conditional expression yet, can we. How would we create a valid predicate when we have no construct that evaluates to a boolean?
+Now that everything is done, we should be able to test our code, but... we're lacking something, though. We can't actually write a conditional expression yet, can we. How would we create a valid predicate when we have no term that evaluates to a boolean?
 
 ### Boolean literals
 
@@ -235,6 +234,7 @@ Let's fix that quickly by adding boolean literals to the language:
 
 This tells us we need to add the `Bool` variant to our AST:
 
+<a name="bool-ast"/>
 ```scala
 case Bool(value: Boolean)
 ```
@@ -242,16 +242,12 @@ case Bool(value: Boolean)
 We'll of course need to update the interpreter to deal with that new variant, but it's fairly simple. We've already done pretty much the same thing for number literals.
 
 ```scala
-def interpret(expr: Expr): Value = expr match
-  case Num(value)           => Value.Num(value)
-  case Bool(value)          => Value.Bool(value) // Bool value ⇓ Value.Bool value
-  case Add(lhs, rhs)        => runAdd(lhs, rhs)
-  case Cond(pred, onT, onF) => runCond(pred, onT, onF)
+case Bool(value) => Value.Bool(value) // Bool value ⇓ Value.Bool value
 ```
 
 ### Checking our work
 
-And now that we have all the necessary elements, we can create a simple conditional and confirm that it's interpreted correctly.
+We now have all the necessary elements and can create a simple conditional to confirm that it's interpreted correctly.
 
 Here's the code we want to interpret:
 

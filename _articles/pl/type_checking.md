@@ -9,6 +9,7 @@ Our programming language feels pretty complete now - sure, it lacks a lot of bel
 
 One thing that bothers me, however, is that it's perfectly possible to write programs that don't make sense. For example:
 
+<a name="nonsense"/>
 ```scala
 // 1 + true
 val nonsense = Add(
@@ -53,7 +54,7 @@ def typeCheck(expr: Expr): Boolean =
 ```
 And this is reasonable, right? `Num` and `Bool` are always well-typed, and `Add` is well-typed if both its operands are. Sensible enough.
 
-Except, of course, that if we try and type check `nonsense`, we learn that it's well-typed:
+Except, of course, that if we try and type check `nonsense`, we learn it's well-typed:
 
 ```scala
 typeCheck(expr)
@@ -79,19 +80,20 @@ enum Type:
 
 There's a small flaw there, however. Functions go from one type to another, and we would like to be able to express `Type.Num -> Type.Bool`, for example. For that, we need `Fun` to keep track of its domain and codomain:
 
+<a name="type-fun"/>
 ```scala
 case Fun(from: Type, to: Type)
 ```
 
 ### Finalising `typeCheck`'s signature
 
-Of course, we don't want `typeCheck` to simply return a `Type`, because this would imply all expressions have a type. We must allow the possibility for failure - for ill-typed expressions - which we'll do by allowing `typeCheck` to return either a `Type` or a human-readable error message:
+Of course, we don't want `typeCheck` to simply return a `Type`, because this would imply all expressions have a type. We must allow the possibility for failure - for ill-typed expressions - which we'll do by having `typeCheck` return either a `Type` or a human-readable error message:
 
 ```scala
 def typeCheck(expr: Expr): Either[String, Type] = ???
 ```
 
-All we need to do now is to write the body of `typeCheck`, and run through every possible expression of our AST to decide whether they're well-typed. This might take a while, but is not actually as hard as you might expect.
+All we need to do now is to write the body of `typeCheck`, and run through every possible term of our AST to decide whether they're well-typed. This might take a while, but is not actually as hard as you might expect.
 
 ## Typing literal values
 
@@ -108,18 +110,20 @@ Remember how we used a formal notation to express our operational semantics? We'
 Which we'll read as _expression $expr$ has type $X$_.
 
 Here's the typing rule for $\texttt{Num}$, then:
+<a name="num-typing"/>
 \begin{prooftree}
   \AXC{$\texttt{Num}\ value : \texttt{Type.Num}$}
 \end{prooftree}
 
 And, unsurprisingly, the one for $\texttt{Bool}$:
-
+<a name="bool-typing"/>
 \begin{prooftree}
   \AXC{$\texttt{Bool}\ value : \texttt{Type.Bool}$}
 \end{prooftree}
 
 These are simple enough that we can just stick them directly in our type checker:
 
+<a name="literals"/>
 ```scala
 def typeCheck(expr: Expr): Either[String, Type] =
   expr match
@@ -129,7 +133,7 @@ def typeCheck(expr: Expr): Either[String, Type] =
 
 ## Typing `Add`
 
-Working our way through the easier things first, let's now do $\texttt{Add}$.
+Working our way through the easier things first, let's now do [$\texttt{Add}$](./ast.html#full-ast).
 
 It has two components: $lhs$, the left-hand side operand, and $rhs$, the right-hand side one. This tells us we want to complete the following:
 
@@ -147,6 +151,7 @@ We know that for this to be well-typed, $lhs$ and $rhs$ must both be numbers. Th
 
 It's also pretty clear that adding two numbers yields a number:
 
+<a name="add-typing"/>
 \begin{prooftree}
   \AXC{$lhs : \texttt{Type.Num}$}
   \AXC{$rhs : \texttt{Type.Num}$}
@@ -155,6 +160,7 @@ It's also pretty clear that adding two numbers yields a number:
 
 Let's take a step back before implementing this typing rule. Both antecedents tell us they expect some expression to have some type. This is clearly something we'll need to do quite a bit: $\texttt{Gt}$ will need to check that its operands are numbers, $\texttt{Cond}$ that its predicate is a boolean... so let's write a helper function for this common use case:
 
+<a name="expect"/>
 ```scala
 def expect(expr: Expr, expected: Type) =
   typeCheck(expr).flatMap: observed =>
@@ -162,10 +168,11 @@ def expect(expr: Expr, expected: Type) =
     else Left(s"Expected $expected, found $observed")
 ```
 
-That's really the code version of $expr: expected$, and will be our basic tool for the rest of this article.
+That's really the code version of $expr: expected$, and will be one our main workhorses for the rest of this article.
 
 Here's how we can now turn $\texttt{Add}$'s typing rule into code:
 
+<a name="checkAdd"/>
 ```scala
 def checkAdd(lhs: Expr, rhs: Expr) =
   for _ <- expect(lhs, Type.Num) // lhs : Type.Num
@@ -175,8 +182,9 @@ def checkAdd(lhs: Expr, rhs: Expr) =
 
 ## Typing `Gt`
 
-It shouldn't be too hard to see that the typing rule for $\texttt{Gt}$ is:
+It shouldn't be too hard to see that the typing rule for [$\texttt{Gt}$](./recursion.html#gt) is:
 
+<a name="gt-typing"/>
 \begin{prooftree}
   \AXC{$lhs : \texttt{Type.Num}$}
   \AXC{$rhs : \texttt{Type.Num}$}
@@ -185,6 +193,7 @@ It shouldn't be too hard to see that the typing rule for $\texttt{Gt}$ is:
 
 That is, given two numeric operands, $\texttt{Gt}$ is a boolean. The translation to code is almost immediate:
 
+<a name="checkGt"/>
 ```scala
 def checkGt(lhs: Expr, rhs: Expr) =
   for _ <- expect(lhs, Type.Num) // lhs : Type.Num
@@ -194,7 +203,7 @@ def checkGt(lhs: Expr, rhs: Expr) =
 
 ## Typing conditionals
 
-Conditionals have 3 parts:
+[Conditionals](./conditionals.html#ast) have 3 parts:
 - $pred$, the predicate.
 - $onT$, the expression to evaluate if $pred$ is $\texttt{true}$.
 - $onF$, the expression to evaluate otherwise.
@@ -236,6 +245,7 @@ Note the type of $onT$ and $onF$: it's not a concrete type, but a type variable.
 
 And since $\texttt{Cond}$ is interpreted as either $onT$ or $onF$, its type must clearly be the same as theirs:
 
+<a name="cond-typing"/>
 \begin{prooftree}
   \AXC{$pred : \texttt{Type.Bool}$}
   \AXC{$onT : X$}
@@ -246,6 +256,7 @@ And since $\texttt{Cond}$ is interpreted as either $onT$ or $onF$, its type must
 
 As usual, once the typing rule is clear, the concrete implementation becomes almost trivial:
 
+<a name="checkCond"/>
 ```scala
 def checkCond(pred: Expr, onT: Expr, onF: Expr) =
   for _ <- expect(pred, Type.Bool) // pred : Type.Bool
@@ -258,9 +269,9 @@ def checkCond(pred: Expr, onT: Expr, onF: Expr) =
 
 ### Environment
 
-Recall that we had to introduce the notion of an environment in which we kept track of what name a value is bound to when working on `let`'s operational semantics. While values have little relevance to what we're doing right now (they happen at runtime, which we're explicitly ignoring), their _type_ is crucially important. We'll need a type environment in which to keep track of what type a name references.
+Recall that we had to introduce the notion of an environment in which we kept track of what name a value is bound to when working on $\texttt{Let}$'s operational semantics. While values have little relevance to what we're doing right now (they happen at runtime, which we're explicitly ignoring), their _type_ is crucially important. We'll need a type environment in which to keep track of what type a name references.
 
-This environment is conceptually very similar to our operation semantics one, so we'll use a similar notation:
+This environment is conceptually very similar to our operational semantics one, so we'll use a similar notation:
 \begin{prooftree}
   \AXC{$\Gamma \vdash expr : X$}
 \end{prooftree}
@@ -271,8 +282,9 @@ Just like all expressions needed a (potentially empty) environment to be interpr
 
 The implementation of this environment is very similar to that of `Env`, except that we're keeping track of `Type` rather than `Value`:
 
+<a name="TypeEnv"/>
 ```scala
-case class TypeEnv(env: List[TypeEnv.Binding])
+class TypeEnv(env: List[TypeEnv.Binding])
 
 object TypeEnv:
   case class Binding(name: String, tpe: Type)
@@ -282,7 +294,7 @@ object TypeEnv:
 
 ### Binding introduction
 
-Recall that $\texttt{Let}$ has three components:
+Recall that [$\texttt{Let}$](./bindings.html#let) has three components:
 - $name$, the name we'll bind a value to.
 - $value$, the value to bind.
 - $body$, the expression in which the binding is in scope.
@@ -293,7 +305,7 @@ This, then, is the typing rule we want to complete:
   \AXC{$\Gamma \vdash \texttt{Let}\ name\ value\ body :\ ???$}
 \end{prooftree}
 
-The semantics of $\texttt{Let}$ are that $body$ will be interpreted in an environment in which $value$ is bound to $name$. From a type checking perspective, this means that $name$ will have the same type has $value$, so we'll need to check what that is:
+The semantics of $\texttt{Let}$ are that $body$ will be interpreted in an environment in which $value$ is bound to $name$. From a type checking perspective, this means that $name$ will be bound to the type of $value$, so we'll need to check what that is:
 
 \begin{prooftree}
   \AXC{$\Gamma \vdash value: X$}
@@ -302,7 +314,7 @@ The semantics of $\texttt{Let}$ are that $body$ will be interpreted in an enviro
 
 Note how we're again using a type variable. We do not care what concrete type $value$ has, so long as it's a valid one.
 
-The next step is to type check $body$. Recall that our operational semantics had us interpret $body$ in the same environment as $\texttt{Let}$, updated with a binding mapping $name$ to $value$. This tells us that $body$ must be type checked in the same environment as $\texttt{Let}$, updated so that $name$ has type $X$. The notation we used for that in operational semantics was convenient, so we'll use the same: $\Gamma[name \leftarrow X]$.
+The next step is to type check $body$. Recall that our operational semantics had us interpret $body$ in the same environment as $\texttt{Let}$, updated with a binding mapping $name$ to $value$. This tells us that $body$ must be type checked in the same environment as $\texttt{Let}$, updated so that $name$ has type $X$. The [notation we used](./bindings.html#leftarrow) for that in operational semantics was convenient, so we'll use the same: $\Gamma[name \leftarrow X]$.
 
 \begin{prooftree}
   \AXC{$\Gamma \vdash value: X$}
@@ -314,13 +326,15 @@ $body$ has, again, _some_ type. We're not placing any constraint on it, but mere
 
 And since $\texttt{Let}$ is interpreted as the result of interpreting $body$, then it seems natural that it also has type $Y$:
 
+<a name="let-typing"/>
 \begin{prooftree}
   \AXC{$\Gamma \vdash value: X$}
   \AXC{$\Gamma[name \leftarrow X] \vdash body : Y$}
   \BIC{$\Gamma \vdash \texttt{Let}\ name\ value\ body : Y$}
 \end{prooftree}
 
-Before we can turn this into code, we need to work on `TypeEnv` a little: we need to write its version of `bind`. This is essentially the same thing as for `Env`:
+Before we can turn this into code, we need to work on `TypeEnv` a little: we need to write its version of [`bind`](./bindings.html#env). This is essentially the same thing as for `Env`:
+<a name="bind"/>
 ```scala
 def bind(name: String, tpe: Type) =
   TypeEnv(TypeEnv.Binding(name, tpe) :: env)
@@ -328,6 +342,7 @@ def bind(name: String, tpe: Type) =
 
 And we can now turn $\texttt{Let}$'s typing rule into code:
 
+<a name="checkLet"/>
 ```scala
 def checkLet(name: String, value: Expr, body: Expr, Γ: TypeEnv) =
   for x <- typeCheck(value, Γ)              // Γ |- value : X
@@ -338,15 +353,17 @@ def checkLet(name: String, value: Expr, body: Expr, Γ: TypeEnv) =
 
 ### Binding elimination
 
-$\texttt{Ref}$'s typing rule is as straightforward as its operational semantics: the type of a reference is whatever the environment says it is. We merely need syntax for this, and again, there's no particular reason not to reuse the one we had for operation semantics: $\Gamma(name)$ is the type of the value bound to $name$ in $\Gamma$.
+[$\texttt{Ref}$](./bindings.html#ref)'s typing rule is as straightforward as its operational semantics: the type of a reference is whatever the environment says it is. We merely need syntax for this, and again, there's no particular reason not to reuse the one we had for operation semantics: $\Gamma(name)$ is the type of the value bound to $name$ in $\Gamma$.
 
 $\texttt{Ref}$'s typing rule is simply:
 
+<a name="ref-typing"/>
 \begin{prooftree}
   \AXC{$\Gamma \vdash \texttt{Ref}\ name : \Gamma(name)$}
 \end{prooftree}
 
-We'll of course need to update `TypeEnv` to support reference binding lookup:
+We'll of course need to update `TypeEnv` to support reference [binding lookup](./bindings.html#env):
+<a name="lookup"/>
 ```scala
 def lookup(name: String) =
   env.find(_.name == name)
@@ -358,6 +375,7 @@ It is, again, essentially the same thing as `Env`, except we're now treating fai
 
 
 $\texttt{Ref}$'s typing rule can now easily be coded:
+<a name="checkRef"/>
 ```scala
 def checkRef(name: String, Γ: TypeEnv) =
   Γ.lookup(name) // Γ |- Ref name : Γ(name)
@@ -366,7 +384,7 @@ def checkRef(name: String, Γ: TypeEnv) =
 ## Typing functions
 ### Function introduction
 
-Recall that $\texttt{Fun}$ has two components:
+Recall that [$\texttt{Fun}$](./functions.html#fun) has two components:
 - $param$, the name to which we'll bind the function's argument.
 - $body$, the expression to interpret when the function is applied.
 
@@ -401,12 +419,13 @@ This fully unblocks us, because we now know which type must be bound to $param$,
 
 $\texttt{Fun}$, then, produces a function which takes an $X$ and returns a $Y$. $\texttt{Fun}$ has type $X \to Y$.
 
+<a name="fun-typing"/>
 \begin{prooftree}
   \AXC{$\Gamma[param \leftarrow X] \vdash body : Y$}
   \UIC{$\Gamma \vdash \texttt{Fun}\ (param : X)\ body : X \to Y$}
 \end{prooftree}
 
-In order to implement this typing rule, we must first update `Expr` so that `Fun` holds its parameter type:
+<a name="ptype"/> In order to implement this typing rule, we must first update `Expr` so that `Fun` holds its parameter type:
 
 ```scala
 case Fun(param: String, pType: Type, body: Expr)
@@ -414,6 +433,7 @@ case Fun(param: String, pType: Type, body: Expr)
 
 After which we can proceed with translating our typing rule into code, which is not very hard at all:
 
+<a name="checkFun"/>
 ```scala
 def checkFun(param: String, x: Type, body: Expr, Γ: TypeEnv) =
   for y <- typeCheck(body, Γ.bind(param, x)) // Γ[param <- X] |- body : Y
@@ -422,7 +442,7 @@ def checkFun(param: String, x: Type, body: Expr, Γ: TypeEnv) =
 
 ### Function elimination
 
-Recall that $\texttt{Apply}$ is composed of:
+Recall that [$\texttt{Apply}$](./functions.html#apply) is composed of:
 - $fun$, the function to apply.
 - $arg$, the value to apply it on.
 
@@ -433,7 +453,7 @@ Here, then, is the skeleton of our typing rule:
 \end{prooftree}
 
 
-We know we want $fun$ to be a function, so our first step will be confirm that. We don't have any constraint on what kind of function $fun$ is, though. It can be from any type to any type, so long as it's a function.
+We know we want $fun$ to be a function, so our first step will be confirm that. We don't have any constraint on what kind of function. It can be from any type to any type, so long as it's a function.
 \begin{prooftree}
   \AXC{$\Gamma \vdash fun : X \to Y$}
   \UIC{$\Gamma \vdash \texttt{Apply}\ fun\ arg :\ ???$}
@@ -450,6 +470,7 @@ We will, of course, also want to know the type of $arg$, but this must be constr
 
 Finally, the semantics of $\texttt{Apply}$ are that it's ultimately interpreted to $body$, which means it must have the same type:
 
+<a name="apply-typing"/>
 \begin{prooftree}
   \AXC{$\Gamma \vdash fun : X \to Y$}
   \AXC{$\Gamma \vdash arg : X$}
@@ -460,6 +481,7 @@ And this makes sense, doesn't it: Applying a function from $X$ to $Y$ to an $X$ 
 
 We can now do the straightforward work of translating our typing rule into code:
 
+<a name="checkApply"/>
 ```scala
 def checkApply(fun: Expr, arg: Expr, Γ: TypeEnv) =
   typeCheck(fun, Γ).flatMap:
@@ -472,7 +494,7 @@ def checkApply(fun: Expr, arg: Expr, Γ: TypeEnv) =
 
 ## Typing recursion
 
-$\texttt{LetRec}$ is extremely similar to $\texttt{Let}$, the only difference between the two being the environment in which $value$ is interpreted. We can thus start from $\texttt{Let}$'s typing rule, leaving that environment blank:
+[$\texttt{LetRec}$](./recursion.html#letRec) is extremely similar to $\texttt{Let}$, the only difference between the two being the environment in which $value$ is interpreted. We can thus start from $\texttt{Let}$'s typing rule, leaving that environment blank:
 
 \begin{prooftree}
   \AXC{$??? \vdash value: X$}
@@ -490,6 +512,7 @@ Recall that $\texttt{LetRec}$ must interpret $value$ in an environment in which 
 
 Do you see the problem with this? We must know $X$ in order to know $X$. This was a _massive_ issue when interpreting $\texttt{LetRec}$, but here, we can sidestep it altogether and do what we did with $\texttt{Fun}$: decide that if we must know $X$, then someone had better give it to us. That is, update the syntax of our language so that $\texttt{LetRec}$ is aware of the type of $value$:
 
+<a name="letRec-typing"/>
 \begin{prooftree}
   \AXC{$\Gamma[name \leftarrow X] \vdash value : X$}
   \AXC{$\Gamma[name \leftarrow X] \vdash body : Y$}
@@ -504,6 +527,7 @@ case LetRec(name: String, value: Expr, vType: Type, body: Expr)
 
 As usual, now that we've reasoned through this abstractly, the implementation is almost a disappointment:
 
+<a name="checkLetRec"/>
 ```scala
 def checkLetRec(name: String, value: Expr, x: Type,
                 body: Expr, Γ: TypeEnv) =
@@ -516,7 +540,7 @@ def checkLetRec(name: String, value: Expr, x: Type,
 
 ## Testing our implementation
 
-In order to test that everything we just did at least appears to behave as expected, let's take our old example of the recursive `sum` function and fix it to include type ascriptions for function introduction and recursion.
+In order to test that everything we just did at least appears to behave as expected, let's take our old example of the recursive [`sum`](./recursion.html#sum) function and fix it to include type ascriptions for function introduction and recursion.
 
 The code would look something like:
 
@@ -527,10 +551,11 @@ let rec (sum: Num -> Num -> Num) = (lower: Num) -> (upper: Num) ->
   in sum 1 10
 ```
 
-Which translates to the following AST (you don't really have to read it all, it's a little noisy and you can just trust me):
+Which translates to the following AST (you don't really have to read it all, it's a little noisy and you could just take my word for it):
 
+<a name="sum"/>
 ```scala
-val expr = LetRec(
+val sum = LetRec(
   name  = "sum",
   vType = Type.Num -> Type.Num -> Type.Num,
   value = Fun(
@@ -554,7 +579,7 @@ val expr = LetRec(
 We want this to type check to a number, since the sum of all numbers in a range is a number. And indeed:
 
 ```scala
-typeCheck(expr, TypeEnv.empty)
+typeCheck(sum, TypeEnv.empty)
 // val res: Either[String, Type] = Right(Num)
 ```
 
@@ -562,7 +587,7 @@ typeCheck(expr, TypeEnv.empty)
 
 We've gained a reasonable understanding of how type checking works, and can now identify well-typed programs.
 
-This feels a little disappointing, however: it's still perfectly possible to represent ill-typed programs. We can still write `nonsense`, it's just that we now have a validation function to tell us we shouldn't.
+This feels a little disappointing, however: it's still perfectly possible to represent ill-typed programs. We can still write `nonsense`, it's just that there is now a validation function to tell us we shouldn't.
 
 It would be much better if we could somehow represent programs in a way that made illegal expressions impossible - in which adding a number and a boolean did not merely cause `typeCheck` to grumble, but was a notion that simply could not exist.
 

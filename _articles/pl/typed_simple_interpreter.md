@@ -5,13 +5,13 @@ series : pl
 date   : 20250122
 ---
 
-We now have a (mostly) typed AST, [`TypedExpr`](./typed_expr.html), and the [means of representing](./simple_type_checker.html) programs in it. The next logical step is to write an interpreter for that AST, which will require a little finesse but I think will ultimately prove very satisfying.
+We now have a (mostly) typed AST, [`TypedExpr`](./typed_simple_ast.html), and the [means of representing](./typed_simple_type_checker.html) programs in it. The next logical step is to write an interpreter for that AST, which will require a little finesse but I think will ultimately prove very satisfying.
 
 And, as usual, we must start by wondering what kind of value the interpreter will return.
 
 ## A new interpreter
 
-As [before](simple_type_checker.html#a-new-type-checker), we're going to start by thinking about the signature of our new interpreter.
+As [before](typed_simple_type_checker.html#a-new-type-checker), we're going to start by thinking about the signature of our new interpreter.
 
 We know it'll look roughly like this:
 
@@ -50,7 +50,7 @@ This is unfortunately not completely finished yet.
 
 ### Error handling
 
-If you remember, we saw that `TypedExpr` has [a major flaw](./typed_expr.html#typedexpr-limitations): it doesn't know anything about the environment. It stands to reason then that it cannot force any environment it's working in to be healthy - to contain the expected bindings, with the expected types.
+If you remember, we saw that `TypedExpr` has [a major flaw](./typed_simple_ast.html#limitation): it doesn't know anything about the environment. It stands to reason then that it cannot force any environment it's working in to be healthy - to contain the expected bindings, with the expected types.
 
 We can do our best to enforce this by populating the environment sanely, but unfortunately, that's not going to be enough to convince anyone, least of all the type checker: we are going to have to deal with the consequences of looking up a binding that does not exist. Which is to say, `interpret` must have errors baked into its return type, which we'll do with the usual `Either` potentially containing a human readable error message:
 
@@ -75,7 +75,7 @@ I don't know how you feel about this, but to me, it seems almost magical. We're 
 
 ## Interpreting `Add`
 
-[$\texttt{Add}$](./ast.html#supporting-nested-expressions) is also, well... essentially what you wish it were, if the compiler would but cave in to your every wish. Let's see the result before explaining it:
+[$\texttt{Add}$](./ast.html#runAdd) is also, well... essentially what you wish it were, if the compiler would but cave in to your every wish. Let's see the result before explaining it:
 
 ```scala
 def runAdd(lhs: TypedExpr[Type.Num], rhs: TypedExpr[Type.Num], e: Env) =
@@ -90,7 +90,7 @@ There is the slight annoyance of having to do this in a for-comprehension. We'll
 
 ## Interpreting `Gt`
 
-[$\texttt{Gt}$](./recursion.html#supporting-gt) is pretty much the same thing as $\texttt{Add}$, except we compare numbers rather than sum them:
+[$\texttt{Gt}$](./recursion.html#runGt) is pretty much the same thing as $\texttt{Add}$, except we compare numbers rather than sum them:
 
 ```scala
 def runGt(lhs: TypedExpr[Type.Num], rhs: TypedExpr[Type.Num], e: Env) =
@@ -101,7 +101,7 @@ def runGt(lhs: TypedExpr[Type.Num], rhs: TypedExpr[Type.Num], e: Env) =
 
 ## Interpreting conditionals
 
-This takes us to the last of the "easy" ones, [$\texttt{Cond}$](./conditionals.html#fixing-conditionals). There really isn't anything special about it, aside from the unfortunate number of parameters:
+This takes us to the last of the "easy" ones, [$\texttt{Cond}$](./conditionals.html#runCond). There really isn't anything special about it, aside from the unfortunate number of parameters:
 
 ```scala
 def runCond[X <: Type](
@@ -122,7 +122,7 @@ We are now entering the slightly more complicated part of this article: all the 
 
 ### Binding elimination
 
-You'll remember that [binding elimination](./bindings.html#binding-elimination-1), $\texttt{Ref}$, is merely looking at what the environment contains for a given name. It is, however, a little more complicated here: we cannot return just any old value, it must be a value of the right type.
+You'll remember that [binding elimination](./bindings.html#runRef), $\texttt{Ref}$, is merely looking at what the environment contains for a given name. It is, however, a little more complicated here: we cannot return just any old value, it must be a value of the right type.
 
 We'll want something like this:
 
@@ -135,7 +135,7 @@ This tells us a few things. First, `Env` will need to be updated to contain `Val
 
 ### `Eq`
 
-We've already seen at least a hint of how to achieve this: [GADTs](./simple_type_checker.html#gadts-to-the-rescue). If you'll recall, we've learned that their defining property was allowing the compiler to conclude two types were equal and thus could be used interchangeably. This sounds awfully similar to what we're trying to achieve here, doesn't it.
+We've already seen at least a hint of how to achieve this: [GADTs](./typed_simple_type_checker.html#gadts-to-the-rescue). If you'll recall, we've learned that their defining property was allowing the compiler to conclude two types were equal and thus could be used interchangeably. This sounds awfully similar to what we're trying to achieve here, doesn't it.
 
 The prototypical GADT, the one that rules them all, as it were, is `Eq`. It embodies type equality, in that `Eq[A, B]` is a proof that types `A` and `B` are the same. I've [been told](https://scala.io/talks/intro-to-gadts), and have reasons to believe (although I've yet to confirm it for myself) that all GADTs can be implemented with `Eq`.
 
@@ -247,7 +247,7 @@ Finally, we'll need to update `Binding` to associate a name to a `TypedValue`:
 case class Binding(name: String, var value: TypedValue[?] | Null)
 ```
 
-You'll of course remember we needed the value to be both nullable and mutable to [support recursion](./recursion.html#making-the-environment-mutable).
+You'll of course remember we needed the value to be both nullable and mutable to [support recursion](./recursion.html#binding).
 
 
 Note how we cannot say for sure what kind of `TypedValue` we're holding: a binding may reference _any_ kind of value! But since we have a `TypeRepr`, that's really not much of an issue, as we can always attempt to cast it to the type we need it to be.
@@ -260,7 +260,7 @@ def find(name: String) =
      .toRight(s"Binding not found: $name")
 ```
 
-There. All the groundwork is finally done, and we can write [`lookup`](./bindings.html#environment-2), a method on `Env` that looks for a binding with a non-null value of the desired type:
+There. All the groundwork is finally done, and we can write [`lookup`](./bindings.html#env), a method on `Env` that looks for a binding with a non-null value of the desired type:
 
 ```scala
 def lookup[A <: Type](name: String, repr: TypeRepr[A]) =
@@ -271,7 +271,7 @@ def lookup[A <: Type](name: String, repr: TypeRepr[A]) =
   yield value
 ```
 
-And at long last, we can declare that [$\texttt{Ref}$](./bindings.html#binding-elimination-1) interprets to whatever the environment contains _provided it's of the right type_:
+And at long last, we can declare that [$\texttt{Ref}$](./bindings.html#runRef) interprets to whatever the environment contains _provided it's of the right type_:
 
 ```scala
 def runRef[X <: Type](name: String, rType: TypeRepr[X], e: Env) =
@@ -280,7 +280,7 @@ def runRef[X <: Type](name: String, rType: TypeRepr[X], e: Env) =
 
 ### Binding introduction
 
-$\texttt{Let}$ is going to require us to change our existing code again, but only a little this time. We've seen that `Env` needed to store a `Value` _and_ the corresponding `TypeRepr`, which we do not have a way of getting yet. This requires updating [`Let`](./typed_expr.html#binding-introduction) to store the type of the bound value:
+$\texttt{Let}$ is going to require us to change our existing code again, but only a little this time. We've seen that `Env` needed to store a `Value` _and_ the corresponding `TypeRepr`, which we do not have a way of getting yet. This requires updating [`Let`](./typed_simple_ast.html#let) to store the type of the bound value:
 
 
 ```scala
@@ -292,14 +292,14 @@ case Let[A <: Type, B <: Type](
 ) extends TypedExpr[B]
 ```
 
-We'll also need to change `Env`'s [`bind`](./bindings.html#environment-2) method to work with `TypedValue`, since that is what the environment now stores:
+We'll also need to change `Env`'s [`bind`](./bindings.html#env) method to work with `TypedValue`, since that is what the environment now stores:
 
 ```scala
 def bind[A <: Type](name: String, value: TypedValue[A] | Null): Env =
   Env(Env.Binding(name, value) :: env)
 ```
 
-That's really all we needed in order to adapt [`runLet`](bindings.html#binding-introduction-1), which we can now turn into a tight for-comprehension:
+That's really all we needed in order to adapt [`runLet`](bindings.html#runLet), which we can now turn into a tight for-comprehension:
 
 ```scala
 def runLet[X <: Type, Y <: Type](
@@ -320,7 +320,7 @@ If you've managed to make it all the way here, the good news is that you got thr
 
 ### Function introduction
 
-Adapting $\texttt{Fun}$ is easy enough. We need to return a `Value[X -> Y]`, which really is a `Value[X] => Value[Y]`, and have already written all the moving bits. We can simply bind the argument to the right name and interpret the body in the newly defined environment. But... well, in order to call `bind`, we need the type of the argument as a `TypeRepr`, which means we need to update [`TypeRepr.Fun`](./typed_expr.html#function-introduction) to include it:
+Adapting $\texttt{Fun}$ is easy enough. We need to return a `Value[X -> Y]`, which really is a `Value[X] => Value[Y]`, and have already written all the moving bits. We can simply bind the argument to the right name and interpret the body in the newly defined environment. But... well, in order to call `bind`, we need the type of the argument as a `TypeRepr`, which means we need to update [`TypeRepr.Fun`](./typed_simple_ast.html#fun) to include it:
 
 ```scala
 case Fun[A <: Type, B <: Type](
@@ -330,7 +330,7 @@ case Fun[A <: Type, B <: Type](
 ) extends TypedExpr[A -> B]
 ```
 
-This allows us to adapt [`runFun`](./functions#function-introduction-2) to our typed AST in a most straightforward way:
+This allows us to adapt [`runFun`](./functions#runFun) to our typed AST in a most straightforward way:
 
 ```scala
 def runFun[X <: Type, Y <: Type](
@@ -353,7 +353,7 @@ That small modification aside, we're done with function introduction. And isn't 
 
 ### Function elimination
 
-$\texttt{Apply}$ is one of the easy ones. It does not involve the environment in any way, and adapting our [existing work](./functions.html#function-elimination-2) yields simpler code thanks to all the types already being guaranteed to line up:
+$\texttt{Apply}$ is one of the easy ones. It does not involve the environment in any way, and adapting our [existing work](./functions.html#runApply) yields simpler code thanks to all the types already being guaranteed to line up:
 
 ```scala
 def runApply[X <: Type, Y <: Type](
@@ -371,7 +371,7 @@ def runApply[X <: Type, Y <: Type](
 
 The only term we still need to handle is $\texttt{LetRec}$, which is going to require a little bit of work, but nothing too strenuous.
 
-The first thing is that we know we're going to need to create a binding for the recursive value, and we know this will require knowing its type at runtime, as a `TypeRepr`. [`LetRec`](./typed_expr.html#typed-recursion) doesn't contain that information, and we'll need to update it accordingly:
+The first thing is that we know we're going to need to create a binding for the recursive value, and we know this will require knowing its type at runtime, as a `TypeRepr`. [`LetRec`](./typed_simple_ast.html#letrec) doesn't contain that information, and we'll need to update it accordingly:
 
 ```scala
 case LetRec[A <: Type, B <: Type](
@@ -382,7 +382,7 @@ case LetRec[A <: Type, B <: Type](
 ) extends TypedExpr[B]
 ```
 
-We'll also need to update [`Env.set`](./recursion.html#making-the-environment-mutable) to take a `TypedValue`, since this is what the environment now stores:
+We'll also need to update [`Env.set`](./recursion.html#set) to take a `TypedValue`, since this is what the environment now stores:
 
 ```scala
 def set[A <: Type](name: String, value: TypedValue[A]) =
@@ -390,7 +390,7 @@ def set[A <: Type](name: String, value: TypedValue[A]) =
     .map(_.value = value)
 ```
 
-Having done these minor updates, we can easily fix [`runLetRec`](./recursion.html#updating-the-interpreter) to handle `TypedExpr`:
+Having done these minor updates, we can easily fix [`runLetRec`](./recursion.html#runLetRec) to handle `TypedExpr`:
 
 ```scala
 def runLetRec[X <: Type, Y <: Type](

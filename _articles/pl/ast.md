@@ -37,7 +37,7 @@ We can then formally express what `Num` is interpreted as:
   \AXC{$\texttt{Num}\ value \Downarrow value$}
 \end{prooftree}
 
-This is a fairly straightforward rule that we can easily turn into code:
+This is a fairly straightforward rule we can easily turn into code:
 
 ```scala
 def interpret(expr: Expr): Int = expr match
@@ -52,9 +52,9 @@ Instinctively, we'd probably want to write the operational semantics of addition
   \AXC{$\texttt{Add}\ lhs\ rhs \Downarrow lhs + rhs$}
 \end{prooftree}
 
-This, however, does not really work: $lhs$ and $rhs$ are not actual numbers, but terms of our language. Before we can add them, we need to turn them into numbers, which we do by interpreting them.
+This, however, does not really work: $lhs$ and $rhs$ are not actual numbers, but terms of our language. Before we can add them, we need to turn them into numbers, and the only tool we have for that is interpretation.
 
-We'll write this as follows:
+We'll write it as follows:
 
 \begin{prooftree}
   \AXC{$lhs \Downarrow v_1$}
@@ -139,6 +139,7 @@ And the answer is, we can't, not with `Expr` such as it is. The trick is to real
 
 Here's how we'll fix `Expr`:
 
+<a name="full-ast"/>
 ```scala
 enum Expr:
   case Num(value: Int)
@@ -156,8 +157,9 @@ The interesting bit is that this doesn't cause us to change our semantics at all
 \end{prooftree}
 
 
-Whether `lhs` and `rhs` are `Num` or `Expr` doesn't matter, they're still things that can be interpreted, which is all we care about. We do have to change the types of operands in `add`'s implementation, however:
+Whether `lhs` and `rhs` are `Num` or `Expr` doesn't matter, they're still things that can be interpreted, which is all we really care about. We do have to change the types of operands in the implementation of `runAdd`, however:
 
+<a name="runAdd"/>
 ```scala
 def runAdd(lhs: Expr, rhs: Expr) =
   val v1 = interpret(lhs) // lhs ⇓ v₁
@@ -166,7 +168,7 @@ def runAdd(lhs: Expr, rhs: Expr) =
   v1 + v2                 // Add lhs rhs ⇓ v₁ + v₂
 ```
 
-We can easily confirm that this all works:
+Confirming that it all works is easy enough:
 
 ```scala
 // 1 + (2 + 3)
@@ -178,8 +180,8 @@ interpret(expr)
 
 ## Where to go from here?
 
-We can now represent simple arithmetic operations in memory and interpret them. This is obviously not yet a full fledged programming language, but it's a nice start!
+We can now represent simple arithmetic operations in memory and interpret them. This is obviously not yet a full fledged programming language, but it is a nice start!
 
 In the live coding sessions of this series, I will usually also implement multiplication, subtraction and division, as well as a basic code formatter. They're useful for practice, but maybe not so much for explanations, so I'll skip this here.
 
-You however should feel free to try your hand at it if you have the time. But do not attempt yet to write operations that work with anything but numbers - this requires a little subtlety, and we'll tackle that in our next session.
+You however should feel free to try your hand at it if you have the time. But do not attempt to write operations that work with anything but numbers just yet - it requires a little subtlety, and we'll tackle that in our next session.

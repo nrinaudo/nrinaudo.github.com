@@ -16,7 +16,7 @@ One way of reading that is:
 - the `in` part is telling us _give me an `x`, any `x`, and I'll add `2` to it_.
 - the `let` part is telling us _`x` is only ever going to be `1`, though_.
 
-While bindings are undoubtedly nice, this also seems needlessly limiting: why make `x` a parameter of the `in` part, but then fix it to a unique value? Wouldn't it be much nicer if we could keep the `in` part, but allow people to evaluate it for any `x`?
+While bindings are undoubtedly nice, this also seems needlessly limiting: why make `x` a parameter of the `in` part, but then fix it to a unique value? Would it not be much nicer if we could keep the `in` part, but allow people to evaluate it for any `x`?
 
 This notion of _something that takes a parameter and computes something with it_ is called a _function_. We've just come to the conclusion that we'd like to add support for functions to our language.
 
@@ -26,7 +26,7 @@ This notion of _something that takes a parameter and computes something with it_
 
 Let's start by thinking of how we would declare a new function - function _introduction_, to reuse the vocabulary we introduced when working on bindings.
 
-As we've seen, we really want a function to act as a more generic `let` expression, one in which the binding's value is going to be specified later. A function, then, is like a `let` without a value, which tells us it must be composed of:
+As we've seen, we really want a function to act as a more generic `let` expression, one in which the binding's value is going to be specified later. A function, then, is like [a `let`](./bindings.html#binding-introduction) without a value, which tells us it must be composed of:
 - a name to which a value will later be bound. This is traditionally called the function's _parameter_.
 - a _body_, the block of code in which the parameter will be in scope.
 
@@ -83,7 +83,7 @@ I'll readily agree that this is not as pleasant to read, but it does exactly the
 
 One reason for which this might feel a little uncomfortable is that we're a lot more used to seeing functions as named things - typically `f`, or some variation of it. We would usually expect to declare `x -> x + 2`, name it `f`, and then call `f 1`.
 
-Well, we just spent a rather large article coming up with a way of naming things: bindings. It only seems reasonable to make us of all that work:
+Well, we just spent a rather [large article](./bindings.html) coming up with a way of naming things: bindings. It only seems reasonable to make use of all that hard work:
 
 ```ocaml
 let f = x -> x + 2 in
@@ -94,7 +94,7 @@ This binds our function to the name `f`, which is exactly what we wanted, but al
 
 ### Interpreting a function
 
-It's now time to start thinking about how we might interpret functions. We've made a point of treating them as ax more general `let` expression, so we can start from there. Applying a function, then:
+It's now time to start thinking about how we might interpret functions. We've made a point of treating them as more general `let` expression, so we can start from there. Applying a function, then:
 - creates a new environment in which the $parameter$ is bound to the $attribute$.
 - interprets the $body$ in that environment.
 
@@ -122,7 +122,7 @@ If we try interpreting it with our current rules however, we'll get `5` instead.
 * the middle `let` creates environment $e_2 = e_1[f \leftarrow (x \to x + y)]$.
 * the innermost `let` creates environment $e_3 = e_2[y \leftarrow 2]$.
 
-Interpreting `f 3` in $e_3$ shows the problem: we end up interpreting `3 + y` in an environment in which `y` is bound to `2`, which clearly yields `5`. The bindings referenced in the body of `f` end up being "overwritten" by deeper `let` expressions. We've broken dynamic scoping. Again.
+Interpreting `f 3` in $e_3$ shows the problem: we end up interpreting `3 + y` in an environment in which `y` is bound to `2`, which clearly yields `5`. The bindings referenced in the body of `f` end up being "overwritten" by deeper `let` expressions. We've broken static scoping. Again.
 
 Our mistake is that we're using the wrong environment when interpreting `f 3`. We've been using $e_3$, in which `y` is bound to `2`, when we really wanted $e_1$, where `y` is bound to `1`. Or, more generally: we want to interpret functions in the environment in which they're _introduced_, not the one in which they're _applied_.
 
@@ -184,7 +184,7 @@ We'll then want to bind the function's parameter to its argument so we can inter
 
 All we have left to do is interpret $body$  - but there's a crucial subtlety here: what environment should we do this in?
 
-We've seen that a function must be evaluated in the environment in which it was _introduced_ - $e'$ in our rule. But that's not the whole story: we must not forget to bind the function's argument to its parameter, as that is rather the entire point of the whole thing.
+We've seen that a function must be evaluated in the environment in which it was _introduced_ - $e'$ in our rule. But that's not the whole story, is it. We must not forget to bind the function's argument to its parameter, as that is rather the entire point of the whole thing.
 
 Putting all this together, we can write a complete rule, by far the more complex we've seen so far:
 
@@ -222,8 +222,9 @@ Let's start with function introduction:
   \AXC{$e \vdash \texttt{Fun}\ param\ body\ \Downarrow \texttt{Value.Fun}\ param\ body\ e$}
 \end{prooftree}
 
-This tells us that our new variant for `Fun` must hold the parameter name and function body:
+This tells us that our new variant for $\texttt{Fun}$ must hold the parameter name and function body:
 
+<a name="fun"/>
 ```scala
 case Fun(param: String, body: Expr)
 ```
@@ -238,6 +239,7 @@ Our other new term, function application, is defined as follows:
 
 Which makes it clear that our new variant, `Apply`, must be composed of a function to apply and the argument to apply it on:
 
+<a name="apply"/>
 ```scala
 case Apply(fun: Expr, arg: Expr)
 ```
@@ -246,13 +248,14 @@ case Apply(fun: Expr, arg: Expr)
 
 We can now get to the fun bit of translating our operational semantics to code. We'll start from function introduction, which is essentially a copy/paste job from the semantics.
 
-Taking $Fun$'s semantics:
+Taking $\texttt{Fun}$'s semantics:
 \begin{prooftree}
   \AXC{$e \vdash \texttt{Fun}\ param\ body\ \Downarrow \texttt{Value.Fun}\ param\ body\ e$}
 \end{prooftree}
 
 We very easily get the Scala implementation:
 
+<a name="runFun"/>
 ```scala
 def runFun(param: String, body: Expr, e: Env) =
   Value.Fun(param, body, e) // e |- Fun param body ⇓ Value.Fun param body e
@@ -271,6 +274,7 @@ We can finally tackle `Apply`, whose operational semantics are:
 
 The translation to code is, again, very simple:
 
+<a name="runApply"/>
 ```scala
 def runApply(fun: Expr, arg: Expr, e: Env) =
   interpret(fun, e) match
@@ -286,7 +290,7 @@ Do note how we're erroring out on any value of `fun` that is not a function. Tha
 
 ## Testing our implementation
 
-In order to test our implementation, we'll take our previous example - the one that showed how a naive implementation would fail to maintain lexical scoping:
+In order to test our implementation, we'll take our previous example - the one that showed how a naive implementation would fail to maintain static scoping:
 
 ```ocaml
 let y = 1 in
@@ -342,9 +346,9 @@ That's a perfectly valid expression (feel absolutely free to write the AST value
 
 ## Should we drop `Let` ?
 
-Our language now has full support for functions - which we can see as a generalised form of bindings. We _could_ decide to drop support for $Let$, at least in the AST: a hypothetical parser could support `let` _syntax_, but map it to function introduction followed by immediate application.
+Our language now has full support for functions - which we can see as a generalised form of bindings. We _could_ decide to drop support for $\texttt{Let}$, at least in the AST: a hypothetical parser could support `let` _syntax_, but map it to function introduction followed by immediate application.
 
-On the one hand, that would make for a leaner AST, and thus less code to write for interpreting it.
+On the one hand, that would make for a leaner AST, and thus less code to write to interpret it.
 
 On the other hand, it's sometimes useful to keep specialised terms like this in the AST: since their semantics are simpler, it allows us to write more optimal code for that specific use case.
 

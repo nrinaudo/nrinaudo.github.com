@@ -70,9 +70,9 @@ This is telling us that we should bind name `x` to value `1`, and evaluate the b
 
 In order to keep track of this, we'll use the following notation: $\\{name_1 = value_1, ..., name_n = value_n\\}$.
 
-The environment, then, is where we look for values when a binding is referenced. When evaluating the body of our `let` expression, we merely need to look up what name `x` is references in the environment and substitute it with that. Which tells us that, as expected, this entire program evaluates to `1`.
+The environment, then, is where we look for values when a binding is referenced. When evaluating the body of our `let` expression, we merely need to look up what value `x` references in the environment and substitute it with that. Which tells us that, as expected, this entire program evaluates to `1`.
 
-This gives us a good intuition for the general case for let bindings, but there are still a few stones left unturned.
+This gives us a good intuition for the general case, but there are still a few stones left unturned.
 
 ### Laziness vs eagerness
 
@@ -98,7 +98,7 @@ let x = 1 + 2 in
 
 Lazily evaluating this will cause us to compute `1 + 2` twice (once per `x` in the `let`'s body), while eager evaluation will only compute it a single time (when storing it in the environment). Eager evaluation would be faster in this scenario.
 
-But that's not always true! Look at the following code fragment:
+But that is not always true! Look at the following code fragment:
 
 ```ocaml
 let x = 1 + 2 in
@@ -108,7 +108,7 @@ let x = 1 + 2 in
 
 Lazy evaluation means we'll never actually compute `1 + 2`, since our conditional expression will never go in the on-false branch. Were we doing eager evaluation, it would have been computed once, even though it's never needed.
 
-In the rest of these articles, we'll be doing eager evaluation, purely because that's the most common evaluation model and the one you're most likely to have a good intuition for.
+In the rest of these articles, we'll be doing eager evaluation, purely because that's the most common evaluation strategy and the one you're most likely to have a good intuition for.
 
 ### Nesting `let` expressions
 
@@ -154,7 +154,7 @@ let x = 1 in
  (let x = 2 in x) + x
 ```
 
-You hopefully think that it should also evaluate to `3` - it's essentially the same program as before, except we've swapped the addition's operands. Addition is commutative, so this really shouldn't change anything and we should get the same result as before.
+You hopefully think that it should also evaluate to `3` - it's essentially the same program as before, except we've swapped the addition's operands. Addition is [commutative](https://en.wikipedia.org/wiki/Commutative_property), so this really shouldn't change anything and we should get the same result as before.
 
 But if you follow the rules we've defined, you'll see that it doesn't quite work out:
 - the outermost `let` gives us an environment of $\\{x = 1\\}$.
@@ -167,9 +167,9 @@ Which tells us that the order of the operands matters in addition. This is obvio
 These semantics are called _dynamic_ scoping: since anybody can overwrite any binding at any time, the only way to be sure what a name is bound to is to observe it at runtime.
 
 
-The alternative is called _static scoping_, or _lexical scoping_. I personally prefer the word _static_, as it's more clearly in opposition to _dynamic_.
+The alternative is called _static scoping_, or _lexical scoping_. I personally prefer the word _static_, as it's more clearly in opposition with _dynamic_.
 
-The idea is that rather than overwrite existing bindings, we create a new environment instead. That new environment inherits all previous bindings (as we've seen when handling nested `let` expressions), overwriting conflicting names as needed; but the important distinction is, bindings are only overwritten _in the new environment_, leaving the old one alone.
+The idea is that rather than overwrite existing bindings, we create a new environment instead. That new environment inherits all previous bindings (as we've seen when handling [nested `let` expressions](#nesting-let-expressions)), overwriting conflicting names as needed; but the important distinction is, bindings are only overwritten _in the new environment_, leaving the old one alone.
 
 Let's see how that works in our previous example:
 
@@ -180,7 +180,7 @@ let x = 1 in
 
 The outermost `let` gives us $e_1 = \\{x = 1\\}$, in which to evaluate `(let x = 2 in x) + x`.
 
-The innermost `let` creates a new environment which duplicates $e_1$ and overwrites `x` to `2`. We'll write this $e_2 = e_1[x \leftarrow 2]$. Interpreting `x` in $e_2$ clearly gives us `2`.
+The innermost `let` creates a new environment which duplicates $e_1$ and overwrites `x` to `2`. We'll write this <a name="leftarrow"/>$e_2 = e_1[x \leftarrow 2]$. Interpreting `x` in $e_2$ clearly gives us `2`.
 
 We're then left with evaluating `2 + x` - but since we're finished interpreting the innermost `let`, its environment, $e_2$, has been discarded. We're now working with $e_1$, in which `x` is bound to `1`. This unambiguously leads to a final value of `3` - exactly the result we wanted.
 
@@ -203,7 +203,7 @@ This reads _expression $expr$ is interpreted as value $v$ in environment $e$_.
 
 ### Binding introduction
 
-Let's call the term used to create a binding $\texttt{Let}$. We've seen that $Let$ is composed of a binding's $name$, its $value$, and the block of code in which that binding is in scope, $body$:
+Let's call the term used to create a binding $\texttt{Let}$. We've seen that $\texttt{Let}$ is composed of a binding's $name$, its $value$, and the block of code in which that binding is in scope, $body$:
 
 ```ocaml
 let [name] = [value] in
@@ -216,7 +216,7 @@ This, then, is what we're trying to specify the behaviour for:
   \AXC{$e \vdash \texttt{Let}\ name\ value\ body \Downarrow\ ???$}
 \end{prooftree}
 
-We're doing eager evaluation, so we know we must interpret $value$ immediately. There's no real ambiguity about which environment this should happen in: the only one that makes sense is $e$, the one in which $Let$ is being interpreted.
+We're doing eager evaluation, so we know we must interpret $value$ immediately. There's no real ambiguity about which environment this should happen in: the only one that makes sense is $e$, the one in which $\texttt{Let}$ is being interpreted.
 
 \begin{prooftree}
   \AXC{$e \vdash value \Downarrow v_1$}
@@ -227,7 +227,7 @@ The next step is to interpret $body$, which we know must be done in an environme
 - inherits all of $e$'s bindings.
 - binds $v_1$ to $name$.
 
-That is exactly $e[name \leftarrow v_1]$, which gives us the final semantics of $Let$:
+That is exactly $e[name \leftarrow v_1]$, which gives us the final semantics of $\texttt{Let}$:
 
 \begin{prooftree}
   \AXC{$e \vdash value \Downarrow v_1$}
@@ -241,7 +241,7 @@ We have a operational semantics for binding introduction, the act of creating a 
 
 Let's call the term for this $\texttt{Ref}$. Its semantics are really rather straightforward: $\texttt{Ref}$ evaluates to whatever value the environment says the corresponding name references.
 
-We'll need to introduce a new notation for this: $e(name)$ is the value bound to $name$ in $e$. This allows us to write the $Ref$ semantics:
+We'll need to introduce a new notation for this: $e(name)$ is the value bound to $name$ in $e$. This allows us to write the $\texttt{Ref}$ semantics:
 
 \begin{prooftree}
   \AXC{$e \vdash \texttt{Ref}\ name \Downarrow e(name)$}
@@ -260,6 +260,7 @@ Looking up the value bound to a name is merely looking at the earliest binding f
 
 Those operations are relatively trivial, so we'll not spend too much time explaining them. Here's the full code for the environment:
 
+<a name="env"/>
 ```scala
 class Env(env: List[Env.Binding]):
   // e(name)
@@ -282,19 +283,20 @@ object Env:
 
 Before we can update the interpreter, we need to add 2 new variants to our AST, one for each new term in our language.
 
-Let's start with $Ref$, whose semantics are:
+Let's start with $\texttt{Ref}$, whose semantics are:
 
 \begin{prooftree}
   \AXC{$e \vdash \texttt{Ref}\ name \Downarrow e(name)$}
 \end{prooftree}
 
-This tells us quite clearly that $Ref$ is entirely defined by the name of the binding it references:
+This tells us quite clearly that $\texttt{Ref}$ is entirely defined by the name of the binding it references:
 
+<a name="ref"/>
 ```scala
 case Ref(name: String)
 ```
 
-Similarly, looking at the $Let$ semantics will tell us exactly what we need:
+Similarly, looking at the $\texttt{Let}$ semantics will tell us exactly what we need:
 
 \begin{prooftree}
   \AXC{$e \vdash value \Downarrow v_1$}
@@ -302,8 +304,9 @@ Similarly, looking at the $Let$ semantics will tell us exactly what we need:
   \BIC{$e \vdash \texttt{Let}\ name\ value\ body \Downarrow v_2$}
 \end{prooftree}
 
-$Let$ is defined by the binding's $name$, $value$, and $body$:
+$\texttt{Let}$ is defined by the binding's $name$, $value$, and $body$:
 
+<a name="let"/>
 ```scala
 case Let(name: String, value: Expr, body: Expr)
 ```
@@ -312,13 +315,14 @@ case Let(name: String, value: Expr, body: Expr)
 
 Having done the hard work of specifying our semantics, implementing bindings is actually quite straightforward.
 
-Let's start with $Ref$, whose semantics are:
+Let's start with $\texttt{Ref}$, whose semantics are:
 
 \begin{prooftree}
   \AXC{$e \vdash \texttt{Ref}\ name \Downarrow e(name)$}
 \end{prooftree}
 
 This is simple enough:
+<a name="runRef"/>
 ```scala
 def runRef(name: String, e: Env) =
   e.lookup(name) // e |- Ref name ⇓ e(name)
@@ -326,7 +330,7 @@ def runRef(name: String, e: Env) =
 
 ### Binding introduction
 
-And finally, we can tackle $Let$, whose semantics are:
+And finally, we can tackle $\texttt{Let}$, whose semantics are:
 
 \begin{prooftree}
   \AXC{$e \vdash value \Downarrow v_1$}
@@ -336,6 +340,7 @@ And finally, we can tackle $Let$, whose semantics are:
 
 As usual, this maps quite easily and directly to code:
 
+<a name="runLet"/>
 ```scala
 def runLet(name: String, value: Expr, body: Expr, e: Env) =
   val v1 = interpret(value, e)               // e |- value ⇓ v₁
@@ -343,17 +348,7 @@ def runLet(name: String, value: Expr, body: Expr, e: Env) =
   v2                                         // e |- Let name value body ⇓ v₂
 ```
 
-At this point, we need to update `interpret` a little: not only does it need to handle our two new variants, but it must be environment-aware - which is really just declaring an `Env` parameter and passing it everywhere it's needed. Here's what this looks like in the end:
-
-```scala
-def interpret(expr: Expr, e: Env): Value = expr match
-  case Num(value)             => Value.Num(value)
-  case Bool(value)            => Value.Bool(value)
-  case Add(lhs, rhs)          => runAdd(lhs, rhs, e)
-  case Cond(pred, onT, onF)   => runCond(pred, onT, onF, e)
-  case Let(name, value, body) => runLet(name, value, body, e)
-  case Ref(name)              => runRef(name)
-```
+Of course, we'll also need to update `interpret` a little: not only does it need to handle our two new variants, but it must also be environment-aware - which is really just declaring an `Env` parameter and passing it everywhere it's needed. This is a trivial task that I don't feel really needs to be shown here.
 
 ## Testing our implementation
 
@@ -383,14 +378,14 @@ val expr = Let(
 )
 ```
 
-Interpreting that is simple enough, with one small subtlety: we're considering that our initial environment is empty. This might not always be the case, as their might be predefined global bindings, for example.
+Interpreting that is simple enough, with one small subtlety: we're considering that our initial environment is empty. This might not always be the case, as there might be predefined global bindings, for example.
 
 ```scala
 interpret(expr, Env.empty)
 // val res: Value = Num(3)
 ```
 
-If you remember, had we implemented dynamic scoping, this would evaluate to `4`. But we get `3`, which is a pretty good hint that we've successfully implemented static scoping, exactly as we wanted. Making sure we don't break this as we add more features to the language will prove a challenge, but at least for the moment, we have good reasons to believe we have a solid implementation of what we set out to support.
+If you remember, had we implemented [dynamic scoping](#shadowing-bindings), this would evaluate to `4`. But we get `3`, which is a pretty good hint that we've successfully implemented static scoping, exactly as we wanted. Making sure we don't break this as we add more features to the language will prove a challenge, but at least for the moment, we have good reasons to believe our implementation is faithful to the semantics we desire.
 
 
 ## Where to go from there?
