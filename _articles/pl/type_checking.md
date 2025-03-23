@@ -4,7 +4,6 @@ layout: article
 series: pl
 date:   20240806
 ---
-
 Our programming language feels pretty complete now - sure, it lacks a lot of bells and whistles, but it's powerful enough to express just about everything.
 
 One thing that bothers me, however, is that it's perfectly possible to write programs that don't make sense. For example:
@@ -585,10 +584,4 @@ typeCheck(sum, TypeEnv.empty)
 
 ## Where to go from here?
 
-We've gained a reasonable understanding of how type checking works, and can now identify well-typed programs.
-
-This feels a little disappointing, however: it's still perfectly possible to represent ill-typed programs. We can still write `nonsense`, it's just that there is now a validation function to tell us we shouldn't.
-
-It would be much better if we could somehow represent programs in a way that made illegal expressions impossible - in which adding a number and a boolean did not merely cause `typeCheck` to grumble, but was a notion that simply could not exist.
-
-We'll tackle this and typed ASTs next. This is likely to keep us busy for a little while, as it's rather harder than anything we've done so far. But it's definitely worth it and quite a bit of fun!
+We've gained a reasonable understanding of how type checking works, and can now identify well-typed programs. But, as we've seen above, this requires a lot of unpleasant explicit type ascriptions, and I would really prefer if we could somehow magically summon them out of thin air (or rigorously reason them into existence, whichever is easiest). We'll be tackling this next.

@@ -348,9 +348,7 @@ That's a perfectly valid expression (feel absolutely free to write the AST value
 
 Our language now has full support for functions - which we can see as a generalised form of bindings. We _could_ decide to drop support for $\texttt{Let}$, at least in the AST: a hypothetical parser could support `let` _syntax_, but map it to function introduction followed by immediate application.
 
-On the one hand, that would make for a leaner AST, and thus less code to write to interpret it.
-
-On the other hand, it's sometimes useful to keep specialised terms like this in the AST: since their semantics are simpler, it allows us to write more optimal code for that specific use case.
+On the one hand, that would make for a leaner AST, and thus less code to write to interpret it the other hand, it's sometimes useful to keep specialised terms like this in the AST: since their semantics are simpler, it allows us to write more optimal code for that specific use case.
 
 I'll be keeping `Let` in the rest of this series, but you should feel free to experiment with dropping it.
 

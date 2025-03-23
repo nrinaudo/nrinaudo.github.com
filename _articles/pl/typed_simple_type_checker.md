@@ -282,12 +282,14 @@ We finally get to recursion, $\texttt{LetRec}$, the last term of our language. W
 Other than that, adapting [`checkLetRec`](./type_checking.html#checkLetRec) is very straightforward:
 
 ```scala
-def checkLetRec(name: String, value: Expr, vType: Type, body: Expr, Γ: TypeEnv) =
-  val Γʹ = Γ.bind(name, TypeRepr.from(vType))
+def checkLetRec(name: String, value: Expr, x: Type, body: Expr, Γ: TypeEnv) =
+  val xRepr = TypeRepr.from(x)
+  val Γʹ    = Γ.bind(name, xRepr)
 
-  for value <- typeCheck(value, Γʹ)
-      body  <- typeCheck(body, Γʹ)
-  yield Typing(LetRec(name, value.expr, body.expr), body.repr)
+  for
+    value <- expect(value, xRepr, Γʹ)
+    body  <- typeCheck(body, Γʹ)
+  yield Typing(LetRec(name, value.expr, value.repr, body.expr), body.repr)
 ```
 
 
