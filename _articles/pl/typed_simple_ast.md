@@ -3,6 +3,7 @@ title  : Enforcing typing rules in the AST
 layout : article
 series : pl
 date   : 20240824
+code   : https://github.com/nrinaudo/programming_a_language/tree/main/typed_ast/src/main/scala/package.scala
 ---
 
 One flaw with our current type checking is that while we can confirm an expression is well-typed, we are not prevented from creating an ill-typed one. It's still perfectly possible to create an `Expr` that adds a number to a boolean, we "merely" have a validation function that tells us we should not.

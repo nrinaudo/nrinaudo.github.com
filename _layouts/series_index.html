@@ -7,10 +7,12 @@ layout: compress
 <div class="wrapper">
 
   <h1>{{ page.title }}</h1>
-  <i>{% if page.talk %}This is the companion article for <a href="{{ site.baseurl }}/talks/{{ page.talk }}.html">this talk</a>. {% endif %}</i>
+  <ul class="series-notes">
+  {% if page.talk %}<li>This is the companion article for <a href="{{ site.baseurl }}/talks/{{ page.talk }}.html">this talk</a>.</li> {% endif %}
+  {% if page.code %} <li>The full code for this series can be viewed <a href="{{ page.code }}">here</a>.</li> {% endif %}
+  </ul>
 
   {{ content }}
-
 
 {% assign sorted_pages = site.articles | sort: "date" | where: "series", page.series | where_exp: "post", "post.enabled != false" %}
 <ul>

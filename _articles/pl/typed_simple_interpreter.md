@@ -3,6 +3,7 @@ title  : Interpreting a typed AST
 layout : article
 series : pl
 date   : 20250122
+code   : https://github.com/nrinaudo/programming_a_language/tree/main/typed_ast/src/main/scala/package.scala
 ---
 
 We now have a (mostly) typed AST, [`TypedExpr`](./typed_simple_ast.html), and the [means of representing](./typed_simple_type_checker.html) programs in it. The next logical step is to write an interpreter for that AST, which will require a little finesse but I think will ultimately prove very satisfying.

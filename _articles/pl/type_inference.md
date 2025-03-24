@@ -3,6 +3,7 @@ title  : Inferring types
 layout : article
 series : pl
 date:   20240807
+code:   https://github.com/nrinaudo/programming_a_language/tree/main/type_inference/src/main/scala/package.scala
 ---
 
 Our language now has type checking: the ability to identify programs who perform illegal actions, without running said programs.
@@ -529,7 +530,7 @@ This must clearly happen during type checking, as that's when we turn missing ty
 case class Typing(expr: Expr[TypeInf], t: TypeInf)
 ```
 
-Updating type checking to support this is easy, just a little... long and boring, really. I'll not go through the details here (you can browse the [full code](https://github.com/nrinaudo/programming_a_language/blob/main/type_inference/src/main/scala/Infer.scala) if you're keen), but will merely show you a somewhat high level overview.
+Updating type checking to support this is easy, just a little... long and boring, really. I'll not go through the details here (you can browse the [full code](https://github.com/nrinaudo/programming_a_language/blob/main/type_inference/src/main/scala/package.scala) if you're keen), but will merely show you a somewhat high level overview.
 
 First, `typeCheck`'s return type must obviously be updated:
 <a name="typeCheck"/>
@@ -647,7 +648,7 @@ def substLet(name: String, value: Expr[TypeInf], x: TypeInf,
   yield Let(name, value, x, body)
 ```
 
-You can see the full code [here](https://github.com/nrinaudo/programming_a_language/blob/main/type_inference/src/main/scala/Infer.scala). It's a lot of what can only be described as boilerplate, and one would think something like [recursion schemes](https://nrinaudo.github.io/articles/recschemes.html) would be able to help here. I just find it hard to convince myself this would be a pedagogically wise choice.
+You can see the full code [here](https://github.com/nrinaudo/programming_a_language/blob/main/type_inference/src/main/scala/package.scala). It's a lot of what can only be described as boilerplate, and one would think something like [recursion schemes](https://nrinaudo.github.io/articles/recschemes.html) would be able to help here. I just find it hard to convince myself this would be a pedagogically wise choice.
 
 ### Tying everything together
 
@@ -678,7 +679,7 @@ I may be missing a subtle point, and there might be scenarios in which my reason
 
 Another thing that's worth pointing out is that our implementation is suboptimal: the larger $\Phi$ grows, the longer chains of variables pointing to each other get, the more expensive variable lookup will become. The fix is obvious (and I did not mention union-find earlier by accident), but I didn't feel it was worth the added complexity in something that is mostly intended to be a pedagogical exercise. If you happen to run in this performance issue, you need to make $\Phi$ behave more like union-find and update links between variables as you explore them. For example, should you encounter $\\$i = \\$j$, $\\$j = \\$k$ and $\\$k = \\$l$ when trying to retrieve the value of $\\$i$, you should update $\\$i$, $\\$j$ and $\\$k$ to all point to $\\$l$ to make lookup a 1-step operation rather than one that would potentially explore the whole of $\Phi$.
 
-Finally, we used local mutable state in this article because I felt it would be a lot easier to understand than [`State`](https://typelevel.org/cats/datatypes/state.html). If you already understand that, however, or would like to see what that approach would be like, the code is available [here](https://github.com/nrinaudo/programming_a_language/tree/main/type_inference_state/src/main/scala).
+Finally, we used local mutable state in this article because I felt it would be a lot easier to understand than [`State`](https://typelevel.org/cats/datatypes/state.html). If you already understand that, however, or would like to see what that approach would be like, the code is available [here](https://github.com/nrinaudo/programming_a_language/tree/main/type_inference_state/src/main/scala/package.scala).
 
 
 ## Where to go from here?

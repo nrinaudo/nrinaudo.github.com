@@ -3,6 +3,7 @@ title: Taking decisions
 layout: article
 series: pl
 date:   20240621
+code:   https://github.com/nrinaudo/programming_a_language/tree/main/untyped/src/main/scala/package.scala
 ---
 
 What we've written so far is a glorified calculator - fun, certainly, but not yet exactly a programming language, is it?

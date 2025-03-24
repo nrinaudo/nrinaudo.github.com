@@ -242,6 +242,12 @@ td {
     vertical-align: top;
 }
 
+ul.series-notes {
+    font-style: italic;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
 
 .highlight .hll { background-color: #ffffcc }
 .highlight .c { color: #586E75; font-style: italic; font-weight: lighter} /* Comment */

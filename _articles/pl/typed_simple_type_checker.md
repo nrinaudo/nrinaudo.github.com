@@ -3,6 +3,7 @@ title  : Producing a typed AST
 layout : article
 series : pl
 date   : 20250115
+code   : https://github.com/nrinaudo/programming_a_language/tree/main/typed_ast/src/main/scala/package.scala
 ---
 
 We're done implementing a typed AST, `TypedExpr`, but don't yet know how to produce expressions in it. We could wave the problem away by declaring it the responsibility of the parser, but that's not how things are usually done. Commonly, the parser will produce an untyped AST which will then be refined by going through different compiler phases, one of which, type checking, may produce a typed AST.

@@ -3,6 +3,7 @@ title: Reusing code
 layout: article
 series: pl
 date:   20240705
+code:   https://github.com/nrinaudo/programming_a_language/tree/main/untyped/src/main/scala/package.scala
 ---
 
 We've just implemented bindings, which allow us to write things like this:

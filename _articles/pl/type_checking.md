@@ -3,6 +3,7 @@ title: Identifying invalid programs
 layout: article
 series: pl
 date:   20240806
+code:   https://github.com/nrinaudo/programming_a_language/tree/main/type_inference/src/main/scala/package.scala
 ---
 Our programming language feels pretty complete now - sure, it lacks a lot of bells and whistles, but it's powerful enough to express just about everything.
 

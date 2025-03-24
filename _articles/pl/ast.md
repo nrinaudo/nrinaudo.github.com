@@ -3,6 +3,7 @@ title: Representing source code
 layout: article
 series: pl
 date:   20240615
+code:   https://github.com/nrinaudo/programming_a_language/tree/main/untyped/src/main/scala/package.scala
 ---
 
 Let's start with a very simple programming language, one that only supports addition of numbers. The following would be a valid expression in that language:

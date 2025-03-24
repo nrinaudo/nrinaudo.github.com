@@ -4,6 +4,7 @@ layout : article
 series : pl
 date   : 20250203
 enabled: false
+code   : https://github.com/nrinaudo/programming_a_language/tree/main/typed_env/src/main/scala/package.scala
 ---
 
 We've taken our typed AST quite far. It's possible to produce instances of it automatically from an untyped AST, and to interpret them in a way that is safer and more convenient than before. But it still has one glaring flaw: as soon as a term involves the environment in some way, it becomes unsafe.

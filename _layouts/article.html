@@ -9,6 +9,8 @@ layout: compress
 
   {% if page.series != "NONE" %}{% include prev_next.html %}{% endif %}
   {% if page.talk %}<i>This is the companion article for <a href="{{ site.baseurl }}/talks/{{ page.talk }}.html">this talk</a>.</i> {% endif %}
+  {% if page.code %} <i>The full code for this article can be viewed <a href="{{ page.code }}">here</a>.</i> {% endif %}
+
   {{ content }}
 
   {% if page.series != "NONE" %}{% include prev_next.html %}{% endif %}

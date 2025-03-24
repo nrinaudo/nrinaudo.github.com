@@ -3,6 +3,7 @@ title: Naming things
 layout: article
 series: pl
 date:   20240626
+code:   https://github.com/nrinaudo/programming_a_language/tree/main/untyped/src/main/scala/package.scala
 ---
 
 While our little language is developing apace, we are still lacking basic features. One is the ability to give names to values, commonly known as _variables_. We'll stay clear of that term for the moment however, as it hints strongly at things that can change and we do not want to go there quite yet. Instead, since we're binding a value to a name, we'll call these _bindings_.

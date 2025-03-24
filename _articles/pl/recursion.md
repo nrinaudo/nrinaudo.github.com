@@ -3,6 +3,7 @@ title: Repeating actions
 layout: article
 series: pl
 date:   20240713
+code:   https://github.com/nrinaudo/programming_a_language/tree/main/untyped/src/main/scala/package.scala
 ---
 
 One thing our language still lacks is the ability to repeat an action multiple times. This is typically necessary to compute things over ranges of numbers (or lists or queues or...). Most languages achieve this using dedicated constructs called _loops_.
