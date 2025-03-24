@@ -30,10 +30,11 @@ If you think back on what type checking was all about, our typing rules expresse
 ```
 
 The typing rule for [$\texttt{Gt}$](./type_checking.html#gt-typing) tells us its operands must be of type `Type.Num`, and the typing rule for [$\texttt{Num}$](./type_checking.html#num-typing) tells us `2` and `1` are of type `Type.Num`. Put another way, our expression is well-typed if the following equalities hold:
-\[\begin{eqnarray}
-\texttt{Type.Num} = \texttt{Type.Num}   \\\
+
+\begin{eqnarray}
+\texttt{Type.Num} = \texttt{Type.Num}   \\\\\\
 \texttt{Type.Num} = \texttt{Type.Num}
-\end{eqnarray}\]
+\end{eqnarray}
 
 
 This is clearly not the most challenging thing to prove. The one difficulty we encountered was with types that couldn't be known ahead of time, such as function parameters:
@@ -50,10 +51,10 @@ The type of `x` is unknown, and therefore cannot be part of an equality between 
 
 This suddenly becomes very easy, as it gives us the trivial:
 
-\[\begin{eqnarray}
-\texttt{Type.Num} = \texttt{Type.Num}   \\\
+\begin{eqnarray}
+\texttt{Type.Num} = \texttt{Type.Num}   \\\\\\
 \texttt{Type.Num} = \texttt{Type.Num}
-\end{eqnarray}\]
+\end{eqnarray}
 
 This simplification means no type is ever unknown, and turns all constraints expressed by typing rules into either _tautologies_ (constraints that always hold) or _contradictions_ (constraints that never hold), with the presence of a single contradiction sufficient to prove ill-typedness (no, I'm not entirely sure this is an actual word either). Every equality can be checked on the fly, as it is encountered, which is exactly what `typeCheck` does, failing at the first contradiction or succeeding when the entire AST has been explored.
 
@@ -66,10 +67,10 @@ Type inference is what you get when you go the other way and decide to embrace u
 
 By the same process as before, we get the following set of type equalities:
 
-\[\begin{eqnarray}
-$0                &=& \texttt{Type.Num}   \\\
+\begin{eqnarray}
+$0                &=& \texttt{Type.Num}   \\\\\\
 \texttt{Type.Num} &=& \texttt{Type.Num}
-\end{eqnarray}\]
+\end{eqnarray}
 
 And suddenly type checking is no longer confirming trivial equalities, but finding a value of $\\$0$ for which they hold - solving [a linear system](https://en.wikipedia.org/wiki/System_of_linear_equations). We'll spend the rest of this article figuring out how to do that.
 
@@ -409,10 +410,10 @@ In that case, we'll simply rely on the transitivity of equality: if $\\$i = Y$ a
 There is a subtlety here, however. We must consider the case of self-referential variables, as these are always something of a headache. Mathematicians have built entire careers off of them.
 
 Take the following scenario:
-\[\begin{eqnarray}
-$0 &=& $0                \\\
+\begin{eqnarray}
+$0 &=& $0                \\\\\\
 $0 &=& \texttt{Type.Num}
-\end{eqnarray}\]
+\end{eqnarray}
 
 If we run through this naively, we'll end up in a situation where $\\$0$ maps to itself, after which we'll try to unify it with $\texttt{Type.Num}$. Since $\\$0$ maps to something, we'll want to unify _that_ with $\texttt{Type.Num}$, meaning we'll want to unify $\\$0$ with $\texttt{Type.Num}$. Again. That's a loop we'll never get out of, unless we take the usual, simple solution to impredicativity: declare it forbidden.
 
