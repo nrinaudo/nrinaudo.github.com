@@ -2,7 +2,7 @@
 title:  Hands on Capture Checking
 layout: article
 date:   20250824
-code:   https://github.com/nrinaudo/hands_on_cc/blob/main/main.sc
+code:   https://github.com/nrinaudo/hands_on_capabilities/blob/main/capture/src/main/scala/capture.scala
 ---
 
 ## Introduction 
