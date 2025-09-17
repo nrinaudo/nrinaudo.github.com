@@ -24,7 +24,7 @@ sequence(List(Some(1), Some(2), None))
 // None
 ```
 
-I've picked `sequence` because, well, it illustrates my point quite neatly, but also because it's such a common combinator, and one which I feel is quite unpleasant to write in a monadic style.
+I've picked `sequence` because, well, it illustrates my point quite neatly, but also because it's such a common combinator, and one which I feel is quite unpleasant to write in a monadic style. And while the versions we'll write is strictly hard-coded to `List` and `Option`, the complete code (linked at the top of the page) contains the full implementation of a generic `sequence`, if you're interested.
 
 ### Without capabilities
 
