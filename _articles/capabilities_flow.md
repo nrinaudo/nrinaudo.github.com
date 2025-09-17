@@ -153,6 +153,8 @@ sequence(List(Option(1), Option(2),None))
 // None
 ```
 
+It's probably worth pointing out that if you want to use `boundary` and `break` right now, they're already part of the [standard Scala 3 library](https://www.scala-lang.org/api/3.5.0/scala/util/boundary$.html).
+
 ## Specialised boundaries
 
 If we look back at our new implementation of `sequence`, it's maybe better than the initial one (and even that is probably a matter of taste), but not exactly great yet:
