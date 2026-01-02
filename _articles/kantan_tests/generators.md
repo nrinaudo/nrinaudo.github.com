@@ -278,6 +278,7 @@ We've spent a little while writing a set of useful random generators, which all 
 
 The pattern I've come to settle on for this is methods (in the companion object) that take effectful computations and run them:
 
+<a name="Rand.apply"/>
 ```scala
 def apply[A](body: Rand ?=> A): A =
   val rand = scala.util.Random
