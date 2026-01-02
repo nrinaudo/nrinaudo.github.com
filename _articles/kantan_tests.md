@@ -13,7 +13,7 @@ I eventually did finish writing it, and [gave it](https://scala.io/sessions/pari
 
 This managed to hit two of my main motivators: the desire to do what I want, not what I should, and the need to prove rude people wrong. Because I'm a strong, confident man.
 
-And so, kantan.tests was born. A fully capability-based generative testing library (not, after all, a property-based one, more on that later), one that was even more fun to write than all the other property-based testing libraries I wrote before - of which I guarantee there are more than what you're thinking right now.
+And so, [kantan.tests](https://github.com/nrinaudo/kantan.tests) was born. A fully capability-based generative testing library (not, after all, a property-based one, more on that later), one that was even more fun to write than all the other property-based testing libraries I wrote before - of which I guarantee there are more than what you're thinking right now.
 
 This series of article goes through that journey, which took me to a very different place from the one I was expecting. I will use these articles to explore the design space of generative testing, wrestle with capabilities and capture checking and come up with patterns for working with them that I feel are worth sharing. Not that I expect them to become the accepted convention, but they work _for me_ and one has to start somewhere, doesn't one.
 

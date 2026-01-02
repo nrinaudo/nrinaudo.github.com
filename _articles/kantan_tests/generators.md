@@ -2,6 +2,7 @@
 title: Random generators
 layout: article
 series: kantan_tests
+code:   https://github.com/nrinaudo/kantan.tests/blob/main/src/main/scala/Rand.scala
 date:   20260101
 ---
 
