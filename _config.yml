@@ -1,6 +1,7 @@
 name:        Nicolas Rinaudo
 markdown:    kramdown
 highlighter: rouge
+incremental: true
 
 collections:
   talks:
