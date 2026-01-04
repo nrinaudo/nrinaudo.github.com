@@ -289,4 +289,4 @@ I think we've achieved rather a lot here. We've solved two problems that matter 
 
 Along the way, we've learned how to enhance handlers - something we'll be doing quite a bit of - and have hammered in the point that you could choose to ignore available capabilities - to pass in non-effectful computations were effectful ones are expected. This is no longer a mere, vaguely interesting theorical point: it's exactly how we manage to treat non-generative tests and generative ones as the same thing.
 
-
+Our next task will be to make writing tests a little less cumbersome.
