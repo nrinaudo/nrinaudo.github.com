@@ -43,6 +43,9 @@ trait Rand extends SharedCapability:
 
 This will cause the compiler to keep track of any `Rand` instance and prevent it from escaping its intended scope (if you're a little mystified by this statement, you should probably read [this article](../capture_checking.html) first).
 
+<a name="gen-type"/>
+And so we now have a capability-based version of `Gen`: a generator of `A` is of type `Rand ?-> A`.
+
 Now that we have our base capability, we need to start providing more directly useful ways of interacting with it.
 
 ## Useful combinators
@@ -278,6 +281,7 @@ We've spent a little while writing a set of useful random generators, which all 
 
 The pattern I've come to settle on for this is methods (in the companion object) that take effectful computations and run them:
 
+<a name="Rand.apply"/>
 ```scala
 def apply[A](body: Rand ?=> A): A =
   val rand = scala.util.Random
