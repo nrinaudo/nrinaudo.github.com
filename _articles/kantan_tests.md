@@ -17,6 +17,12 @@ And so, [kantan.tests](https://github.com/nrinaudo/kantan.tests) was born. A ful
 
 This series of article goes through that journey, which took me to a very different place from the one I was expecting. I will use these articles to explore the design space of generative testing, wrestle with capabilities and capture checking and come up with patterns for working with them that I feel are worth sharing. Not that I expect them to become the accepted convention, but they work _for me_ and one has to start somewhere, doesn't one.
 
+## Important note
+
+Before embarking on this series of articles, and if you want to get the most out of them, you may want to start with two other articles I wrote: [Effects as capabilities](./capabilities.html) and [Hands on Capture Checking](./capture_checking.html).
+
+They are not required reading, not exactly, and you'll probably get the gist of what I'm trying to do even without knowing too much about these two topics. However, kantan.tests _is_, at least initially, an exploration of how capabilities and capture checking behave in a real world project, which influences a lot of my design decisions and thought process.
+
 ## A few definitions
 
 I will be using some terms and concepts that readers are expected to be familiar with. Among them:

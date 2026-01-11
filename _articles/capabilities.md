@@ -9,6 +9,8 @@ Capabilities appear to be _the_ hot topic in the Scala community right now. Some
 
 As usual when looking at new features, I tend to ask myself the simple question of _what problem is this trying to solve?_ And in this case, the most immediate answer I could find was to allow a _direct style_ of programming. There are subtleties and details I'm purposefully ignoring here and we'll get to later, but really, the direct style bit seems to be the inciting incident.
 
+An important note before we start: the code in this article will not necessary compile as-is. Things like scoping and packages are glossed over a little, because they bring nothing to the points I'm making and add unnecessary noise. If you want to play with the code, you can find it all [here](https://github.com/nrinaudo/hands_on_capabilities/blob/main/numbers/src/main/scala/capabilities.scala). _This_ compiles.
+
 ## Direct style
 
 This is all well and good, but what does _direct style_ actually mean? The clearest technical answer I could find (well, synthetise from various sources) is:
@@ -262,7 +264,7 @@ def system[A](ra: Rand ?=> A): A =
     val r = new scala.util.Random
 
     override def range(min: Int, max: Int) =
-      r.nextInt(max - min) + min
+      r.between(min, max)
 
   ra(using handler)
 ```
@@ -321,6 +323,9 @@ And, just like we did with `Rand`, we'll want to provide atomic effectful comput
 def println(a: Any): Print ?=> Unit =
   p ?=> p.println(a.toString)
 ```
+
+It's important to note that this is very intentionally shadowing the standard `println` function. This would probably usually be considered a bad idea, but in this very specific context, I want our final code to look exactly like the one we started with, except for the types.
+
 
 That's really it for `Print`. We can now update `run` to rely on it. Since our capability-enabled `println` takes precedence over the default `Predefs.println`, all we need to do is update the type of `run`:
 ```scala

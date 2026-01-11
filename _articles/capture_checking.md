@@ -29,6 +29,13 @@ After the talk, Martin came to me and said _this was fun, we should do it again 
 
 The rest of this article, then, is a re-enactment of the talk Martin and I gave together in Krakow. Martin's obviously not writing this with me, which is your loss if I'm being honest because he's the charming one of our double act, but I'll do my best to make it worth your while.
 
+## Important note
+
+The code in this article is _not_ going to compile if you chuck it as-is in a REPL, mostly for reasons of scoping: when it comes to capture checking, things get a little weird. The compiler has _views_ about values being in the global scope, for example, so every bit of code in my article would need to be wrapped in an entirely artificial method. I chose not to do so, because it's noisy and confusing.
+
+If you want to play with the code, it's all available [here](https://github.com/nrinaudo/hands_on_capabilities/blob/main/capture/src/main/scala/capture.scala), boilerplate and all, for your convenience.
+
+
 <a name="problem"/>
 ## What problem are we solving?
 
@@ -83,7 +90,7 @@ It's not the only possible example however, and I want to give another quick one
 ```scala
 type Secret = String
 
-def withSecret[T](f: Secret => T): T
+def withSecret[T](f: Secret => T): T =
   val secret = "Celui qui lit ça est un !@#"
   val result = f(secret)
   
@@ -365,7 +372,7 @@ If we were to interract with a free, tracked variable in any way, however, this 
 
 
 ```scala
-val a1: A = A()
+val a1: A^ = A()
 
 val f: Int ->{a1} Int = 
   x =>

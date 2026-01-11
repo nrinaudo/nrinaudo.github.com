@@ -32,7 +32,7 @@ Let's think about that last sentence for a bit. Properties combine generators to
 Our previous property could be written as:
 ```scala
 val prop: Rand ?-> Boolean =
-  val cs = Rand.list(Rand.int(100), Rand.lowerAscii)
+  val cs = Rand.listOfN(Rand.int(100), Rand.lowerAscii)
   
   sort(cs).length == cs.length
 ```
@@ -83,13 +83,13 @@ I would much prefer a solution where this problem didn't exist. The good news is
 
 ```scala
 val prop1: Rand ?-> Boolean =
-  val cs = Rand.list(Rand.int(100), Rand.lowerAscii)
+  val cs = Rand.listOfN(Rand.int(100), Rand.lowerAscii)
   
   sort(cs).length == cs.length
 
 val prop2: Rand ?-> Boolean =
   val c  = Rand.lowerAscii
-  val cs = Rand.list(Rand.int(100), Rand.lowerAscii)
+  val cs = Rand.listOfN(Rand.int(100), Rand.lowerAscii)
 
   (c :: cs).head == c
 ```
@@ -136,7 +136,7 @@ Once I'm convinced these two scenarios are handled properly, I'd start generalis
 ```scala
 test("non-empty list head"):
   val head  = Rand.lowerAscii
-  val tail  = Rand.listOf(Rand.int(99), Rand.lowerAscii)
+  val tail  = Rand.listOfN(Rand.int(99), Rand.lowerAscii)
   val input = head :: tail
   
   input.headOption == Some(head)
