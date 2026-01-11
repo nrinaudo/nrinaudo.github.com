@@ -2,7 +2,7 @@
 title: Introduction
 layout: article
 series: optics
-date:   20200221
+date:   20200220
 ---
 
 Optics is a subject that I feel the Scala community is a bit weird about. Take the Haskell community, for example - they talk about optics *all the time*, and apparently even use them.
