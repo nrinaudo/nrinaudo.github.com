@@ -191,6 +191,7 @@ Now, I know some of you are probably bothered by the current `test` implementati
 
 ## Enhancing handlers
 
+<a name="mutable-handlers"/> 
 We could solve this optimisation problem quite simply if there was some way to know whether the `Rand` capability was used while running a test: if it wasn't, then further iterations won't change anything and we can simply stop there.
 
 This sounds a lot like mutable state - some sort of flag set to `true` if and only if `Rand` was used, for example. And we have just the place to store such state: the handler itself! If you remember the one we [wrote earlier](./generators.html#Rand.apply), it's _already_ stateful, which is how it manages to generate different values on successive calls to `nextInt`. We could naively update it to contain a little more state:
@@ -236,6 +237,7 @@ Except - we keep track of whether or not `nextInt` was called, but we don't real
 One approach - the first I tried, the silly one that was obviously never going to work, but this is a skill of mine, making all the mistakes so you don't have to - would be to expose the tracking handler as a type with some public `used` property. But if you think about it a little, isn't the entire point of capture checking to make this useless? Even if we were to do that, the handler would be scoped to the `Rand.tracking` block, and prevented from escaping by the compiler. It would expose `used`, but no one would be able to get their hands on it.
 
 The solution I've come up with - I make it sound like some grand discovery but it really is just the obvious next step - is to change the type of `tracking` to ultimately not return an `A`, but some other type wrapping an `A` and the `used` value. Something like this (scoped to the `Rand` companion object):
+<a name="Rand.Tracked"/> 
 ```scala
 case class Tracked[A](value: A, used: Boolean)
 ```
