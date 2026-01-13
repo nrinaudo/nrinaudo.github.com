@@ -177,7 +177,7 @@ This will attempt the test up to 100 times, aborting on the first failure. And i
 `test` here is obviously quite naive and limited. The number of attempts is hard-coded, there is no real strategy in looking for failing test cases, just brute force and luck... We can, and will, do much better than this: if I have the stamina for it, we will do things like:
 - grow the size of test cases little by little (as done in [QuickCheck](https://dl.acm.org/doi/10.1145/351240.351266)).
 - enumerate all small test cases (as done in [SmallCheck](https://dl.acm.org/doi/10.1145/1411286.1411292)).
-- use probabilities to drive our exploration of the test space (as presented in [Inputs from hell](https://ieeexplore.ieee.org/document/9154602)).
+- use probabilities to drive our exploration of the test space (as presented in [Inputs from hell](https://arxiv.org/pdf/1812.07525)).
 
 We'll also make it easy to swap from one strategy to another, and to do so at runtime.
 
