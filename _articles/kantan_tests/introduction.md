@@ -17,15 +17,15 @@ This series of article goes through that journey, which took me to a very differ
 
 ## Important note
 
-Before embarking on this series of articles, and if you want to get the most out of them, you may want to start with two other articles I wrote: [Effects as capabilities](./capabilities.html) and [Hands on Capture Checking](./capture_checking.html).
+Before embarking on this series of articles, and if you want to get the most out of them, you may want to start with two other articles I wrote: [Effects as capabilities](../capabilities.html) and [Hands on Capture Checking](../capture_checking.html).
 
 They are not required reading, not exactly, and you'll probably get the gist of what I'm trying to do even without knowing too much about these two topics. However, kantan.tests _is_, at least initially, an exploration of how capabilities and capture checking behave in a real world project, which influences a lot of my design decisions and thought process.
 
 ## A few definitions
 
 I will be using some terms and concepts that readers are expected to be familiar with. Among them:
-* _capabilities_: a (currently experimental) technique for encoding effects in Scala 3. I wrote an [entire article](./capabilities.html) on them.
-* _capture checking_: a (currently experimental) technique for preventing values from escaping their intended scope. I also wrote [an article](./capture_checking.html) on this.
+* _capabilities_: a (currently experimental) technique for encoding effects in Scala 3. I wrote an [entire article](../capabilities.html) on them.
+* _capture checking_: a (currently experimental) technique for preventing values from escaping their intended scope. I also wrote [an article](../capture_checking.html) on this.
 * _generative testing_: a method for testing software that involves generating random test cases. This is usually opposed to _example-based testing_, in which the output of known scenarios is compared to expected results.
-* _property-based testing_: a kind of _generative testing_ where general properties of a system are expressed as universal statements: _for all inputs, xxx is true_. It may surprise you that I did not write an article on this. I did give [a talk](../talks/much_ado_testing.html) though.
+* _property-based testing_: a kind of _generative testing_ where general properties of a system are expressed as universal statements: _for all inputs, xxx is true_. It may surprise you that I did not write an article on this. I did give [a talk](../../talks/much_ado_testing.html) though.
 
