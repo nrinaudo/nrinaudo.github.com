@@ -252,21 +252,34 @@ def tracking[A](body: Rand ?=> A): Rand ?->{body} Tracked[A] =
   Tracked(body, used)
 ```
 
-We now have the ability to run some effectful computation and to know whether it called `nextInt`, which was the last bit we needed to complete our initial `test` implementation:
+We now have the ability to run some effectful computation and to know whether it called `nextInt`, which was the last bit we needed to complete our initial `test` implementation.
+
+First, I like to extract the bit that declares all the handlers and runs an effectful computation from the main logic; it makes things, in my opinion, far more readable. Let's do that here by writing a function that runs a test:
+
+```scala
+def runTest(body: Rand ?=> Boolean): Tracked[Boolean] =
+  Rand:
+    tracking:
+      body
+```
+
+Updating `test` to keep track of generative and non-generative tests is now straightforward:
+
 ```scala
 def test(desc: String)(body: Rand ?=> Boolean) =
   def go(count: Int): Boolean =
     // We've exhausted our attempts.
     if count <= 0 then true
-    else
-      Rand:
-        tracking(body) match
-          case Tracked(result, false) => result        // Non-generative test.
-          case Tracked(true, __)      => go(count - 1) // Test success.
-          case _                      => false         // Test failure.
+    else runTest(body) match
+      case Tracked(false, _) => false         // Test failure
+      case Tracked(_, false) => true          // Non-generative test
+      case Tracked(_, true)  => go(count - 1) // Test success
 
   go(100)
 ```
+
+You may note with distate the tricky-to-parse pattern match at the heart of the logic - it's all booleans and a little hard to keep track of what is what. We'll address this a little later when we represent test results with a more useful type.
+
 
 This implementation of `test` will run both generative and non-generative tests, while being clever enough to run the latter only once. When I first set out on this project, I didn't really think I'd solve this particular problem, and it was truly delightlful how a solution just sort of happened.
 
