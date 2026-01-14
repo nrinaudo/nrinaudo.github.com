@@ -159,15 +159,15 @@ Here's a naive implementation of the `test` function I was using above to run a 
 
 ```scala
 def test(desc: String)(body: Rand ?=> Boolean) =
-  def go(count: Int): Boolean =
-    // We've exhausted our attempts.
-    if count <= 0 then true
-    else
-      Rand:
-        if body then go(count - 1) // Test success.
-        else         false         // Test failure.
+  def loop(successCount: Int): Boolean =
+    Rand:
+      if body
+        then if successCount >= 100 
+          then true
+          else loop(successCount + 1)
+        else false
 
-  go(100)
+  loop(0)
 ```
 
 This will attempt the test up to 100 times, aborting on the first failure. And it fully supports my workflow - in fact, all the examples above compile and work just fine with this `test` implementation!
@@ -259,7 +259,7 @@ First, I like to extract the bit that declares all the handlers and runs an effe
 ```scala
 def runTest(body: Rand ?=> Boolean): Tracked[Boolean] =
   Rand:
-    tracking:
+    Rand.tracking:
       body
 ```
 
@@ -267,19 +267,17 @@ Updating `test` to keep track of generative and non-generative tests is now stra
 
 ```scala
 def test(desc: String)(body: Rand ?=> Boolean) =
-  def go(count: Int): Boolean =
-    // We've exhausted our attempts.
-    if count <= 0 then true
-    else runTest(body) match
-      case Tracked(false, _) => false         // Test failure
-      case Tracked(_, false) => true          // Non-generative test
-      case Tracked(_, true)  => go(count - 1) // Test success
+  def loop(successCount: Int): Boolean =
+    runTest(body) match
+      case Tracked(true, isGenerative) =>
+        if isGenerative && successCount < 100 
+          then loop(successCount + 1)
+          else true
+    
+      case _ => false
 
-  go(100)
+  loop(100)
 ```
-
-You may note with distate the tricky-to-parse pattern match at the heart of the logic - it's all booleans and a little hard to keep track of what is what. We'll address this a little later when we represent test results with a more useful type.
-
 
 This implementation of `test` will run both generative and non-generative tests, while being clever enough to run the latter only once. When I first set out on this project, I didn't really think I'd solve this particular problem, and it was truly delightlful how a solution just sort of happened.
 

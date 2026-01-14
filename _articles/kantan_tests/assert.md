@@ -201,29 +201,37 @@ The first thing we need to do is update `runTest`, the function that, given a te
 ```scala
 def runTest(body: (Assert, Rand) ?=> AssertionResult): Tracked[AssertionResult] =
   Rand:
-    tracking:
+    Rand.tracking:
       Assert:
         body
 ```
 
-Our next task is `test`, which is also easy enough to update: most of the work can be done by simply following type errors. Of course, we also want to go a little further than that and print errors, as well:
+We'll then want to write a function to report the results of a test which, for the moment, are represented as an `AssertionResult`:
+```scala
+def report(desc: String, result: AssertionResult) = 
+  result match
+    case AssertionResult.Success =>
+      println(s"$desc: success")
+
+    case AssertionResult.Failure(msg) =>
+      println(s"$desc: failure")
+      println(s"Error: $msg")
+```
+
+Our final task is `test`, which is also easy enough to update: it's really just a matter of following the type errors and replacing booleans with `AssertionResult`:
 
 ```scala
 def test(desc: String)(body: (Assert, Rand) ?=> AssertionResult) =
-  def go(count: Int): AssertionResult =
-    if count <= 0 then AssertionResult.Success
-    else runTest(body) match
-      case Tracked(e: AssertionResult.Failure, _) => e
-      case Tracked(_, false)                      => AssertionResult.Success
-      case Tracked(_, true)                       => go(count - 1)
+  def loop(successCount: Int): AssertionResult =
+    runTest(body) match
+      case Tracked(AssertionResult.Success, isGenerative) =>
+        if isGenerative && successCount < 100
+          then loop(successCount + 1)
+          else AssertionResult.Success
 
-  go(100) match
-    case AssertionResult.Success => 
-      println(s"$desc: success")
-      
-    case AssertionResult.Failure(msg) => 
-      println(s"$desc: failure")
-      println(s"Error: $msg")
+      case Tracked(failure, _) => failure
+
+  report(desc, loop(100))
 ```
 
 
