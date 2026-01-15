@@ -231,7 +231,7 @@ def test(desc: String)(body: (Assert, Rand) ?=> Unit) =
 
       case Rand.Tracked(failure, _) => failure
 
-  report(desc, loop(100))
+  report(desc, loop(0))
 ```
 
 

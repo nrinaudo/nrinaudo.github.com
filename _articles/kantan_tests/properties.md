@@ -276,7 +276,7 @@ def test(desc: String)(body: Rand ?=> Boolean) =
     
       case _ => false
 
-  loop(100)
+  loop(0)
 ```
 
 This implementation of `test` will run both generative and non-generative tests, while being clever enough to run the latter only once. When I first set out on this project, I didn't really think I'd solve this particular problem, and it was truly delightlful how a solution just sort of happened.
