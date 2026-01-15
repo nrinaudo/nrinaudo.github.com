@@ -199,7 +199,7 @@ Our last task is to adapt the test runner: tests used to be of type `Rand ?-> Bo
 The first thing we need to do is update `runTest`, the function that, given a test, runs it. This is easy enough, all we have to do is execute the test within an `Assert` prompt:
 
 ```scala
-def runTest(body: (Assert, Rand) ?=> AssertionResult): Tracked[AssertionResult] =
+def runTest(body: (Assert, Rand) ?=> AssertionResult): Rand.Tracked[AssertionResult] =
   Rand:
     Rand.tracking:
       Assert:
@@ -224,12 +224,12 @@ Our final task is `test`, which is also easy enough to update: it's really just 
 def test(desc: String)(body: (Assert, Rand) ?=> AssertionResult) =
   def loop(successCount: Int): AssertionResult =
     runTest(body) match
-      case Tracked(AssertionResult.Success, isGenerative) =>
+      case Rand.Tracked(AssertionResult.Success, isGenerative) =>
         if isGenerative && successCount < 100
           then loop(successCount + 1)
           else AssertionResult.Success
 
-      case Tracked(failure, _) => failure
+      case Rand.Tracked(failure, _) => failure
 
   report(desc, loop(100))
 ```

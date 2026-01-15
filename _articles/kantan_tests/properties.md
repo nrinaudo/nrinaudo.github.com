@@ -235,21 +235,21 @@ Except - we keep track of whether or not `nextInt` was called, but we don't real
 
 One approach - the first I tried, the silly one that was obviously never going to work, but this is a skill of mine, making all the mistakes so you don't have to - would be to expose the tracking handler as a type with some public `used` property. But if you think about it a little, isn't the entire point of capture checking to make this useless? Even if we were to do that, the handler would be scoped to the `Rand.tracking` block, and prevented from escaping by the compiler. It would expose `used`, but no one would be able to get their hands on it.
 
-The solution I've come up with - I make it sound like some grand discovery but it really is just the obvious next step - is to change the type of `tracking` to ultimately not return an `A`, but some other type wrapping an `A` and the `used` value. Something like this:
+The solution I've come up with - I make it sound like some grand discovery but it really is just the obvious next step - is to change the type of `tracking` to ultimately not return an `A`, but some other type wrapping an `A` and the `used` value. Something like this (scoped to the `Rand` companion object):
 ```scala
 case class Tracked[A](value: A, used: Boolean)
 ```
 
 We can then very easily update `tracking` to make use of it:
 ```scala
-def tracking[A](body: Rand ?=> A): Rand ?->{body} Tracked[A] =
+def tracking[A](body: Rand ?=> A): Rand ?->{body} Rand.Tracked[A] =
   var used = false
   
   given Rand = (max: Int) =>
     used = true
     Rand.int(max)
 
-  Tracked(body, used)
+  Rand.Tracked(body, used)
 ```
 
 We now have the ability to run some effectful computation and to know whether it called `nextInt`, which was the last bit we needed to complete our initial `test` implementation.
@@ -257,7 +257,7 @@ We now have the ability to run some effectful computation and to know whether it
 First, I like to extract the bit that declares all the handlers and runs an effectful computation from the main logic; it makes things, in my opinion, far more readable. Let's do that here by writing a function that runs a test:
 
 ```scala
-def runTest(body: Rand ?=> Boolean): Tracked[Boolean] =
+def runTest(body: Rand ?=> Boolean): Rand.Tracked[Boolean] =
   Rand:
     Rand.tracking:
       body
@@ -269,7 +269,7 @@ Updating `test` to keep track of generative and non-generative tests is now stra
 def test(desc: String)(body: Rand ?=> Boolean) =
   def loop(successCount: Int): Boolean =
     runTest(body) match
-      case Tracked(true, isGenerative) =>
+      case Rand.Tracked(true, isGenerative) =>
         if isGenerative && successCount < 100 
           then loop(successCount + 1)
           else true
