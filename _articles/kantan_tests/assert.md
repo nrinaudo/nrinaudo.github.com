@@ -194,12 +194,12 @@ I will readily admit that this is possibly a matter of taste more than facts. Fo
 
 ## Adapting the test runner
 
-Our last task is to adapt the test runner: tests used to be of type `Rand ?-> Boolean`, and are now `(Assert, Rand) ?-> AssertionResult`, and this needs to be taken into account.
+Our last task is to adapt the test runner: tests used to be of type `Rand ?-> Boolean`, and are now `(Assert, Rand) ?-> Unit`, and this needs to be taken into account.
 
 The first thing we need to do is update `runTest`, the function that, given a test, runs it. This is easy enough, all we have to do is execute the test within an `Assert` prompt:
 
 ```scala
-def runTest(body: (Assert, Rand) ?=> AssertionResult): Rand.Tracked[AssertionResult] =
+def runTest(body: (Assert, Rand) ?=> Unit): Rand.Tracked[AssertionResult] =
   Rand:
     Rand.tracking:
       Assert:
@@ -221,7 +221,7 @@ def report(desc: String, result: AssertionResult) =
 Our final task is `test`, which is also easy enough to update: it's really just a matter of following the type errors and replacing booleans with `AssertionResult`:
 
 ```scala
-def test(desc: String)(body: (Assert, Rand) ?=> AssertionResult) =
+def test(desc: String)(body: (Assert, Rand) ?=> Unit) =
   def loop(successCount: Int): AssertionResult =
     runTest(body) match
       case Rand.Tracked(AssertionResult.Success, isGenerative) =>
