@@ -113,6 +113,7 @@ A list has two main moving bits:
 
 We'll start by solving the first problem: generating a list of `n` random elements for a given `n`. Not the most complicated thing in the world:
 
+<a name="Rand.listOfN"/>
 ```scala
 def listOfN[A](n: Int, content: => A): List[A] =
   List.fill(n)(content)

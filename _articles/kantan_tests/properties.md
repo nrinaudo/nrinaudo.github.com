@@ -214,6 +214,7 @@ I've played a little in that design space, went back to my roots as an OOP progr
 
 Here's how it would work for our needs, a handler that modifies an existing one to track whether or not `nextInt` was called:
 
+<a name="Rand.tracking"/>
 ```scala
 def tracking[A](body: Rand ?=> A)(using Rand): A =
   var used = false

@@ -102,6 +102,7 @@ First, of course, we must add `Log` to the type of tests: `(Assert, Log, Rand) ?
 
 Running a test now needs to provide a `Log` handler:
 
+<a name="runTest"/>
 ```scala
 def runTest(
     body: (Assert, Log, Rand) ?=> Unit
@@ -129,6 +130,7 @@ case class TestResult(
 
 This allows us to clean `test` up a little, which is a piece of luck because that pattern match is getting quite close to the limit of what I consider acceptably readable with these nested patterns:
 
+<a name="test"/>
 ```scala
 def test(desc: String)(body: (Assert, Log, Rand) ?=> Unit) =
 
@@ -170,6 +172,7 @@ We could make this extra nice by using fancy ANSI colours, with successful tests
 
 Everything is now correctly set up. We can rewrite our _list reverse_ test to use `logAs`:
 
+<a name="fixed-list-reverse"/>
 ```scala
 test("list reverse"):
   val xs = Rand
