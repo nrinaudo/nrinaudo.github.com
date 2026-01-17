@@ -1,0 +1,8 @@
+<title>
+{% if post.series != "NONE" %}
+{% assign series = site.articles | where: "series", post.series | where_exp: "post", "post.layout == 'series_index'" %}
+{{ series[0].title | xml_escape }}: {{ post.title | xml_escape }}
+{% else %}
+{{ post.title | xml_escape }}
+{% endif %}
+</title>
