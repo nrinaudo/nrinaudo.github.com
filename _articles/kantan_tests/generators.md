@@ -144,15 +144,8 @@ Now that we're clear on capture checking, the body of `listOfN` all but writes i
 
 ```scala
 def listOfN[A](n: Int, content: Rand ?=> A): Rand ?->{content} List[A] =
-  val builder = List.newBuilder[A]
-
-  (0 until n).foreach: _ =>
-    builder += content
-      
-  builder.result
+  List.fill(n)(content)
 ```
-
-And yes, I could _absolutely_ have written that as a recursive function and done away with all the mutability. This is more fun though, a little naughty even, and still perfectly safe.
 
 This is enough to write a subset of the `identifier` generator we had in mind. We can easily generate lists (of a fixed length) of (lower case) letters:
 
