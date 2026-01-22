@@ -17,9 +17,9 @@ This series of article goes through that journey, which took me to a very differ
 
 ## Important note
 
-Before embarking on this series of articles, and if you want to get the most out of them, you may want to start with two other articles I wrote: [Effects as capabilities](../capabilities.html) and [Hands on Capture Checking](../capture_checking.html).
+Before embarking on this series of articles, and if you want to get the most out of them, you may want to read [Effects as capabilities](../capabilities.html), [The right(?) way to work with capabilities](../capability_types.html) and [Hands on Capture Checking](../capture_checking.html).
 
-They are not required reading, not exactly, and you'll probably get the gist of what I'm trying to do even without knowing too much about these two topics. However, kantan.tests _is_, at least initially, an exploration of how capabilities and capture checking behave in a real world project, which influences a lot of my design decisions and thought process.
+They are not required reading, not exactly, and you'll probably get the gist of what I'm trying to do even without knowing too much about these topics. However, kantan.tests _is_, at least initially, an exploration of how capabilities and capture checking behave in a real world project, which influences a lot of my design decisions and thought process.
 
 ## A few definitions
 
