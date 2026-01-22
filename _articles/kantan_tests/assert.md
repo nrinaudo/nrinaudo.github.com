@@ -131,8 +131,8 @@ Writing a `fail` operation then becomes relatively trivial: given an `Assert`, w
 ```scala
 import scala.caps.unsafe.unsafeAssumePure
 
-def fail(msg: String): Assert ?-> Nothing =
-  handler ?=> throw AssertionFailure(handler.unsafeAssumePure, msg)
+def fail(msg: String)(using handler: Assert): Nothing =
+  throw AssertionFailure(handler.unsafeAssumePure, msg)
 ```
 
 We're forced to perform a little black magic here with `unsafeAssumePure`. This is linked to the `Assert^{}` thing we talked about ealier: we must pass a non-capturing `Label` to `AssertionFailure`'s constructor, but all `Label`s are tracked by virtue of being subtypes of `SharedCapability`. This forces us to tell the compiler it's ok to stop tracking `handler` here. I looked for a cleaner solution, but... well, that's the one used by the Scala standard library, so I guess it's at least an acceptable one.
@@ -160,7 +160,7 @@ You'll also notice the decision to give effectul computations the type `Assert ?
 We've now laid all the necessary groundwork for a very small, very simple `assert` implementation, which simply fails if its condition isn't met:
 
 ```scala
-def assert(condition: Boolean, msg: String): Assert ?-> Unit =
+def assert(condition: Boolean, msg: String)(using Assert): Unit =
   if condition
     then ()
     else fail(msg)

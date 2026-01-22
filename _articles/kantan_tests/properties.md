@@ -31,7 +31,7 @@ Let's think about that last sentence for a bit. Properties combine generators to
 
 Our previous property could be written as:
 ```scala
-val prop: Rand ?-> Boolean =
+def prop(using Rand): Boolean =
   val cs = Rand.listOfN(Rand.int(100), Rand.lowerAscii)
   
   sort(cs).length == cs.length
@@ -82,12 +82,12 @@ You can of course do some work to make this less dreadful - ad hoc polymorphism 
 I would much prefer a solution where this problem didn't exist. The good news is, our `Rand ?-> Boolean` encoding is exactly such a solution: we do not take a generator for each input of our property, but the ability to generate random values regardless of how many inputs it has. This allows us to rewrite the above properties as:
 
 ```scala
-val prop1: Rand ?-> Boolean =
+def prop1(using Rand): Boolean =
   val cs = Rand.listOfN(Rand.int(100), Rand.lowerAscii)
   
   sort(cs).length == cs.length
 
-val prop2: Rand ?-> Boolean =
+def prop2(using Rand): Boolean =
   val c  = Rand.lowerAscii
   val cs = Rand.listOfN(Rand.int(100), Rand.lowerAscii)
 
@@ -117,7 +117,7 @@ Let me illustrate this by taking a concrete example. Say we're tasked with the e
 - `None` on the empty list
 - `Some` of the first element on a non-empty list.
 
-I would personally start with some reasonable example-based tests to make sure `headOption` is at least reasonably healthy. Ideally, something that looks like this:
+I would personally start with some simple example-based tests to make sure `headOption` is at least reasonably healthy. Ideally, something that looks like this:
 
 ```scala
 test("non-empty list head"):
@@ -215,7 +215,7 @@ I've played a little in that design space, went back to my roots as an OOP progr
 Here's how it would work for our needs, a handler that modifies an existing one to track whether or not `nextInt` was called:
 
 ```scala
-def tracking[A](body: Rand ?=> A): Rand ?->{body} A =
+def tracking[A](body: Rand ?=> A)(using Rand): A =
   var used = false
   
   given Rand = (max: Int) =>
@@ -244,7 +244,7 @@ case class Tracked[A](value: A, used: Boolean)
 
 We can then very easily update `tracking` to make use of it:
 ```scala
-def tracking[A](body: Rand ?=> A): Rand ?->{body} Rand.Tracked[A] =
+def tracking[A](body: Rand ?=> A)(using Rand): Rand.Tracked[A] =
   var used = false
   
   given Rand = (max: Int) =>
@@ -254,7 +254,7 @@ def tracking[A](body: Rand ?=> A): Rand ?->{body} Rand.Tracked[A] =
   Rand.Tracked(body, used)
 ```
 
-We now have the ability to run some effectful computation and to know whether it called `nextInt`, which was the last bit we needed to complete our initial `test` implementation.
+This gives us the ability to run some effectful computation and to know whether it called `nextInt`, which was the last bit we needed to complete our initial `test` implementation.
 
 First, I like to extract the bit that declares all the handlers and runs an effectful computation from the main logic; it makes things, in my opinion, far more readable. Let's do that here by writing a function that runs a test:
 
