@@ -1,6 +1,7 @@
 ---
 title:   Effects as Capabilities
 layout:  article
+talk:    capabilities
 date:    20250901
 code:    https://github.com/nrinaudo/hands_on_capabilities/blob/main/numbers/src/main/scala/capabilities.scala
 ---
